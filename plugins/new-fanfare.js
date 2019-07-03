@@ -46,7 +46,9 @@ class SampleFanfarePlugin { /* exported SampleFanfarePlugin */
     this._config = config;
     this._host = client.get("Fanfare");
     this._host.bindClient("twitch-notice", this._onEvent.bind(this, client));
-    ChatCommands.add("newffdemo", this._onCmd, "From plugin SampleFanfarePlugin: demonstrate the effect", this);
+    ChatCommands.add("newffdemo", this._onCmd,
+                     `From plugin ${this.name}: demonstrate the effect`,
+                     this);
     resolve(this);
   }
 
