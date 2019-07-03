@@ -55,7 +55,7 @@ const AssetPaths = { /* exported AssetPaths */
   SETTINGS_LIGHT: "assets/settings.png",
   FAVICON: "assets/settings_white.png",
   FAVICON_ALERT: "assets/settings_white_alert.png",
-  BUILDER_WINDOW: "settings/builder.html", /* TODO */
+  BUILDER_WINDOW: "assets/help-window.html", /* TODO: Use "settings/builder.html" */
   HELP_WINDOW: "assets/help-window.html",
   CONFIG_EXPORT_WINDOW: "assets/config-export.html",
   LOG_EXPORT_WINDOW: "assets/log-export.html"

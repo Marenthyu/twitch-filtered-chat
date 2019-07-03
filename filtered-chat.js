@@ -10,6 +10,7 @@
 
 /* TODO (in approximate decreasing priority):
  * Add to content to both #settings help and builder links
+ *   Change AssetPaths.BUILDER_WINDOW to use the new builder
  *   shayd3 is working on the builder
  * Create a README.md file for the plugins directory. Include documentation on:
  *   Commands
@@ -1411,10 +1412,16 @@ function doLoadClient() { /* exported doLoadClient */
                        {literal: true, command: true});
   ChatCommands.addHelp("!tfc force-reload: Reload the page, discarding cache",
                        {literal: true, command: true});
-  ChatCommands.addHelp("!tfc nuke: Clear the chat",
+  ChatCommands.addHelp("!tfc nuke: Completely clear the chat",
                        {literal: true, command: true});
   ChatCommands.addHelp("!tfc nuke <user>: Clear messages sent by <user>",
-                       {command: true, args: true});
+                       {args: true, command: true});
+  ChatCommands.addHelp("!tfc ffdemo: Demonstrate fanfares",
+                       {literal: true, command: true});
+  ChatCommands.addHelp("!tfc ffcheerdemo: Demonstrate default cheer fanfare",
+                       {literal: true, command: true});
+  ChatCommands.addHelp("!tfc ffsubdemo: Demonstrate default sub fanfare",
+                       {literal: true, command: true});
 
   /* Close the main settings window */
   function closeSettings() {
@@ -1500,7 +1507,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Add command to open the settings builder page */
   ChatCommands.add("builder", function _on_cmd_builder(cmd, tokens, client_) {
-    Util.Open(AssetPaths.BUILDER_WINDOW, "_blank", {});
+    openSettingsTab();
   }, "Open the configuration builder wizard");
 
   /* Pressing a key on the chat box */
@@ -1593,7 +1600,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Clicking on the "Builder" link in the settings box header */
   $("#btnSettingsBuilder").click(function(e) {
-    Util.Open(AssetPaths.BUILDER_WINDOW, "_blank", {});
+    openSettingsTab();
   });
 
   /* Changing the "Channels" text box */
@@ -1751,12 +1758,7 @@ function doLoadClient() { /* exported doLoadClient */
     } else if (e.key === "F1") {
       /* F1: open configuration help window */
       openSettingsTab();
-    }/* else if (!e.key.match(/^[A-Za-z0-9_]$/)) {
-      if (["Shift", "Control", "Alt", "Tab"].indexOf(e.key) === -1) {
-        Util.LogOnly(e.key);
-        Util.DebugOnly(e);
-      }
-    }*/
+    }
   });
 
   /* Clicking elsewhere on the document: reconnect, username context window */
@@ -1838,12 +1840,6 @@ function doLoadClient() { /* exported doLoadClient */
       Content.addNoticeText("Reconnecting...");
       client.Connect();
     }
-
-    /* Clicking on an emote
-    if ($t.attr("data-is-emote") === "1") {
-      Util.LogOnly(`Clicked on an emote: ${$t.parent().html()}`);
-    }
-    */
   });
 
   /* WebSocket opened */
@@ -1981,6 +1977,22 @@ function doLoadClient() { /* exported doLoadClient */
             } else {
               $(".content").children().remove();
             }
+          } else if (tokens[1] === "ffdemo") {
+            let ff = client.get("Fanfare");
+            ff._onChatEvent(client, {bits: 1000}, true);
+            ff._onSubEvent(client, {
+              kind: TwitchSubEvent.SUB,
+              plan: TwitchSubEvent.PLAN_TIER1
+            }, true);
+          } else if (tokens[1] === "ffcheerdemo") {
+            let ff = client.get("Fanfare");
+            ff._onChatEvent(client, {bits: 1000}, true);
+          } else if (tokens[1] === "ffsubdemo") {
+            let ff = client.get("Fanfare");
+            ff._onSubEvent(client, {
+              kind: TwitchSubEvent.SUB,
+              plan: TwitchSubEvent.PLAN_TIER1
+            }, true);
           }
           return;
         }
