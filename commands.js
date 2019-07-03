@@ -743,12 +743,12 @@ function onCommandPlugins(cmd, tokens, client) {
       } else {
         Content.addErrorText("//plugins add: not enough arguments");
       }
-    } else {
-      if (t0 !== "help") {
-        Content.addErrorText(`Unknown command ${t0}`);
-      }
+    } else if (t0 === "help") {
       this.printHelp();
       this.printUsage();
+    } else {
+      Content.addErrorText(`Unknown command ${t0}`);
+      this.printHelp();
     }
   } else {
     Content.addErrorText("Plugin information unavailable");
