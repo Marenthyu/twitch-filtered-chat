@@ -13,6 +13,7 @@
  * Add to content to both #settings help and builder links
  *   Change AssetPaths.BUILDER_WINDOW to use the new builder
  *   shayd3 is working on the builder
+ * Move authentication to using Twitch's implicit OAuth flow?
  * Create a README.md file for the plugins directory. Include documentation on:
  *   Commands
  *   Filtering
@@ -416,7 +417,7 @@ function getConfigObject(inclSensitive=false) {
   /* Populate configs from each module */
   $(".module").each(function _config_get_module_settings() {
     let id = $(this).attr("id");
-    let toArray = (val) => (Util.IsArray(val) ? val : []);
+    let toArray = (val) => Util.IsArray(val) ? val : [];
     if (!config[id]) {
       config[id] = getModuleSettings($(this));
     }
