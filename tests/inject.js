@@ -1,8 +1,10 @@
 /* Twitch Filtered Chat - Message Injection Testing Module */
 
+"use strict";
+
 /* To use: AddAsset("tests/inject.js"); */
 
-function BuildMessage(flag_obj, cmd=null, msg=null) {
+function BuildMessage(flag_obj, cmd, msg=null) {
   let flags = {};
   flags["badge-info"] = "subscriber/12";
   flags["badges"] = "moderator/1,subscriber/12,bits/1000";
@@ -20,23 +22,64 @@ function BuildMessage(flag_obj, cmd=null, msg=null) {
   flags["tmi-sent-ts"] = Number(new Date());
   flags["__injected"] = 1;
   for (let [k, v] of Object.entries(flag_obj)) {
-    flags[k] = v;
+    if (v === null) {
+      delete flags[k];
+    } else {
+      flags[k] = v;
+    }
   }
   let user = "kaedenn_!kaedenn_@kaedenn_.tmi.twitch.tv";
   let ch = "#dwangoac";
 
-  let command = cmd || "PRIVMSG";
-
-  let fstr = Object.entries(flags).map(([k,v]) => (`${k}=${Twitch.EncodeFlag(String(v))}`)).join(";");
-  let message = `@${fstr} :${user} ${command} ${ch}`;
-  if (msg !== null) { message = `${message} :${msg}`; }
-  if (!message.endsWith("\r\n")) message += "\r\n";
+  let encodeFlag = (k, v) => `${k}=${Twitch.EncodeFlag(String(v))}`;
+  let fstr = Object.entries(flags).map(([k, v]) => encodeFlag(k, v)).join(";");
+  let message = `@${fstr} :${user} ${cmd} ${ch}`;
+  if (msg !== null) {
+    message += ` :${msg}`;
+  } else if (cmd === "PRIVMSG") {
+    message += ` :Test message: ${JSON.stringify(flags)}`;
+  }
+  if (!message.endsWith("\r\n")) {
+    message += "\r\n";
+  }
 
   Util.DebugOnly(flags, JSON.stringify(message));
   return message;
 }
 
 var TEST_MESSAGES = { };
+
+TEST_MESSAGES.MSG_PLEB = BuildMessage({
+  "badge-info": "",
+  "badges": "",
+  "user-type": "",
+  "mod": null,
+  "subscriber": null
+}, "PRIVMSG");
+
+TEST_MESSAGES.MSG_SUB = BuildMessage({
+  "badge-info": "subscriber/24",
+  "badges": "subscriber/24",
+  "user-type": ""
+}, "PRIVMSG");
+
+TEST_MESSAGES.MSG_CASTER = BuildMessage({
+  "badge-info": "",
+  "badges": "broadcaster/1",
+  "user-type": "broadcaster",
+  "broadcaster": "1",
+  "subscriber": null,
+  "mod": "1"
+}, "PRIVMSG");
+
+TEST_MESSAGES.MSG_SUBCASTER = BuildMessage({
+  "badge-info": "subscriber/24",
+  "badges": "subscriber/24,broadcaster/1",
+  "user-type": "broadcaster",
+  "broadcaster": "1",
+  "subscriber": "1",
+  "mod": "1"
+}, "PRIVMSG");
 
 TEST_MESSAGES.GIFTSUB = BuildMessage({
   "msg-id": "subgift",
@@ -142,7 +185,7 @@ TEST_MESSAGES.SUBMYSTERYGIFT = BuildMessage({
   "system-msg": "jbwags is gifting 1 Tier 1 Subs to CarlSagan42's community! They've gifted a total of 1 in the channel!"
 }, "USERNOTICE");
 
-TEST_MESSAGES.REWARD_GIFT = BuildMessage({
+TEST_MESSAGES.REWARDGIFT = BuildMessage({
   /* "@badge-info=;badges=bits/100;color=;display-name=parkourgardevoir;emotes=;flags=;id=bff6b896-cbfc-47ef-a08e-be4f053ad904;login=parkourgardevoir;mod=0;msg-id=rewardgift;msg-param-bits-amount=200;msg-param-domain=seasonal-pride;msg-param-min-cheer-amount=200;msg-param-selected-count=3;room-id=20702886;subscriber=0;system-msg=reward;tmi-sent-ts=1559694167528;user-id=58076057;user-type= :tmi.twitch.tv USERNOTICE #carlsagan42 :A Cheer shared Rewards to 3 others in Chat!" */
   "msg-id": "rewardgift",
   "msg-param-bits-amount": "200",
@@ -152,8 +195,11 @@ TEST_MESSAGES.REWARD_GIFT = BuildMessage({
   "system-msg": "reward"
 }, "USERNOTICE", "A Cheer shared Rewards to 3 others in Chat!");
 
-TEST_MESSAGES.SUB_CONVERT = BuildMessage({
-/* WARNING: "Unknown USERNOTICE type" "@badge-info=subscriber/2;badges=subscriber/0,premium/1;color=#FF00F7;display-name=HarleyDeWayne;emotes=;flags=;id=7cdca6fc-f47b-43fd-a629-cea399b46843;login=harleydewayne;mod=0;msg-id=primepaidupgrade;msg-param-sub-plan=1000;room-id=20702886;subscriber=1;system-msg=HarleyDeWayne\\sconverted\\sfrom\\sa\\sTwitch\\sPrime\\ssub\\sto\\sa\\sTier\\s1\\ssub!;tmi-sent-ts=1559696263639;user-id=196783661;user-type= :tmi.twitch.tv USERNOTICE #carlsagan42" {"cmd":"USERNOTICE","flags":{"badge-info":[["subscriber","2"]],"badges":[["subscriber","0"],["premium","1"]],"color":"#FF00F7","display-name":"HarleyDeWayne","emotes":"","flags":"","id":"7cdca6fc-f47b-43fd-a629-cea399b46843","login":"harleydewayne","mod":0,"msg-id":"primepaidupgrade","msg-param-sub-plan":1000,"room-id":20702886,"subscriber":1,"system-msg":"HarleyDeWayne converted from a Twitch Prime sub to a Tier 1 sub!","tmi-sent-ts":1559696263639,"user-id":196783661,"user-type":""},"server":"tmi.twitch.tv","channel":{"channel":"#carlsagan42","room":null,"roomuid":null},"sub_kind":null,"issub":false,"israid":false,"isritual":false,"ismysterygift":false,"message":"","user":null} */
+TEST_MESSAGES.PRIMEPAIDUPGRADE = BuildMessage({
+  /* "@badge-info=subscriber/2;badges=subscriber/0,premium/1;color=#FF00F7;display-name=HarleyDeWayne;emotes=;flags=;id=7cdca6fc-f47b-43fd-a629-cea399b46843;login=harleydewayne;mod=0;msg-id=primepaidupgrade;msg-param-sub-plan=1000;room-id=20702886;subscriber=1;system-msg=HarleyDeWayne\\sconverted\\sfrom\\sa\\sTwitch\\sPrime\\ssub\\sto\\sa\\sTier\\s1\\ssub!;tmi-sent-ts=1559696263639;user-id=196783661;user-type= :tmi.twitch.tv USERNOTICE #carlsagan42" */
+  "msg-id": "primepaidupgrade",
+  "msg-param-sub-plan": "1000",
+  "system-msg": "HarleyDeWayne converted from a Twitch Prime sub to a Tier 1 sub!"
 }, "USERNOTICE");
 
 function inject_message(msg) { /* exported inject_message */
