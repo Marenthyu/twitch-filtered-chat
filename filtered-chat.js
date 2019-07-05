@@ -763,10 +763,10 @@ function shouldFilter(module, event) {
     if (rules.FromChannel.length > 0) {
       for (let s of rules.FromChannel) {
         if (event.channelString.equalsLowerCase(s)) {
-          return true;
+          return false;
         }
       }
-      return false;
+      return true;
     }
   } else if (event instanceof TwitchEvent) {
     /* Filter out events and notices */
@@ -1018,8 +1018,8 @@ function doLoadClient() { /* exported doLoadClient */
 
   if (Util.DebugLevel < Util.LEVEL_TRACE) {
     /* Filter out PING/PONG messages */
-    Util.Logger.add_filter(/^ws recv> "PING :tmi.twitch.tv"$/);
-    Util.Logger.add_filter(/^ws send> "PONG :tmi.twitch.tv"$/);
+    Util.Logger.add_filter(/ws recv> "PING :tmi.twitch.tv"/);
+    Util.Logger.add_filter(/ws send> "PONG :tmi.twitch.tv"/);
 
     /* Filter out users joining/parting channels */
     Util.Logger.add_filter(/tmi.twitch.tv (JOIN|PART) #/);
