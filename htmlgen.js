@@ -47,15 +47,15 @@ class HTMLGenerator { /* exported HTMLGenerator */
   }
 
   get enableAntics() {
-    return !this.getValue("NoForce") && !$("#cbForce").is(":checked");
+    return this.getValue("EnableForce") && $("#cbForce").is(":checked");
   }
 
   set enableAntics(val) {
     if (val) {
-      this.setValue("NoForce", true);
+      this.setValue("EnableForce", true);
       $("#cbForce").check();
     } else {
-      this.setValue("NoForce", false);
+      this.setValue("EnableForce", false);
       $("#cbForce").uncheck();
     }
   }

@@ -271,9 +271,9 @@ function parseQueryString(config, qs=null) {
         Util.WarnOnly(`Invalid scheme value ${v}, defaulting to dark`);
         val = "dark";
       }
-    } else if (key === "noforce") {
-      key = "NoForce";
-      val = true;
+    } else if (key === "force" || key === "antics") {
+      key = "EnableForce";
+      val = Boolean(v);
     } else if (key === "fanfare") {
       key = "Fanfare";
       val = {enable: false};
@@ -347,7 +347,7 @@ function getConfigObject(inclSensitive=false) {
     config.key = config_key;
 
     /* Purge obsolete configuration items */
-    const obsolete_props = ["AutoReconnect"];
+    const obsolete_props = ["AutoReconnect", "NoForce"];
     let should_store = false;
     for (let prop of obsolete_props) {
       if (config.hasOwnProperty(prop)) {
@@ -364,7 +364,7 @@ function getConfigObject(inclSensitive=false) {
   const purge_props = [
     "NoAssets", "Debug", "NoAutoReconnect", "Layout", "Transparent", "Plugins",
     "EnableEffects", "DisableEffects", "PluginConfig", "ColorScheme", "nols",
-    "NoForce"];
+    "EnableForce"];
   for (let prop of purge_props) {
     if (config.hasOwnProperty(prop)) {
       delete config[prop];
@@ -410,8 +410,8 @@ function getConfigObject(inclSensitive=false) {
     config.ShowClips = $("#cbClips").is(":checked");
   }
 
-  if (!config.hasOwnProperty("NoForce")) {
-    config.NoForce = $("#cbForce").is(":checked");
+  if (!config.hasOwnProperty("EnableForce")) {
+    config.EnableForce = $("#cbForce").is(":checked");
   }
 
   /* Populate configs from each module */
@@ -1169,8 +1169,8 @@ function doLoadClient() { /* exported doLoadClient */
       } else if (cfg.ColorScheme === "light") {
         qsAdd("scheme", "light");
       }
-      if (cfg.NoForce) {
-        qsAdd("noforce", "1");
+      if (cfg.EnableForce) {
+        qsAdd("force", "1");
       }
       if (cfg.Fanfare) {
         qsAdd("fanfare", JSON.stringify(cfg.Fanfare));
@@ -1272,7 +1272,7 @@ function doLoadClient() { /* exported doLoadClient */
       document.title += " Read-Only";
       if (cfg.Layout.Chat) {
         /* Change the chat placeholder and border to reflect read-only */
-        $("#txtChat").attr("placeholder", "Authentication needed to send messages");
+        $("#txtChat").attr("placeholder", Strings.ANON_PLACEHOLDER + ": " + Strings.AUTH_PLACEHOLDER);
         Util.CSS.SetProperty("--chat-border", "#cd143c");
       }
     }
@@ -1348,7 +1348,7 @@ function doLoadClient() { /* exported doLoadClient */
   }
 
   /* Apply the no-force config to the settings div */
-  if (config.NoForce) {
+  if (config.EnableForce) {
     $("#cbForce").check();
   } else {
     $("#cbForce").uncheck();
@@ -1640,7 +1640,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Clicking on the "No Force" checkbox */
   $("#cbForce").change(function(e) {
-    mergeConfigObject({"NoForce": $(this).is(":checked")});
+    mergeConfigObject({"EnableForce": $(this).is(":checked")});
     updateHTMLGenConfig();
   });
 
@@ -1982,7 +1982,7 @@ function doLoadClient() { /* exported doLoadClient */
             let ff = client.get("Fanfare");
             ff._onChatEvent(client, {bits: 1000}, true);
             ff._onSubEvent(client, {
-              kind: TwitchSubEvent.SUB,
+              kind: TwitchSubEvent.KIND_SUB,
               plan: TwitchSubEvent.PLAN_TIER1
             }, true);
           } else if (tokens[1] === "ffcheerdemo") {
@@ -1991,7 +1991,7 @@ function doLoadClient() { /* exported doLoadClient */
           } else if (tokens[1] === "ffsubdemo") {
             let ff = client.get("Fanfare");
             ff._onSubEvent(client, {
-              kind: TwitchSubEvent.SUB,
+              kind: TwitchSubEvent.KIND_SUB,
               plan: TwitchSubEvent.PLAN_TIER1
             }, true);
           }

@@ -61,7 +61,7 @@ URL: `https://kaedenn.github.io/twitch-filtered-chat/index.html?<OPTIONS>`
 |  `clips`       | If non-empty, show clip information in chat (default: hidden) |
 |  `nols`        | Forcibly disable `localStorage` support. Note that this disables `pass` support entirely, as `localStorage` is needed to store passwords |
 |  `scheme`      | Color scheme to use. Valid values: `light` and `dark`. Default: `dark` |
-|  `noforce`     | Disable mod antics (see below) |
+|  `enableforce` | Enable mod antics (see below) |
 |  `fanfare`     | Fanfare configuration: either `1` or `true` to enable, or a JSON-encoded string to set specific options |
 |  `tag`         | Set a specific name for the chat, for debugging and antics usage (highly recommended!) |
 
@@ -193,7 +193,7 @@ Chat command documentation is coming relatively soon.
 
 ## Antics
 
-Unless enabled (either `&noforce=1` present in the query string or `No Force` checkbox in the upper-right settings window is checked), moderators are able to take control of the chat in various ways.
+If enabled (either `&force=1` present in the query string or `Mod Antics` checkbox in the upper-right settings window is checked), moderators are able to take control of the chat in various ways.
 
 By starting their message with one of the following words, moderators can do the following:
 
@@ -216,7 +216,9 @@ By starting their message with one of the following words, moderators can do the
 
 `forcejs-only tfc alert("Hello there")` displays an alert window if the streamer's `&tag` value is `tfc`.
 
-Be sure to disable antics if you don't quite trust your moderators.
+Only enable antics if you completely trust your moderators. Furthermore, antics gives access to your OAuth token if one is present.
+
+If you're using an OAuth token, then ensure antics are disabled. Enable antics at your own risk.
 
 ## Testing
 

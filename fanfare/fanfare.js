@@ -241,7 +241,7 @@ class Fanfare { /* exported Fanfare */
     } else if (t0 === "demo") {
       self._onChatEvent(self._client, {bits: 1000}, true);
       self._onSubEvent(self._client, {
-        kind: TwitchSubEvent.SUB,
+        kind: TwitchSubEvent.KIND_SUB,
         plan: TwitchSubEvent.PLAN_TIER1
       }, true);
     } else if (t0 === "cheerdemo") {
@@ -251,7 +251,7 @@ class Fanfare { /* exported Fanfare */
       }
       self._onChatEvent(self._client, {bits: bits}, true);
     } else if (t0 === "subdemo") {
-      let kind = TwitchSubEvent.SUB;
+      let kind = TwitchSubEvent.KIND_SUB;
       let plan = TwitchSubEvent.PLAN_TIER1;
       if (tokens.length > 1) {
         for (let k of TwitchSubEvent.KINDS) {

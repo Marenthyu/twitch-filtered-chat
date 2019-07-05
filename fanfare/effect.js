@@ -257,7 +257,7 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
   constructor(host, config, event) {
     super(host, config);
     this._event = event;
-    this._kind = event.kind || TwitchSubEvent.SUB;
+    this._kind = event.kind || TwitchSubEvent.KIND_SUB;
     this._tier = event.plan || TwitchSubEvent.PLAN_TIER1;
   }
 
@@ -274,13 +274,13 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
       let size = "1.0";
       if (this.config("subemote")) {
         emote = this.config("subemote");
-      } else if (this._kind === TwitchSubEvent.SUB) {
+      } else if (this._kind === TwitchSubEvent.KIND_SUB) {
         emote = "MrDestructoid";
-      } else if (this._kind === TwitchSubEvent.RESUB) {
+      } else if (this._kind === TwitchSubEvent.KIND_RESUB) {
         emote = "PraiseIt";
-      } else if (this._kind === TwitchSubEvent.GIFTSUB) {
+      } else if (this._kind === TwitchSubEvent.KIND_GIFTSUB) {
         emote = "HolidayPresent";
-      } else if (this._kind === TwitchSubEvent.ANONGIFTSUB) {
+      } else if (this._kind === TwitchSubEvent.KIND_ANONGIFTSUB) {
         emote = "HolidayPresent";
       } else if (this.config("emote")) {
         emote = this.config("emote");

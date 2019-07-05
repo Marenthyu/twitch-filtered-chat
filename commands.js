@@ -1008,6 +1008,10 @@ function onCommandHighlight(cmd, tokens, client) {
 function onCommandAuth(cmd, tokens, client) {
   let $url = $(`<a href="https://twitchapps.com/tmi/" target="_blank"></a>`);
   $url.text($url.attr("href"));
+  /* Change the txtChat placeholder when this command is ran */
+  if ($("#txtChat") && $("#txtChat").attr("placeholder")) {
+    $("#txtChat").attr("placeholder", Strings.ANON_PLACEHOLDER);
+  }
   if (client.IsAuthed()) {
     Content.addHelpText(`You are authenticated as ${client.GetName()}`);
   } else {
@@ -1183,6 +1187,6 @@ function InitChatCommands() { /* exported InitChatCommands */
   }
 }
 
-/* globals LOG_KEY AssetPaths */
+/* globals LOG_KEY AssetPaths Strings */
 
 /* vim: set ts=2 sts=2 sw=2 et: */

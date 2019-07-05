@@ -63,6 +63,9 @@ const AssetPaths = { /* exported AssetPaths */
 
 /* Strings constants and message-building functions */
 const Strings = { /* exported Strings */
+  ANON_PLACEHOLDER: "Authentication needed to send messages",
+  AUTH_PLACEHOLDER: "type //auth for more information",
+
   RECONNECT: `<span class="reconnect" data-reconnect="1">Reconnect</span>`,
 
   NAME_AUTOGEN: "Auto-Generated",
