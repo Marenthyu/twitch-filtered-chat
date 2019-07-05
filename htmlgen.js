@@ -979,8 +979,15 @@ class HTMLGenerator { /* exported HTMLGenerator */
 
   /* Returns jquery node */
   rewardGift(event) {
-    let message = `${event.command} TODO`;
-    return $(`<div class="message">${message}</div>`);
+    let $e = $(`<div class="chat-line rewardgift notice"></div>`);
+    let $msg = $(`<span class="message" data-message="1"></span>`);
+    this._addChatAttrs($e, event);
+    $e.append(this._genBadges(event));
+    $e.append(this._genName(event));
+    $msg.text(event.message);
+    $e.html($e.html() + ":&nbsp;");
+    $e.append($msg);
+    return $e;
   }
 
   /* Returns jquery node */
