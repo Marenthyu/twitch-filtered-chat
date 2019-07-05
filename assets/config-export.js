@@ -1,4 +1,6 @@
 
+"use strict";
+
 function formatValue(key, val) {
   if (val === null) {
     return "null";
