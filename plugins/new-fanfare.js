@@ -5,6 +5,9 @@
  * To add, type the following commands:
  *  //plugins add SampleFanfarePlugin new-fanfare.js [<config>]
  *
+ * To demonstrate the effect, type:
+ *  //newffdemo
+ *
  * Anything passed via <config> can be accessed through
  * this._config.PluginConfig
  */
@@ -33,8 +36,11 @@ class SampleFanfareEffect extends FanfareEffect {
         dxrange: [-1, 1],
         dyrange: [-20, -10],
         xforcerange: [-0.1, 0.1],
-        yforcerange: [1.1, 0.9],
-        image: this._image
+        yforcerange: [0.9, 1.0],
+        image: this._image,
+        canvasWidth: this._host.width,
+        canvasHeight: this._host.height,
+        borderAction: "bounce"
       }));
     }
   }
@@ -66,12 +72,7 @@ class SampleFanfarePlugin { /* exported SampleFanfarePlugin */
 
   _onEvent(client, event) {
     Util.Debug("Received event:", event);
-    let e = new SampleFanfareEffect(this._host, this.config, event);
-    e.load().then(() => {
-      this._host.addEffect(e);
-    }).catch((err) => {
-      Util.Error(`Failed to load effect ${e.name}:`, err, e);
-    });
+    this._host.addEffect(new SampleFanfareEffect(this._host, this.config, event));
   }
 
   get name() { return "SampleFanfarePlugin"; }
