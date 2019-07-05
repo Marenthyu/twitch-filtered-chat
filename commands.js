@@ -718,7 +718,6 @@ function onCommandCheers(cmd, tokens, client) {
 
 /* //emotes: display known emotes */
 function onCommandEmotes(cmd, tokens, client) {
-  let client_emotes = client.GetEmotes();
   let to_display = [];
   const toImage = (name, url) => {
     let n = name.escape();
