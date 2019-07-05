@@ -8,7 +8,7 @@
  * ChatCommands.add(command, function, description, args...)
  *   command      (string) chat command to add, executed via //command
  *   function     a function taking the following arguments
- *     cmd        the command being executed (value of command parameter)
+ *     cmd        the command being executed (value of `command` parameter)
  *     tokens     the arguments passed to the command when ran
  *     client     a reference to the TwitchClient object
  *     args...    extra arguments passed to ChatCommands.add, as-is
@@ -25,6 +25,7 @@
  */
 
 /* TODO
+ * Implement addHelp for specific commands
  * Implement ChatCommands.addComplete(command, func)
  * Implement //plugins addremote <class> <url> [<config>]
  */
@@ -44,25 +45,35 @@ class ChatCommandManager {
     this.addUsage("help", "command", "Show usage information for <command>");
   }
 
+  /* Trim leading "//" or "." */
   _trim(msg) {
     return msg.replace(/^\/\//, "").replace(/^\./, "");
   }
 
+  /* Add a new command */
   add(command, func, desc, ...args) {
+    let c = {};
     if (!command.match(/^[a-z0-9_-]+$/)) {
       Util.Error(`Invalid command "${command.escape()}"`);
     } else {
-      let c = {};
+      if (typeof(func) !== "function") {
+        Util.Warn(`Adding command ${command}: "func" is not a function`);
+      }
+      if (!desc) {
+        Util.Warn(`Adding command ${command}: description is empty`);
+      }
       c.name = command;
       c.func = func;
       c.desc = desc;
       c.aliases = [];
+      c.extra_help = [];
       c.dflt_args = args.length > 0 ? args : null;
       this._command_list.push(command);
       this._commands[command] = c;
     }
   }
 
+  /* Add an alias to an existing command */
   addAlias(command, referred_command) {
     if (this.hasCommand(referred_command, true)) {
       this._aliases[command] = referred_command;
@@ -72,6 +83,7 @@ class ChatCommandManager {
     }
   }
 
+  /* Add a usage line to an existing command */
   addUsage(command, argstr, usagestr, opts=null) {
     if (this.hasCommand(command, true)) {
       let c = this.getCommand(command);
@@ -82,7 +94,17 @@ class ChatCommandManager {
     }
   }
 
-  addHelp(text, opts=null) {
+  /* Add extra text to be shown in a command's help text */
+  addHelp(command, text) {
+    if (this.hasCommand(command)) {
+      this._commands[command].extra_help.push(text);
+    } else {
+      Util.Error(`addHelpText: No such command ${command}`);
+    }
+  }
+
+  /* Add text to be shown in //help */
+  addHelpText(text, opts=null) {
     let o = opts || {};
     let t = text;
     if (o.indent) t = "&nbsp;&nbsp;" + t;
@@ -96,6 +118,7 @@ class ChatCommandManager {
     this._help_text.push(t);
   }
 
+  /* Request completion of the given completion object */
   complete(client, complete_args) {
     let text = complete_args.orig_text;
     let pos = complete_args.orig_pos;
@@ -103,37 +126,37 @@ class ChatCommandManager {
     /* "test te<tab>" -> "test te" */
     let text_before = text.substr(0, pos);
     /* "test te<tab>" -> "te" */
-    let curr_word = text_before;
     let word_pos = text_before.search(/\W[\w]*$/);
+    let curr_word = text_before;
     if (word_pos > -1) {
       curr_word = text_before.substr(word_pos).trimStart();
     }
+    let prefix = complete_args.orig_text;
+    let matches = [];
     if (curr_word.startsWith("@")) {
       /* Complete @<user> sequences */
-      let prefix = curr_word.substr(1);
-      let matches = [];
+      let part = curr_word.substr(1);
+      if (client.GetName().startsWith(part)) {
+        matches.push(client.GetName());
+      }
       for (let c of client.GetJoinedChannels()) {
         let cinfo = client.GetChannelInfo(c);
         if (cinfo.users) {
           for (let user of cinfo.users) {
-            if (prefix.length === 0 || user.startsWith(prefix)) {
+            if (part.length === 0 || user.startsWith(part)) {
               matches.push(user);
             }
           }
         }
       }
-      if (idx < matches.length) {
-        text = text.substr(0, word_pos) + "@" + matches[idx];
-      }
-      idx += 1;
-      if (idx >= matches.length) {
-        idx = 0;
+      /* Clear the prefix so we can append a match below */
+      if (matches.length > 0) {
+        prefix = "@";
       }
     } else if (this.isCommandStr(text)) {
       /* Complete commands */
       let word = this._trim(text.substr(0, pos));
-      let prefix = text;
-      let matches = [];
+      prefix = text;
       if (word.length > 0) {
         prefix = text.substr(0, text.indexOf(word));
       }
@@ -142,28 +165,38 @@ class ChatCommandManager {
           matches.push(k);
         }
       }
+    }
+
+    /* If matches were found, return one */
+    if (matches.length > 0) {
       if (idx < matches.length) {
         text = prefix + matches[idx];
-        /* TODO: adjust curr_pos */
+        pos = text.length;
+        idx += 1;
       }
-      idx += 1;
       if (idx >= matches.length) {
         idx = 0;
       }
+    } else {
+      text = complete_args.orig_text;
+      pos = complete_args.orig_pos;
     }
+
     return {
       orig_text: complete_args.orig_text,
       orig_pos: complete_args.orig_pos,
       curr_text: text,
-      curr_pos: pos,
+      curr_pos: text.length,
       index: idx
     };
   }
 
+  /* Return whether or not the message is a command */
   isCommandStr(msg) {
     return msg.match(/^\/\//) || msg.match(/^\./);
   }
 
+  /* Return whether or not the message invokes a valid command */
   hasCommand(msg, native_only=false) {
     let cmd = this._trim(msg);
     if (this._commands.hasOwnProperty(cmd)) {
@@ -174,10 +207,12 @@ class ChatCommandManager {
     return false;
   }
 
+  /* Execute a command */
   execute(msg, client) {
     if (this.isCommandStr(msg)) {
       let cmd = this._trim(msg.split(" ")[0]);
       let tokens = msg.replace(/[\s]*$/, "").split(" ").slice(1);
+      /* Executing "//" or "." invokes "//help" */
       if (this._trim(msg).length === 0) {
         cmd = "help";
         tokens = [];
@@ -193,6 +228,8 @@ class ChatCommandManager {
           obj.command = cmd;
           obj.cmd_func = c.func;
           obj.cmd_desc = c.desc;
+          obj.cmd_extra_help = c.extra_help;
+          obj.cmd_dflt_args = c.dflt_args;
           if (c.dflt_args) {
             c.func.bind(obj)(cmd, tokens, client, ...c.dflt_args);
           } else {
@@ -211,10 +248,12 @@ class ChatCommandManager {
     }
   }
 
+  /* Return an array of valid command names */
   getCommands() {
     return Object.keys(this._commands);
   }
 
+  /* Return a command object by command name (optionally excluding aliases) */
   getCommand(cmd, native_only=false) {
     let cname = this._trim(cmd);
     let c = this._commands[cname];
@@ -224,10 +263,12 @@ class ChatCommandManager {
     return c;
   }
 
+  /* Format the help text for the given command object */
   formatHelp(cmd) {
     return this.helpLine(`//${cmd.name}`, cmd.desc, true);
   }
 
+  /* Format the usage text for the given command name */
   formatUsage(cmd) {
     let usages = [];
     if (cmd.usage) {
@@ -244,21 +285,24 @@ class ChatCommandManager {
       usages.push(this.helpLine(`//${cmd.name}`, this.formatArgs(cmd.desc)));
     }
     for (let a of cmd.aliases) {
-      usages.push(this.helpLine(`//${a}`, `Alias for command //${cmd.name}`));
+      usages.push(this.helpLine(`//${a}`, `Alias for command //${cmd.name}`, true));
     }
     return usages;
   }
 
+  /* Helper: format a string as an argument */
   arg(s) {
     return `<span class="arg">${s.escape()}</span>`;
   }
 
+  /* Helper: format a help line key/value pair (optionally escaping HTML) */
   helpLine(k, v, esc=false) {
     let d1 = `<div>${esc ? k.escape() : k}</div>`;
     let d2 = `<div>${esc ? v.escape() : v}</div>`;
     return `<div class="help-line">${d1}${d2}</div>`;
   }
 
+  /* Helper: format "<arg>" and "*arg*" in the given string */
   formatArgs(s) {
     let result = s;
     let repl = [
@@ -271,6 +315,7 @@ class ChatCommandManager {
     return result;
   }
 
+  /* Print the usage information for the given command object */
   printUsage(cmdobj) {
     Content.addHelpText("Usage:");
     for (let line of this.formatUsage(cmdobj)) {
@@ -278,15 +323,17 @@ class ChatCommandManager {
     }
   }
 
+  /* Print the help information for the given command object */
   printHelp(cmdobj) {
     Content.addHelp(this.formatHelp(cmdobj));
   }
 
+  /* Handle builtin //help command */
   onCommandHelp(cmd, tokens, client) {
     if (tokens.length === 0) {
       Content.addHelpText("Commands:");
       for (let c of this._command_list) {
-        Content.addHelp(this.formatHelp(this._commands[c]));
+        this.printHelp(this._commands[c]);
       }
       Content.addHelp(this.formatArgs("Enter //help <command> for help on <command>"));
       for (let line of this._help_text) {
@@ -298,12 +345,16 @@ class ChatCommandManager {
       for (let line of this.formatUsage(obj)) {
         Content.addHelp(line);
       }
+      for (let line of obj.extra_help) {
+        Content.addHelp(line);
+      }
     } else {
       Content.addErrorText(`Invalid command ${tokens[0]}`);
     }
   }
 }
 
+/* //log: manage debug-msg-log content */
 function onCommandLog(cmd, tokens, client) {
   let t0 = tokens.length > 0 ? tokens[0] : "";
   let logs = Util.GetWebStorage(LOG_KEY) || [];
@@ -478,6 +529,7 @@ function onCommandLog(cmd, tokens, client) {
   }
 }
 
+/* //clear: clear one or all modules */
 function onCommandClear(cmd, tokens, client) {
   if (tokens.length === 0) {
     $(".content").find(".line-wrapper").remove();
@@ -493,6 +545,7 @@ function onCommandClear(cmd, tokens, client) {
   }
 }
 
+/* //join: join a channel */
 function onCommandJoin(cmd, tokens, client) {
   if (tokens.length > 0) {
     let cdef = Twitch.ParseChannel(tokens[0]);
@@ -530,6 +583,7 @@ function onCommandJoin(cmd, tokens, client) {
   }
 }
 
+/* //part: leave a channel */
 function onCommandPart(cmd, tokens, client) {
   if (tokens.length > 0) {
     let cdef = Twitch.ParseChannel(tokens[0]);
@@ -567,6 +621,7 @@ function onCommandPart(cmd, tokens, client) {
   }
 }
 
+/* //badges: display known badge images */
 function onCommandBadges(cmd, tokens, client) {
   let badges = [];
   /* Obtain global badges */
@@ -603,6 +658,7 @@ function onCommandBadges(cmd, tokens, client) {
   }
 }
 
+/* //cheers: display known cheermotes */
 function onCommandCheers(cmd, tokens, client) {
   let cheers = client.GetCheers();
   let [bg, scale, state] = [null, null, null];
@@ -660,36 +716,82 @@ function onCommandCheers(cmd, tokens, client) {
   }
 }
 
+/* //emotes: display known emotes */
 function onCommandEmotes(cmd, tokens, client) {
   let client_emotes = client.GetEmotes();
-  let g_emotes = [];
-  let ch_emotes = [];
   let to_display = [];
-  for (let [k, v] of Object.entries(client_emotes)) {
-    let e = `<img src="${v}" title="${k.escape()}" alt="${k.escape()}" />`;
-    if (k.match(/^[a-z]/)) {
-      ch_emotes.push(e);
-    } else {
-      g_emotes.push(e);
+  const toImage = (name, url) => {
+    let n = name.escape();
+    let u = url.escape();
+    return `<img src="${u}" alt="${n}" title="${n}" />`;
+  };
+
+  let s_emotes = {};
+  for (let [eset, eids] of Object.entries(client.GetEmoteSets())) {
+    let emotes = [];
+    for (let eid of eids) {
+      let ename = client.GetEmoteName(eid);
+      let emote = toImage(`${eid} ${ename}`, client.GetEmote(eid));
+      if (emotes.indexOf(emote) === -1) {
+        emotes.push(emote);
+      }
+    }
+    if (emotes.length > 0) {
+      s_emotes[eset] = emotes;
     }
   }
-  if (tokens.indexOf("global") > -1) {
-    to_display.push(`Global: ${g_emotes.join("")}`);
+  if (tokens.indexOf("global") > -1 || tokens.indexOf("all") > -1) {
+    to_display.push(`Global: ${s_emotes[0].join("")}`);
   }
-  if (tokens.indexOf("channel") > -1) {
-    to_display.push(`Channel: ${ch_emotes.join("")}`);
+  if (tokens.indexOf("channel") > -1 || tokens.indexOf("all") > -1) {
+    for (let [eset, emotes] of Object.entries(s_emotes)) {
+      if (eset !== 0) {
+        to_display.push(`Set ${eset}: ${emotes.join("")}`);
+      }
+    }
   }
-  if (tokens.indexOf("bttv") > -1) {
+  if (tokens.indexOf("ffz") > -1 || tokens.indexOf("all") > -1) {
+    if (!client.FFZEnabled()) {
+      Content.addErrorText("FFZ support is disabled");
+    } else {
+      for (let ch of client.GetJoinedChannels()) {
+        let ffz_imgs = [];
+        let emote_def = client.GetFFZEmotes(ch) || {};
+        let emotes = emote_def.emotes || [];
+        for (let [k, v] of Object.entries(emotes)) {
+          if (Object.entries(v.urls).length > 0) {
+            let url = Object.values(v.urls)[0];
+            ffz_imgs.push(toImage(k, url));
+          }
+        }
+        if (ffz_imgs.length > 0) {
+          to_display.push(`FFZ: ${ch}: ${ffz_imgs.join("")}`);
+        }
+      }
+    }
+  }
+  if (tokens.indexOf("bttv") > -1 || tokens.indexOf("all") > -1) {
     if (!client.BTTVEnabled()) {
       Content.addErrorText("BTTV support is disabled");
     } else {
       let bttv_emotes = client.GetGlobalBTTVEmotes();
       let bttv_imgs = [];
       for (let [k, v] of Object.entries(bttv_emotes)) {
-        let kstr = k.escape();
-        bttv_imgs.push(`<img src="${v.url}" title="${kstr}" alt="${kstr}" />`);
+        bttv_imgs.push(toImage(k, v.url));
       }
-      to_display.push(`BTTV: ${bttv_imgs.join("")}`);
+      if (bttv_imgs.length > 0) {
+        to_display.push(`BTTV: ${bttv_imgs.join("")}`);
+      }
+      for (let ch of client.GetJoinedChannels()) {
+        bttv_imgs = [];
+        for (let edef of Object.values(client.GetBTTVEmotes(ch))) {
+          let desc = `${edef.code} (#${edef.channel})`;
+          bttv_imgs.push(toImage(desc, edef.url));
+        }
+        if (bttv_imgs.length > 0) {
+          to_display.push(`BTTV: ${ch}: ${bttv_imgs.join("")}`);
+        }
+      }
     }
   }
   if (to_display.length === 0) {
@@ -702,6 +804,7 @@ function onCommandEmotes(cmd, tokens, client) {
   }
 }
 
+/* //plugins: manage plugins */
 function onCommandPlugins(cmd, tokens, client) {
   let t0 = (tokens.length > 0 ? tokens[0] : null);
   if (Plugins.plugins) {
@@ -755,6 +858,7 @@ function onCommandPlugins(cmd, tokens, client) {
   }
 }
 
+/* //client: display client status information */
 function onCommandClient(cmd, tokens, client) {
   if (tokens.length === 0 || tokens[0] === "status") {
     let cstatus = client.ConnectionStatus();
@@ -795,10 +899,12 @@ function onCommandClient(cmd, tokens, client) {
   }
 }
 
+/* //raw: send a message directly to Twitch, without parsing */
 function onCommandRaw(cmd, tokens, client) {
   client.SendRaw(tokens.join(" "));
 }
 
+/* //to: send a message to a specific channel */
 function onCommandTo(cmd, tokens, client) {
   if (tokens.length >= 2) {
     let ch = client.ParseChannel(tokens[0]);
@@ -809,6 +915,7 @@ function onCommandTo(cmd, tokens, client) {
   }
 }
 
+/* //channels: display connected channels */
 function onCommandChannels(cmd, tokens, client) {
   Content.addHelpText("Active channels:");
   for (let channel of client.GetJoinedChannels()) {
@@ -827,6 +934,7 @@ function onCommandChannels(cmd, tokens, client) {
   }
 }
 
+/* //rooms: display available rooms */
 function onCommandRooms(cmd, tokens, client) {
   for (let channel of client.GetJoinedChannels()) {
     let cinfo = client.GetChannelInfo(channel);
@@ -844,6 +952,7 @@ function onCommandRooms(cmd, tokens, client) {
   }
 }
 
+/* //highlight: manage highlight patterns */
 function onCommandHighlight(cmd, tokens, client) {
   let H = client.get("HTMLGen");
   if (tokens.length === 0 || tokens[0] === "show") {
@@ -907,6 +1016,7 @@ function InitChatCommands() { /* exported InitChatCommands */
    *      [0]: string, array, or null: parameter name(s)
    *      [1]: description
    *      [2]: formatting options (optional)
+   *    extra: array of extra help text (optional)
    *  }
    */
   const DefaultCommands = {
@@ -968,8 +1078,11 @@ function InitChatCommands() { /* exported InitChatCommands */
       func: onCommandEmotes,
       desc: "Display the requested emotes",
       usage: [
-        ["<kinds>", "Display emotes; <kinds> can be one or more of: global, channel, bttv"]
+        ["[<kinds>]", "Display emotes; <kinds> can be one or more of: global, channel, ffz, bttv, or all"]
       ],
+      extra: [
+        "Emotes are organized by set, one set per channel. Set 0 is for global emotes."
+      ]
     },
     "plugins": {
       func: onCommandPlugins,
@@ -1012,7 +1125,8 @@ function InitChatCommands() { /* exported InitChatCommands */
     },
     "rooms": {
       func: onCommandRooms,
-      desc: "List available rooms"
+      desc: "List available rooms",
+      extra: ["This command may not work if you're running un-authenticated"]
     },
     "highlight": {
       func: onCommandHighlight,
@@ -1023,6 +1137,11 @@ function InitChatCommands() { /* exported InitChatCommands */
         ["show", "List highlight patterns"],
         ["add <pattern>", "Highlight messages containing <pattern>"],
         ["remove <index>", "Remove the pattern numbered <index>"]
+      ],
+      extra: [
+        "Patterns can be either regexes (such as /foo/) or text (such as \"foo\")",
+        "Regexes may contain flag characters: /foo/i will match \"foo\", \"Foo\", \"FOO\", etc.",
+        "By default, patterns are case-sensitive; highlighting \"foo\" will not highlight \"Foo\""
       ]
     }
   };
@@ -1038,6 +1157,11 @@ function InitChatCommands() { /* exported InitChatCommands */
     if (cobj.alias) {
       for (let aname of cobj.alias) {
         ChatCommands.addAlias(aname, cname);
+      }
+    }
+    if (cobj.extra) {
+      for (let line of cobj.extra) {
+        ChatCommands.addHelp(cname, line);
       }
     }
   }
