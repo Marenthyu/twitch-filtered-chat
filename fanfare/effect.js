@@ -16,64 +16,109 @@ class FanfareEffect { /* {{{0 */
   get count() { return this._particles.length; }
   get alive() { return this._particles.filter((p) => p.alive).length; }
 
-  get onload() { return this._cb.onload; }
-  set onload(fn) { this._cb.onload = fn; }
-  get onpredraw() { return this._cb.onpredraw; }
-  set onpredraw(fn) { this._cb.onpredraw = fn; }
-  get ondraw() { return this._cb.ondraw; }
-  set ondraw(fn) { this._cb.ondraw = fn; }
-  get onstart() { return this._cb.start; }
-  set onstart(fn) { this._cb.start = fn; }
-  get onend() { return this._cb.end; }
-  set onend(fn) { this._cb.end = fn; }
-  get oncomplete() { return this._cb.complete; }
-  set oncomplete(fn) { this._cb.complete = fn; }
+  /* Fanfare name */
+  get name() { throw new Error("Abstract function call"); }
 
-  /* Fire one of the callbacks defined above */
-  fire(name, ...args) {
-    if (this._cb.hasOwnProperty(name)) {
-      this._cb[name](...args);
+  /* Default emote */
+  get emote() { return null; }
+
+  /* Default image URL */
+  get imageUrl() { return null; }
+
+  /* Default to static images over animated images */
+  get animated() { return false; }
+
+  /* Width of a particle (used by num) */
+  get imageWidth() {
+    if (this._image) {
+      if (Util.IsArray(this._image) && this._image.length > 0) {
+        if (this._image[0].width) {
+          return this._image[0].width;
+        }
+      } else if (this._image.width) {
+        return this._image.width;
+      }
     }
+    return Number.NaN;
+  }
+
+  /* Height of a particle */
+  get imageHeight() {
+    if (this._image) {
+      if (Util.IsArray(this._image) && this._image.length > 0) {
+        if (this._image[0].height) {
+          return this._image[0].height;
+        }
+      } else if (this._image.height) {
+        return this._image.height;
+      }
+    }
+    return Number.NaN;
+  }
+
+  /* Number of particles to render */
+  get num() {
+    if (this.config("numparticles")) {
+      return this.config("numparticles");
+    } else if (this.imageWidth) {
+      return Math.floor(this._host.width / this.imageWidth);
+    } else {
+      return 10;
+    }
+  }
+
+  /* Load the image data as either an <img> or an array of <img>s */
+  _loadImage() {
+    return new Promise((function(resolve, reject) {
+      let url = "";
+      if (this.emote) {
+        url = this._host._client.GetEmote(this.emote);
+      } else if (this.imageUrl) {
+        url = this.imageUrl;
+      } else {
+        reject(new Error(`No image configured for effect ${this.name}`));
+        return;
+      }
+
+      if (this.animated) {
+        Util.SplitGIF(url)
+          .then((framedata) => {
+            let frames = framedata.map((f) => Util.ImageFromPNGData(f));
+            if (framedata.length > 0) {
+              let f0 = frames[0];
+              f0.onload = function() { resolve(frames); };
+              f0.onerror = function(err) { reject(err); };
+            } else {
+              resolve(frames);
+            }
+          })
+          .catch((err) => reject(err));
+      } else {
+        let img = this._host.image(url);
+        img.onload = function(ev) { resolve(img); };
+        img.onerror = function(err) { reject(err); };
+      }
+    }).bind(this));
+  }
+
+  /* Load the effect */
+  _load(resolve, reject) {
+    this._loadImage()
+      .then((img) => {
+        this._image = img;
+        this.initialize();
+        resolve(this);
+      })
+      .catch((err) => reject(err));
   }
 
   /* Load the effect; returns a promise */
   load() {
-    return new Promise((function(resolve, reject) {
-      let img = null;
-      /* Determine the image to use */
-      if (this.emote) {
-        /* Effect wants an emote used */
-        img = this._host.twitchEmote(this.emote);
-      } else if (this.imageUrl) {
-        /* Effect gave a URL */
-        img = this._host.image(this.imageUrl);
-      }
-
-      /* Resolve when ready */
-      img.onload = (function(ev) {
-        this._image = img;
-        this.fire("load", this);
-        this.initialize();
-        resolve(ev);
-      }).bind(this);
-
-      /* Reject on error */
-      img.onerror = (function(ev) {
-        Util.Error(ev);
-        reject(ev);
-      }).bind(this);
-    }).bind(this));
-  }
-
-  /* Initialize the effect */
-  start() {
-    this.initialize();
-    this.fire("start", this);
+    return new Promise(this._load.bind(this));
   }
 
   /* Handle particle movement */
   tick() {
-    this.fire("tick", this);
     let numAlive = 0;
     for (let p of this._particles) {
       p.tick();
@@ -81,20 +126,14 @@ class FanfareEffect { /* {{{0 */
         numAlive += 1;
       }
     }
-    if (numAlive === 0) {
-      this.fire("end", this);
-      this.fire("complete", this);
-    }
     return numAlive > 0;
   }
 
   /* Draw the particles to the given context */
   draw(context) {
-    this.fire("predraw", this);
     for (let p of this._particles) {
       p.draw(context);
     }
-    this.fire("draw", this);
   }
 } /* 0}}} */
 
@@ -107,16 +146,15 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
 
   get name() { return "FanfareCheerEffect"; }
 
-  get num() {
-    if (this.config("numparticles")) {
-      return this.config("numparticles");
-    } else if (this._image && this._image.width) {
-      return this._host.width / this._image.width;
-    } else {
-      return 10;
+  /* If configured, use animated GIFs */
+  get animated() {
+    if (this.config("static")) {
+      return false;
     }
+    return true;
   }
 
+  /* Default background */
   static get background() {
     if ($("body").hasClass("light")) {
       return "light";
@@ -125,11 +163,13 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
     }
   }
 
+  /* Default scale */
   static get scale() {
     return "2";
   }
 
-  static cheerToURL(cdef, bits, pbg=null, pscale=null) {
+  /* Get the URL for the given cheermote */
+  cheerToURL(cdef, bits, pbg=null, pscale=null) {
     let bg = pbg || FanfareCheerEffect.background;
     let scale = pscale || FanfareCheerEffect.scale;
     /* Determine background and scale */
@@ -151,7 +191,11 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
     }
     /* Return the derived URL */
     try {
-      return tier.images[bg].static[scale];
+      if (this.animated) {
+        return tier.images[bg].animated[scale];
+      } else {
+        return tier.images[bg].static[scale];
+      }
     }
     catch (e) {
       Util.ErrorOnly(e);
@@ -160,16 +204,14 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
     }
   }
 
-  get emote() {
-    /* null forces imageUrl to be called */
-    return null;
-  }
-
+  /* Determine the image URL to use */
   get imageUrl() {
     if (this.config("cheerurl")) {
       return this.config("cheerurl");
     } else if (this.config("imageurl")) {
       return this.config("imageurl");
+    } else if (!this._host._client.cheersLoaded) {
+      Util.Warn("Cheers are not yet loaded");
     } else {
       let cheermote = "Cheer";
       let [bg, scale] = [null, null];
@@ -183,27 +225,29 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
         scale = this.config("cheerscale");
       }
       let cdef = this._host._client.GetGlobalCheer(cheermote);
-      return FanfareCheerEffect.cheerToURL(cdef, this._bits, bg, scale);
+      return this.cheerToURL(cdef, this._bits, bg, scale);
     }
+    return "";
   }
 
   /* Called by base class */
   initialize() {
+    const pw = this.imageWidth || 30;
+    const ph = this.imageHeight || 30;
     for (let i = 0; i < this.num; ++i) {
       this._particles.push(new FanfareParticle({
         xmin: 0,
-        xmax: this._host.width - 40,
-        ymin: this._host.height - 100,
-        ymax: this._host.height - 30,
-        dxmin: 0,
-        dxmax: 1,
-        dymin: 0,
-        dymax: 1,
-        xforcemin: -0.1,
-        xforcemax: 0.1,
-        yforcemin: -0.5,
-        yforcemax: 0,
-        image: this._image
+        xmax: this._host.width - pw,
+        ymin: this._host.height - ph - 60,
+        ymax: this._host.height - ph,
+        dxrange: [0, 1],
+        dyrange: [0, 1],
+        xforcerange: [-0.1, 0.1],
+        yforcerange: [-0.5, 0],
+        image: this._image,
+        canvasWidth: this._host.width,
+        canvasHeight: this._host.height,
+        borderAction: "bounce"
       }));
     }
   }
@@ -219,21 +263,7 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
 
   get name() { return "FanfareSubEffect"; }
 
-  get num() {
-    if (this.config("numparticles")) {
-      return this.config("numparticles");
-    } else if (this._image && this._image.width) {
-      return this._host.width / this._image.width;
-    } else {
-      return 10;
-    }
-  }
-
-  get emote() {
-    /* null forces imageUrl to be called */
-    return null;
-  }
-
+  /* Determine the image URL to use */
   get imageUrl() {
     if (this.config("suburl")) {
       return this.config("suburl");
@@ -266,19 +296,22 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
 
   /* Called by base class */
   initialize() {
+    const pw = this.imageWidth || 30;
+    const ph = this.imageHeight || 30;
     for (let i = 0; i < this.num; ++i) {
       this._particles.push(new FanfareParticle({
         xmin: 0,
-        xmax: this._host.width - 40,
-        ymin: this._host.height - 100,
-        ymax: this._host.height - 30,
+        xmax: this._host.width - pw,
+        ymin: this._host.height - ph - 60,
+        ymax: this._host.height - ph,
         dxrange: [-5, 5],
         dyrange: [-4, 1],
-        xforcemin: -0.1,
-        xforcemax: 0.1,
-        yforcemin: -0.5,
-        yforcemax: 0,
-        image: this._image
+        xforcerange: [-0.1, 0.1],
+        yforcerange: [-0.5, 0],
+        image: this._image,
+        canvasWidth: this._host.width,
+        canvasHeight: this._host.height,
+        borderAction: "bounce"
       }));
     }
   }

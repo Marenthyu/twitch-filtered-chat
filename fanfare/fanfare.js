@@ -1,6 +1,6 @@
 /** Fanfare
  *
- * Commands:
+ * Commands: (both //fanfare and //ff refer to the same command)
  *   //ff           Displays //ff usage and whether or not fanfare is enabled
  *   //ff help      Displays //ff usage
  *   //ff on        Enables fanfare
@@ -10,70 +10,45 @@
  *   //ff subdemo   Demonstrates the sub effect (see //ff help for more)
  *
  * Configuration keys:
- *   fanfare        Query string key `&fanfare=<value>`
- *   Fanfare        Config object key
+ *   Query string key:  "fanfare": `&fanfare=<config>`
+ *   Config object key: "Fanfare": `{Fanfare: <config>}`
  *
- * The `&fanfare=<value>` value is either a number (non-zero for enable), a
- * boolean, or a JSON-encoded object with the following attributes:
- *   enable         boolean; whether or not fanfares are enabled
- *   suburl         URL to the image to use for sub fanfares; overrides all
- *                  other image settings
- *   cheerurl       URL to the image to use for cheer fanfares; overrides all
- *                  other image settings
+ * The <config> value is either a number (non-zero for enable), a boolean, or
+ * a JSON-encoded object with any of the following attributes:
+ *   enable         boolean; whether or not fanfares are enabled (false)
+ *   suburl         (sub) URL to the image to use for sub fanfares; overrides
+ *                  all other image settings
+ *   cheerurl       (cheer) URL to the image to use for cheer fanfares;
+ *                  overrides all other image settings
  *   imageurl       URL to the image to use for all fanfares; overrides all
  *                  other image settings other than "suburl" and "cheerurl"
- *   cheerbg        background: either "light" or "dark" (default: "dark")
- *   cheermote      image name (default: "Cheer")
- *   cheerscale     image scale (default: "1.0")
- *   subemote       emote to use for sub events
+ *   cheerbg        (cheer) background: either "light" or "dark" ("dark")
+ *   cheermote      (cheer) cheermote prefix ("Cheer")
+ *   cheerscale     (cheer) image scale: 1, 1.5, 2, etc. ("2")
+ *   subemote       (sub) emote to use for sub events
  *   emote          fallback emote if no other image is defined
- *   numparticles   number of particles (default: window.width / image.width)
+ *   numparticles   number of particles (window.width / image.width)
+ *   static         render static images only (false)
+ * Default values are given in parentheses.
+ * "(cheer)" denotes a FanfareCheerEffect-only attribute.
+ * "(sub)" denotes a FanfareSubEffect-only attribute.
  *
  * Example configuration items:
- *  The following all enable fanfares:
+ *  The following are all identical; they all enable fanfares:
  *   &fanfare=1
  *   &fanfare=true
  *   &fanfare=%7B%22enable%22%3Atrue%7D
  *
  *  The following enable fanfares and set specific emotes:
  *   &fanfare=%7B%22subemote%22%3A%22FrankerZ%22%7D
- *                  Use "FrankerZ" for all sub fanfares
- *   &fanfare=%7Bemote%22%3A%22FrankerZ%22%7D
- *                  Use "FrankerZ" for all fanfares
- *
- * For cheer fanfares, the URL to the image is derived via the following:
- *  1) If config["cheerurl"] is defined, use it. We're done.
- *  2) If config["imageurl"] is defined, use it. We're done.
- *  3) Otherwise, determine the cheermote to use via the following steps:
- *    a) If config["cheermote"] is given, use it. Otherwise, use "Cheer"
- *    b) If config["bg"] is given, use it. Otherwise use the first background
- *       defined in the cheer data (usually "dark")
- *    c) If config["cheerscale"] is given, use it. Otherwise, use the first
- *       scale defined in the cheer data (usually "1")
- *  4) Given the cheermote, background, and scale, determine the exact image to
- *     use based on the number of bits cheered.
- *
- * For sub fanfares, the URL to the image is derived via the following:
- *  1) If config["suburl"] is defined, use it. We're done.
- *  2) If config["imageurl"] is defined, use it. We're done.
- *  3) Otherwise, determine the emote to use via the following steps:
- *    a) If config["subemote"] is defined, use the URL to the emote given
- *    b) If the sub kind is "sub", use the emote "MrDestructoid"
- *    c) If the sub kind is "resub", use the emote "PraiseIt"
- *    d) If the sub kind is "subgift", use the emote "HolidayPresent"
- *    e) If the sub kind is "anonsubgift", use the emote "HolidayPresent"
- *    f) Otherwise, if config["emote"] is given, use it.
- *    g) Otherwise, use "HolidayPresent"
- *  4) Determine the size of the emote:
- *    a) If the sub is Tier 2, use "2.0" (80x60px)
- *    b) If the sub is Tier 3, use "3.0" (120x90px)
- *    c) Otherwise, use "1.0" (40x30px)
- *  5) Use the URL to the emote and size chosen
- */
-
-/* TODO:
- * Somehow handle animated images
- * Provide APIs to add effects from plugins
+ *   {Fanfare: {subemote: "FrankerZ"}}
+ *                  Use the emote "FrankerZ" for all sub fanfares
+ *   &fanfare=%7B%22emote%22%3A%22FrankerZ%22%7D
+ *   {Fanfare: {emote: "FrankerZ"}}
+ *                  Use the emote "FrankerZ" for all fanfares
+ *   &fanfare=%7B%22cheermote%22%3A%22Kappa%22%2C%22cheerscale%22%3A%221%22%7D
+ *   {Fanfare: {cheermote: "Kappa", cheerscale: "1"}}
+ *                  Use the "Kappa" cheeremote at 1x scale (normal chat size)
  */
 
 "use strict";
@@ -83,7 +58,6 @@ class Fanfare { /* exported Fanfare */
   static get DEFAULT_TPS() { return 30; }
 
   constructor(client, config) {
-    /* Grab configuration */
     this._client = client;
     this._config = config.Fanfare || {enable: false};
     this._on = this._config.enable;
@@ -122,6 +96,7 @@ class Fanfare { /* exported Fanfare */
     ChatCommands.addUsage("fanfare", "demo", "Demonstrate fanfare");
     ChatCommands.addUsage("fanfare", "cheerdemo", "Demonstrate cheer fanfare");
     ChatCommands.addUsage("fanfare", "subdemo", "Demonstrate sub fanfare");
+    ChatCommands.addUsage("fanfare", "config", "Manage fanfare configuration");
     ChatCommands.addAlias("ff", "fanfare");
 
     /* Bind to the relevant client events */
@@ -152,13 +127,12 @@ class Fanfare { /* exported Fanfare */
   /* Create an element with some default attributes */
   elem(type, classes, ...attrs) {
     let e = document.createElement(type);
-    let cls = `ff ${classes}`.trim();
     let setAttr = (k, v) => {
       if (k === "innerHTML") e.innerHTML = v;
       else if (k === "innerText") e.innerText = v;
       else e.setAttribute(k, v);
     };
-    setAttr("class", cls);
+    setAttr("class", `ff ${classes}`.trim());
     setAttr("data-from", "fanfare");
     for (let aobj of attrs) {
       if (Util.IsArray(aobj) && aobj.length === 2) {
@@ -193,46 +167,43 @@ class Fanfare { /* exported Fanfare */
   /* Start a new animation */
   addEffect(effect) {
     effect.load().then(() => {
-      Util.LogOnly("Loaded effect, starting...", effect);
+      Util.LogOnly(`Loaded effect ${effect.name}`);
       this._running.push(effect);
       this.startAnimation();
     }).catch((ev) => {
-      Util.Error("Failed to load effect", ev);
+      Util.Error(`Failed to load effect ${effect.name}`);
+      Content.addErrorText(`${ev}`);
+      Util.DebugOnly(ev);
     });
   }
 
   /* Begin animating */
   startAnimation() {
     if (this._timer === null) {
-      let fn = this._animate.bind(this);
-      let rate = 1000 / this._tick;
+      const fn = () => {
+        let stillRunning = [];
+        this.clearCanvas();
+        for (let effect of this._running) {
+          if (effect.tick()) {
+            effect.draw(this._context);
+            stillRunning.push(effect);
+          } else {
+            Util.LogOnly(`Completed effect ${effect.name}`);
+          }
+        }
+        this._running = stillRunning;
+        if (this._running.length === 0) {
+          this.stopAnimation();
+        }
+      };
+      const rate = 1000 / this._tick;
       this._timer = window.setInterval(fn, rate);
-      Util.LogOnly(`Fanfare: starting animations with id ${this._timer}`);
-    }
-  }
-
-  /* Animation function */
-  _animate() {
-    let stillRunning = [];
-    this.clearCanvas();
-    for (let effect of this._running) {
-      if (effect.tick()) {
-        requestAnimationFrame(() => {
-          effect.draw(this._context);
-        });
-        stillRunning.push(effect);
-      }
-    }
-    this._running = stillRunning;
-    if (this._running.length === 0) {
-      this.stopAnimation();
     }
   }
 
   /* Terminate animations */
   stopAnimation() {
     if (this._timer !== null) {
-      Util.LogOnly(`Fanfare: stopping antimations with id ${this._timer}`);
       window.clearInterval(this._timer);
       this._timer = null;
       this._running = [];
@@ -248,6 +219,7 @@ class Fanfare { /* exported Fanfare */
         Content.addHelpText(`Fanfare is ${self._on ? "en" : "dis"}abled`);
       }
       this.printUsage();
+      Content.addHelpText(`Modifications made via "//${cmd} config" are lost on reload`);
       Content.addHelpText("Add a number to cheerdemo to simulate that number of bits");
       Content.addHelpText("Available arguments for subdemo:");
       for (let kind of TwitchSubEvent.KINDS) {
@@ -257,8 +229,9 @@ class Fanfare { /* exported Fanfare */
         let name = TwitchSubEvent.PlanName(plan);
         Content.addHelpLine(plan, `Demonstrate a ${name} subscription`);
       }
-      Content.addHelpText(`Default kind: ${TwitchSubEvent.SUB}`);
-      Content.addHelpText(`Default plan: ${TwitchSubEvent.PLAN_TIER1}`);
+      Content.addHelpText(`Available "//${cmd} config" arguments:`);
+      Content.addHelpLine(`config set &lt;k&gt; &lt;v&gt;`, "Set configuration key &lt;k&gt; to value &lt;v&gt;");
+      Content.addHelpLine(`config unset &lt;k&gt;`, "Unset configuration key &lt;k&gt;");
     } else if (t0 === "on") {
       self._on = true;
       Content.addInfoText("Fanfare is now enabled");
@@ -293,6 +266,23 @@ class Fanfare { /* exported Fanfare */
         }
       }
       self._onSubEvent(self._client, {kind: kind, plan: plan}, true);
+    } else if (t0 === "config") {
+      Content.addHelpLine("config", JSON.stringify(self._config));
+      if (tokens.length > 2) {
+        let t1 = tokens[1];
+        let t2 = tokens[2];
+        let ts = tokens.slice(3).join(" ");
+        if (t1 === "set") {
+          self._config[t2] = ts;
+        } else if (t1 === "unset") {
+          delete self._config[t2];
+        } else {
+          Content.addErrorText(`Fanfare: unknown config argument ${t1}`);
+          Content.addHelpText(`Available arguments:`);
+          Content.addHelpLine(`config set &lt;k&gt; &lt;v&gt;`, "Set configuration key &lt;k&gt; to value &lt;v&gt;");
+          Content.addHelpLine(`config unset &lt;k&gt;`, "Unset configuration key &lt;k&gt;");
+        }
+      }
     } else {
       Content.addErrorText(`Fanfare: unknown argument ${t0}`);
       this.printUsage();
@@ -301,29 +291,17 @@ class Fanfare { /* exported Fanfare */
 
   /* Received a message from the client */
   _onChatEvent(client, event, override=false) {
-    Util.Debug("_onChatEvent", client, event, override);
     if (this._on || override) {
       if (event.bits > 0) {
-        let e = new FanfareCheerEffect(this, this._config, event);
-        e.load().then(() => {
-          this.addEffect(e);
-        }).catch((err) => {
-          Util.Error(`Failed to load effect ${e.name}:`, err, e);
-        });
+        this.addEffect(new FanfareCheerEffect(this, this._config, event));
       }
     }
   }
 
   /* Received a subscription event from the client */
   _onSubEvent(client, event, override=false) {
-    Util.Debug("_onSubEvent", client, event, override);
     if (this._on || override) {
-      let e = new FanfareSubEffect(this, this._config, event);
-      e.load().then(() => {
-        this.addEffect(e);
-      }).catch((err) => {
-        Util.Error(`Failed to load effect ${e.name}:`, err, e);
-      });
+      this.addEffect(new FanfareSubEffect(this, this._config, event));
     }
   }
 }

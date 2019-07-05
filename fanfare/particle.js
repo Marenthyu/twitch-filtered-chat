@@ -13,7 +13,7 @@
  *  yforce    Vertical deceleration (i.e. gravity/drag) factor
  *  force     Directionless force (i.e. drag) coefficient
  *  a         Opacity: decrements every tick and particles "die" at 0
- *  image     Image instance (via document.createElement("img"))
+ *  image     Image instance or array of image instances (for animated GIFs)
  *  width     Image width
  *  height    Image height
  *
@@ -35,6 +35,12 @@
  *   height             image height (or 0 if no image is set/loaded)
  *   left, top          x, y
  *   right, bottom      x + width, y + height
+ *   borderAction       behavior when hitting a screen border: "default",
+ *                      "bounce" (default: "default")
+ *
+ * Particles support animated images via passing an array to the "image"
+ * configuration key. See the cheer fanfare for an example of this (by simply
+ * returning true for the `animated` getter).
  *
  * Every "tick", "living" particles are animated according to the following:
  *  p.a -= 0.01
@@ -56,6 +62,8 @@
  */
 
 class FanfareParticle { /* exported FanfareParticle */
+  static get BORDER_ACTIONS() { return ["default", "bounce"]; }
+
   constructor(config) {
     this._config = config;
     this.x = 0;
@@ -67,7 +75,14 @@ class FanfareParticle { /* exported FanfareParticle */
     this.force = 0;
     this.a = 1;
     this.lifeTick = 0.01;
+    this.borderAction = "default";
+    this._xmin = 0;
+    this._xmax = 0;
+    this._ymin = 0;
+    this._ymax = 0;
     this._image = null;
+    this._frames = null;
+    this._framenr = 0;
     this._applyConfig(config);
   }
 
@@ -77,18 +92,38 @@ class FanfareParticle { /* exported FanfareParticle */
   get bottom() { return this.y + this.height; }
   get right() { return this.x + this.width; }
 
+  /* Position at next timestep */
+  get nextTop() { return this.top + this.dy; }
+  get nextLeft() { return this.left + this.dx; }
+  get nextBottom() { return this.bottom + this.dy; }
+  get nextRight() { return this.right + this.dx; }
+
   /* Size */
   get width() { return this._image ? this._image.width : 0; }
   get height() { return this._image ? this._image.height : 0; }
 
-  /* Get or set the particle image */
+  /* Get an image to draw: either a static image or the next frame */
   get image() {
-    return this._image;
+    let img = this._image;
+    if (this._frames && this._frames.length > 0) {
+      img = this._frames[this._framenr];
+      this._framenr += 1;
+      if (this._framenr >= this._frames.length) {
+        this._framenr = 0;
+      }
+    }
+    return img;
   }
+
+  /* Set the image to draw: a string (URL), Image instance, or array */
   set image(img) {
     if (typeof(img) === "string") {
-      this._image = document.createElement("img");
+      this._image = new Image();
       this._image.src = img;
+    } else if (Util.IsArray(img) && img.length > 0) {
+      this._image = img[0];
+      this._frames = img;
+      this._framenr = 0;
     } else {
       this._image = img;
     }
@@ -111,11 +146,11 @@ class FanfareParticle { /* exported FanfareParticle */
 
   /* Apply the configuration object (see large comment above) */
   _applyConfig(config) {
-    let opts = config || {};
-    let hasNum = (k) => (typeof(opts[k]) === "number");
-    let hasRange = (k) => (Util.IsArray(opts[k]) && opts[k].length === 2);
-    let randNum = (min, max) => Math.random() * (max - min) + min;
-    let getValue = (k, dflt) => {
+    const opts = config || {};
+    const hasNum = (k) => (typeof(opts[k]) === "number");
+    const hasRange = (k) => (Util.IsArray(opts[k]) && opts[k].length === 2);
+    const randNum = (min, max) => Math.random() * (max - min) + min;
+    const getValue = (k, dflt) => {
       if (hasNum(k)) {
         return opts[k];
       } else if (hasNum(`${k}min`) && hasNum(`${k}max`)) {
@@ -135,8 +170,21 @@ class FanfareParticle { /* exported FanfareParticle */
     this.yforce = getValue("yforce", 0);
     this.force = getValue("force", 0);
     this.lifeTick = getValue("lifeTick", 0.01);
-    if (config.image) {
-      this.image = config.image;
+    if (opts.image) {
+      this.image = opts.image;
+    }
+    if (opts.canvasWidth) {
+      this._xmin = 0;
+      this._xmax = opts.canvasWidth;
+    }
+    if (opts.canvasHeight) {
+      this._ymin = 0;
+      this._ymax = opts.canvasHeight;
+    }
+    if (opts.borderAction) {
+      if (FanfareParticle.BORDER_ACTIONS.indexOf(opts.borderAction) > -1) {
+        this.borderAction = opts.borderAction;
+      }
     }
   }
 
@@ -146,13 +194,31 @@ class FanfareParticle { /* exported FanfareParticle */
       this.a -= this.lifeTick;
       this.x += this.dx;
       this.y += this.dy;
-      if (this.xforce !== 0) this.dx += this.xforce;
-      if (this.yforce !== 0) this.dy += this.yforce;
+      this.dx += !Number.isNaN(this.xforce) ? this.xforce : 0;
+      this.dy += !Number.isNaN(this.yforce) ? this.yforce : 0;
       if (this.force !== 0) {
-        let scale = this.force * Math.hypot(this.x, this.y);
-        let angle = Math.atan2(this.y, this.x);
+        const scale = this.force * Math.hypot(this.x, this.y);
+        const angle = Math.atan2(this.y, this.x);
         this.dx = scale * Math.cos(angle);
         this.dy = scale * Math.sin(angle);
+      }
+      if (this.borderAction === "bounce") {
+        /* Handle bounce (if xmin !== xmax) */
+        if (this._xmin !== this._xmax) {
+          if (this.dx < 0 && this.nextLeft < this._xmin) {
+            this.dx *= -1;
+          } else if (this.dx > 0 && this.nextRight > this._xmax) {
+            this.dx *= -1;
+          }
+        }
+        /* Handle bounce (if ymin !== ymax) */
+        if (this._ymin !== this._ymax) {
+          if (this.dy < 0 && this.nextTop < this._ymin) {
+            this.dy *= -1;
+          } else if (this.dy > 0 && this.nextBottom > this._ymax) {
+            this.dy *= -1;
+          }
+        }
       }
     }
   }

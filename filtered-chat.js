@@ -4,7 +4,8 @@
 
 /* FIXME:
  * Username context window should slide rather than teleport to new names
- * Chat line backgrounds flicker unpredictably between messages
+ * Chat line backgrounds flicker between messages
+ *   Caused by non-chat messagesclearing excess chat messages
  * Browser autofills prevent disabling authentication
  */
 
@@ -1407,21 +1408,21 @@ function doLoadClient() { /* exported doLoadClient */
   }
 
   /* Add documentation for the moderator chat commands */
-  ChatCommands.addHelp("Moderator commands:", {literal: true});
-  ChatCommands.addHelp("!tfc reload: Reload the page",
-                       {literal: true, command: true});
-  ChatCommands.addHelp("!tfc force-reload: Reload the page, discarding cache",
-                       {literal: true, command: true});
-  ChatCommands.addHelp("!tfc nuke: Completely clear the chat",
-                       {literal: true, command: true});
-  ChatCommands.addHelp("!tfc nuke <user>: Clear messages sent by <user>",
-                       {args: true, command: true});
-  ChatCommands.addHelp("!tfc ffdemo: Demonstrate fanfares",
-                       {literal: true, command: true});
-  ChatCommands.addHelp("!tfc ffcheerdemo: Demonstrate default cheer fanfare",
-                       {literal: true, command: true});
-  ChatCommands.addHelp("!tfc ffsubdemo: Demonstrate default sub fanfare",
-                       {literal: true, command: true});
+  ChatCommands.addHelpText("Moderator commands:", {literal: true});
+  ChatCommands.addHelpText("!tfc reload: Reload the page",
+                           {literal: true, command: true});
+  ChatCommands.addHelpText("!tfc force-reload: Reload the page, discarding cache",
+                           {literal: true, command: true});
+  ChatCommands.addHelpText("!tfc nuke: Completely clear the chat",
+                           {literal: true, command: true});
+  ChatCommands.addHelpText("!tfc nuke <user>: Clear messages sent by <user>",
+                           {args: true, command: true});
+  ChatCommands.addHelpText("!tfc ffdemo: Demonstrate fanfares",
+                           {literal: true, command: true});
+  ChatCommands.addHelpText("!tfc ffcheerdemo: Demonstrate default cheer fanfare",
+                           {literal: true, command: true});
+  ChatCommands.addHelpText("!tfc ffsubdemo: Demonstrate default sub fanfare",
+                           {literal: true, command: true});
 
   /* Close the main settings window */
   function closeSettings() {
@@ -1511,9 +1512,14 @@ function doLoadClient() { /* exported doLoadClient */
   }, "Open the configuration builder wizard");
 
   /* Pressing a key on the chat box */
-  $("#txtChat").keydown(function(e) {
+  $("#txtChat").keydown(function _txtChat_keydown(e) {
     let t = event.target;
-    if (e.key === "Enter") {
+    let $t = $(t);
+    if (e.shiftKey) {
+      /* Holding shift bypasses the handling below */
+      resetChatComplete();
+      resetChatHistory();
+    } else if (e.key === "Enter") {
       if (t.value.trim().length > 0) {
         if (ChatCommands.isCommandStr(t.value)) {
           ChatCommands.execute(t.value, client);
@@ -1528,11 +1534,13 @@ function doLoadClient() { /* exported doLoadClient */
       /* Prevent bubbling */
       e.preventDefault();
       return false;
+    } else if (e.key === "Process" && e.code === "Tab") {
+      /* Not sure why this gets fired, but ignore it */
     } else if (e.key === "Tab") {
-      /* TODO: Complete command arguments and @user names */
-      let orig_text = t.getAttribute("data-complete-text") || t.value;
-      let orig_pos = Number.parseInt(t.getAttribute("data-complete-pos"));
-      let compl_index = Number.parseInt(t.getAttribute("data-complete-index"));
+      /* TODO: Complete command arguments */
+      let orig_text = $t.attr("data-complete-text") || t.value;
+      let orig_pos = Util.ParseNumber($t.attr("data-complete-pos"));
+      let compl_index = Util.ParseNumber($t.attr("data-complete-index"));
       if (Number.isNaN(orig_pos) || orig_pos === -1) {
         orig_pos = t.selectionStart;
       }
@@ -1547,9 +1555,9 @@ function doLoadClient() { /* exported doLoadClient */
         index: compl_index
       };
       compl_obj = ChatCommands.complete(client, compl_obj);
-      t.setAttribute("data-complete-text", compl_obj.orig_text);
-      t.setAttribute("data-complete-pos", compl_obj.orig_pos);
-      t.setAttribute("data-complete-index", compl_obj.index);
+      $t.attr("data-complete-text", compl_obj.orig_text);
+      $t.attr("data-complete-pos", compl_obj.orig_pos);
+      $t.attr("data-complete-index", compl_obj.index);
       t.value = compl_obj.curr_text;
       requestAnimationFrame(() => {
         t.selectionStart = compl_obj.curr_pos;
@@ -1560,7 +1568,7 @@ function doLoadClient() { /* exported doLoadClient */
       return false;
     } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       /* Handle traversing message history */
-      let i = Number.parseInt($(this).attr("data-hist-index"));
+      let i = Util.ParseNumber($t.attr("data-hist-index"));
       let d = (e.key === "ArrowUp" ? 1 : -1);
       /* Restrict i to [-1, length-1] */
       i = Math.clamp(i + d, -1, client.GetHistoryLength() - 1);
@@ -1568,7 +1576,7 @@ function doLoadClient() { /* exported doLoadClient */
       if (val !== null) {
         t.value = val.trim();
       }
-      t.setAttribute("data-hist-index", `${i}`);
+      $t.attr("data-hist-index", `${i}`);
       /* Delay moving the cursor until after the text is updated */
       requestAnimationFrame(() => {
         t.selectionStart = t.value.length;
@@ -1920,14 +1928,6 @@ function doLoadClient() { /* exported doLoadClient */
         Content.addPreText(JSON.stringify(e));
       }
     }
-    /* Avoid flooding the DOM with stale chat messages */
-    let max = getConfigValue("MaxMessages");
-    /* FIXME: Causes flickering for some reason */
-    for (let c of $(".content")) {
-      while ($(c).find(".line-wrapper").length > max) {
-        $(c).find(".line-wrapper").first().remove();
-      }
-    }
   });
 
   /* Received streamer info */
@@ -2002,7 +2002,6 @@ function doLoadClient() { /* exported doLoadClient */
       let H = client.get("HTMLGen");
       if (!shouldFilter($(this), e)) {
         let $c = $(this).find(".content");
-        let $w = $(`<div class="line line-wrapper"></div>`);
         let $e = H.gen(e);
         let $clip = $e.find(".message[data-clip]");
         if ($clip.length > 0) {
@@ -2015,10 +2014,16 @@ function doLoadClient() { /* exported doLoadClient */
                 });
             });
         }
-        $w.append($e);
-        Content.addHTML($w, $c);
+        Content.addHTML($e, $c);
       }
     });
+    /* Avoid flooding the DOM with stale chat messages */
+    let max = getConfigValue("MaxMessages");
+    for (let c of $(".content")) {
+      while ($(c).find(".line-wrapper").length > max) {
+        $(c).find(".line-wrapper").first().remove();
+      }
+    }
   });
 
   /* Received CLEARCHAT event */
@@ -2126,10 +2131,8 @@ function doLoadClient() { /* exported doLoadClient */
     /* TODO: unraid, bitsbadgetier */
   });
 
-  /* Received a reconnect request from Twitch */
-  client.bind("twitch-reconnect", function _on_twitch_reconnect(e) {
-    /* Client will reconnect automatically */
-  });
+  /* Received a reconnect request from Twitch (handled automatically) */
+  client.bind("twitch-reconnect", function _on_twitch_reconnect(e) {});
 
   /* Bind to the rest of the events */
   client.bind("twitch-join", function _on_twitch_join(e) {});
