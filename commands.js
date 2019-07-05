@@ -1004,6 +1004,19 @@ function onCommandHighlight(cmd, tokens, client) {
   }
 }
 
+/* //auth: authentication help */
+function onCommandAuth(cmd, tokens, client) {
+  let $url = $(`<a href="https://twitchapps.com/tmi/" target="_blank"></a>`);
+  $url.text($url.attr("href"));
+  if (client.IsAuthed()) {
+    Content.addHelpText(`You are authenticated as ${client.GetName()}`);
+  } else {
+    Content.addHelpText("Click the following link to generate an OAuth token:");
+    Content.addHelp($url);
+    Content.addHelpText("Then enter your Twitch username and that OAuth token in the settings panel. You can open the settings panel by clicking the gear icon in the upper-right corner of the page.");
+  }
+}
+
 function InitChatCommands() { /* exported InitChatCommands */
   /* Default command definition
    * Structure:
@@ -1142,6 +1155,10 @@ function InitChatCommands() { /* exported InitChatCommands */
         "Regexes may contain flag characters: /foo/i will match \"foo\", \"Foo\", \"FOO\", etc.",
         "By default, patterns are case-sensitive; highlighting \"foo\" will not highlight \"Foo\""
       ]
+    },
+    "auth": {
+      func: onCommandAuth,
+      desc: "Display help on authenticating with Twitch Filtered Chat"
     }
   };
 
