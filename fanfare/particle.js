@@ -33,8 +33,8 @@
  *   image              DOM Image object
  *   width              image width (or 0 if no image is set/loaded)
  *   height             image height (or 0 if no image is set/loaded)
- *   left, top          x, y
- *   right, bottom      x + width, y + height
+ *   left, top          particle's x, y
+ *   right, bottom      particle's x + width, y + height
  *   borderAction       behavior when hitting a screen border: "default",
  *                      "bounce" (default: "default")
  *
@@ -147,8 +147,8 @@ class FanfareParticle { /* exported FanfareParticle */
   /* Apply the configuration object (see large comment above) */
   _applyConfig(config) {
     const opts = config || {};
-    const hasNum = (k) => (typeof(opts[k]) === "number");
-    const hasRange = (k) => (Util.IsArray(opts[k]) && opts[k].length === 2);
+    const hasNum = (k) => typeof(opts[k]) === "number";
+    const hasRange = (k) => Util.IsArray(opts[k]) && opts[k].length === 2;
     const randNum = (min, max) => Math.random() * (max - min) + min;
     const getValue = (k, dflt) => {
       if (hasNum(k)) {
@@ -224,3 +224,4 @@ class FanfareParticle { /* exported FanfareParticle */
   }
 }
 
+/* vim: set ts=2 sts=2 sw=2 et: */
