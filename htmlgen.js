@@ -477,7 +477,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
         ffz_emote_arr.push([v, k]);
       }
       let results = Twitch.ScanEmotes(event.message, ffz_emote_arr);
-      results.sort((a, b) => (a.start - b.start));
+      results.sort((a, b) => a.start - b.start);
       while (results.length > 0) {
         let emote = results.pop();
         let edef = emote.id;
@@ -515,7 +515,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       emote_arr.push([k, RegExp.escape(k)]);
     }
     let results = Twitch.ScanEmotes(event.message, emote_arr);
-    results.sort((a, b) => (a.start - b.start));
+    results.sort((a, b) => a.start - b.start);
     while (results.length > 0) {
       let emote = results.pop();
       let edef = emotes[emote.id];
@@ -540,7 +540,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       locations.push({part: arr[1], start: start, end: end});
     }
     /* Ensure the locations array is indeed sorted */
-    locations.sort((a, b) => (a.start - b.start));
+    locations.sort((a, b) => a.start - b.start);
     while (locations.length > 0) {
       let location = locations.pop();
       let node = $(`<em class="at-user"></em>`).text(location.part);
@@ -575,7 +575,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
         locations.push({part: part, start: start, end: end});
       }
       /* Ensure the locations array is indeed sorted */
-      locations.sort((a, b) => (a.start - b.start));
+      locations.sort((a, b) => a.start - b.start);
       while (locations.length > 0) {
         let location = locations.pop();
         let node = $(`<em class="highlight"></em>`).text(location.part);
@@ -601,7 +601,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       locations.push({whole: arr[0], part: arr[1], start: start, end: end});
     }
     /* Ensure the locations array is indeed sorted */
-    locations.sort((a, b) => (a.start - b.start));
+    locations.sort((a, b) => a.start - b.start);
     while (locations.length > 0) {
       let location = locations.pop();
       let url = null;
