@@ -12,8 +12,13 @@ class FanfareEffect { /* {{{0 */
     this._cb = {};
   }
 
+  /* Configuration getter */
   config(k) { return this._config[k]; }
+
+  /* Total particle count */
   get count() { return this._particles.length; }
+
+  /* Total number of alive particles */
   get alive() { return this._particles.filter((p) => p.alive).length; }
 
   /* Fanfare name */
@@ -144,6 +149,7 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
     this._bits = event.bits || 1;
   }
 
+  /* Fanfare name */
   get name() { return "FanfareCheerEffect"; }
 
   /* If configured, use animated GIFs */
@@ -261,6 +267,7 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
     this._tier = event.plan || TwitchSubEvent.PLAN_TIER1;
   }
 
+  /* Fanfare name */
   get name() { return "FanfareSubEffect"; }
 
   /* Determine the image URL to use */

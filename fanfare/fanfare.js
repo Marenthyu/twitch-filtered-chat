@@ -54,6 +54,8 @@
 "use strict";
 
 class Fanfare { /* exported Fanfare */
+
+  /* Defaults */
   static get DEFAULT_NUM_PARTICLES() { return 25; }
   static get DEFAULT_TPS() { return 30; }
 
@@ -107,8 +109,11 @@ class Fanfare { /* exported Fanfare */
     client.bind("twitch-anongiftsub", this._onSubEvent.bind(this, client));
   }
 
+  /* Enable switch */
   get enable() { return this._on; }
   set enable(e) { this._on = e; }
+
+  /* Animation speed */
   get tps() { return this._tick; }
   set tps(tps) { this._tick = tps; }
   set tickTime(rate) { this._tick = rate * 1000; }
