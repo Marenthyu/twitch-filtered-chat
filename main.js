@@ -23,13 +23,17 @@ const PATH_TWAPI = BASE_URI + "/" + MOD_TWAPI + (USE_DIST ? "/dist" : "");
 /* Asset storage object */
 var ASSETS = {};
 
-/* Log things to the console, usable even if the console is disabled */
+/* Log things to the console; usable even if the console is disabled */
 function _console(func, ...args) {
-  if (console && console[func]) {
-    return console[func](...args);
+  try {
+    console[func](...args);
+  }
+  catch (e) {
+    /* Do nothing */
   }
 }
 
+/* Console wrappers */
 function _console_error(...args) { return _console("error", ...args); }
 function _console_warn(...args) { return _console("warn", ...args); }
 function _console_log(...args) { return _console("log", ...args); }
