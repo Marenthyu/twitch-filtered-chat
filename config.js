@@ -72,7 +72,7 @@ const Strings = { /* exported Strings */
   PASS_CACHED: "Cached",
 
   StreamOnline: (ch) => `${ch} is streaming`,
-  StreamInfo: (url, name, game, viewers) => `${name} is streaming <a href="${url}">${game}</a> for ${viewers} viewer${viewers === 1 ? "" : "s"}`,
+  StreamInfo: (name, game, viewers) => `${name} is streaming <a href="https://www.twitch.tv/${name}">${game}</a> for ${viewers} viewer${viewers === 1 ? "" : "s"}`,
   StreamOffline: (ch) => `${ch} is not currently streaming`,
 
   Sub: (plan) => `just subscribed with a ${plan} subscription!`,

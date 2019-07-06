@@ -60,11 +60,13 @@ function onChange(elem, func) {
 /* Document writing functions {{{0 */
 
 class Content { /* exported Content */
-  static add(text) { /* escapes */
+  /* Add text: escapes */
+  static add(text) {
     Content.addHTML($(`<span class="message"></span>`).text(text));
   }
 
-  static addHTML(content, container=null) { /* does not escape */
+  /* Add HTML: does not escape */
+  static addHTML(content, container=null) {
     let $container = container ? $(container) : $(".module .content");
     let $line = $(`<div class="line line-wrapper"></div>`);
     if (typeof(content) === "string") {
@@ -80,59 +82,70 @@ class Content { /* exported Content */
     }
   }
 
-  static addPre(content) { /* does not escape */
+  /* Add "pre" content: does not escape */
+  static addPre(content) {
     Content.addHTML($(`<div class="pre"></div>`).html(content));
   }
 
-  static addPreText(content) { /* escapes */
+  /* Add "pre" text: escapes */
+  static addPreText(content) {
     Content.addHTML($(`<div class="pre"></div>`).text(content));
   }
 
-  static addInfo(content, pre=false) { /* does not escape */
+  /* Add info content: does not escape */
+  static addInfo(content, pre=false) {
     let e = $(`<div class="info"></div>`).html(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
-  static addInfoText(content, pre=false) { /* escapes */
+  /* Add info text: escapes */
+  static addInfoText(content, pre=false) {
     let e = $(`<div class="info"></div>`).text(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
-  static addNotice(content, pre=false) { /* does not escape */
+  /* Add notice (warning) content: does not escape */
+  static addNotice(content, pre=false) {
     let e = $(`<div class="notice"></div>`).html(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
-  static addNoticeText(content, pre=false) { /* escapes */
+  /* Add notice (warning) text: escapes */
+  static addNoticeText(content, pre=false) {
     let e = $(`<div class="notice"></div>`).text(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
-  static addError(content, pre=false) { /* does not escape */
+  /* Add error content: does not escape */
+  static addError(content, pre=false) {
     let e = $(`<div class="error"></div>`).html(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
-  static addErrorText(content, pre=false) { /* escapes */
+  /* Add error text: escapes */
+  static addErrorText(content, pre=false) {
     let e = $(`<div class="error"></div>`).text(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
-  static addHelp(s) { /* does not escape */
+  /* Add help content: does not escape */
+  static addHelp(s) {
     Content.addPre($(`<div class="help"></div>`).html(s));
   }
 
-  static addHelpText(s) { /* escapes */
+  /* Add help text: escapes */
+  static addHelpText(s) {
     Content.addPre($(`<div class="help"></div>`).text(s));
   }
 
-  static addHelpLine(c, s) { /* does not escape */
+  /* Add help line pair: does not escape */
+  static addHelpLine(c, s) {
     Content.addHelp(ChatCommands.helpLine(c, s));
   }
 }
@@ -1938,11 +1951,14 @@ function doLoadClient() { /* exported doLoadClient */
     if (layout && !layout.Slim) {
       if (cinfo.online) {
         try {
-          let url = cinfo.stream.channel.url;
+          /* Helix changes:
+           * name = cinfo.stream.user_name
+           * game = cinfo.stream.game_id (translate to game name)
+           * viewers = cinfo.stream.viewer_count */
           let name = cinfo.stream.channel.display_name;
           let game = cinfo.stream.game;
           let viewers = cinfo.stream.viewers;
-          Content.addNotice(Strings.StreamInfo(url, name, game, viewers));
+          Content.addNotice(Strings.StreamInfo(name, game, viewers));
           if (cinfo.stream.channel.status) {
             Content.addNoticeText(cinfo.stream.channel.status);
           }
