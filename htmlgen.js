@@ -38,18 +38,22 @@ class HTMLGenerator { /* exported HTMLGenerator */
     if (!this._config.ShowClips) this._config.ShowClips = false;
   }
 
+  /* Set the configuration key to the value given */
   setValue(k, v) {
     this._config[k] = v;
   }
 
+  /* Return configuration for the given key */
   getValue(k) {
     return this._config[k];
   }
 
+  /* Return whether or not mod antics are enabled */
   get enableAntics() {
     return this.getValue("EnableForce") && $("#cbForce").is(":checked");
   }
 
+  /* Enable or disable mod antics */
   set enableAntics(val) {
     if (val) {
       this.setValue("EnableForce", true);
@@ -60,18 +64,22 @@ class HTMLGenerator { /* exported HTMLGenerator */
     }
   }
 
+  /* Add one highlight match pattern */
   addHighlightMatch(pat) {
     this._highlights.push(pat);
   }
 
+  /* Obtain highlight match patterns */
   get highlightMatches() {
     return this._highlights;
   }
 
+  /* Overwrite highlight match patterns */
   set highlightMatches(v) {
     this._highlights = v;
   }
 
+  /* Calculate (and cache) a color for the given username */
   getColorFor(username) {
     let name = `${username}`;
     if (typeof(username) !== "string") {
@@ -121,8 +129,8 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return this._emote("twitch", this._client.GetEmote(id), opts);
   }
 
+  /* Ensure the wrapper message does not contain "undefined" */
   _checkUndefined(ev, $w) {
-    /* Verify the message doesn't contain "undefined" */
     if ($w[0].outerHTML.indexOf("undefined") > -1) {
       Util.Error("msg contains undefined");
       Util.ErrorOnly(ev, $w, $w[0].outerHTML);
@@ -365,6 +373,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return this.genName(user, color);
   }
 
+  /* Adjust the replacement map between [start,end] by len */
   _remap(map, start, end, len) {
     /* IDEA BEHIND MAP ADJUSTMENT:
      * 1) Maintain two parallel strings, `msg0` (original) and `msg` (final).
@@ -390,6 +399,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     }
   }
 
+  /* Format cheermotes */
   _msgCheersTransform(event, message, map, $msg, $effects) {
     let result = message;
     if (event.flags.bits && event.flags.bits > 0) {
@@ -441,6 +451,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return result;
   }
 
+  /* Format Twitch emotes */
   _msgEmotesTransform(event, message, map, $msg, $effects) {
     let result = message;
     if (event.flags.emotes) {
@@ -468,6 +479,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return result;
   }
 
+  /* Format FFZ emotes */
   _msgFFZEmotesTransform(event, message, map, $msg, $effects) {
     let result = message;
     let ffz_emotes = this._client.GetFFZEmotes(event.channel);
@@ -498,6 +510,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return result;
   }
 
+  /* Format BTTV emotes */
   _msgBTTVEmotesTransform(event, message, map, $msg, $effects) {
     let result = message;
     let all_emotes = this._client.GetGlobalBTTVEmotes();
@@ -529,6 +542,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return result;
   }
 
+  /* Format @user highlights */
   _msgAtUserTransform(event, message, map, $msg, $effects) {
     let result = message;
     let pat = /(?:^|\b\s*)(@\w+)(?:\s*\b|$)/g;
@@ -557,6 +571,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return result;
   }
 
+  /* Format other highlight matches */
   _msgHighlightTransform(event, message, map, $msg, $effects) {
     let result = message;
     for (let pat of this._highlights) {
@@ -590,6 +605,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return result;
   }
 
+  /* Format URLs */
   _msgURLTransform(event, message, map, $msg, $effects) {
     let result = message;
     let locations = [];
@@ -747,14 +763,12 @@ class HTMLGenerator { /* exported HTMLGenerator */
         message = ts;
       } else if (event.flags.force_kind === "forceeval") {
         /* forceeval: evaluate ts as a function */
-        let code = `return ${ts}`;
         try {
-          let func = new Function(code);
-          message = JSON.stringify(func.bind(this)());
+          message = JSON.stringify(eval(ts));
         }
         catch (e) {
-          message = `Can't let you do that, ${event.user}: ${e} (running ${code})`.escape();
-          Util.Error(e);
+          message = `Can't let you do that, ${event.user}: ${e}`.escape();
+          Util.ErrorOnly(e);
         }
       } else if (event.flags.force_kind === "forcejs") {
         /* forcejs: use raw message wrapped in script tags */
@@ -767,6 +781,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return {e: $msg, effects: $effects};
   }
 
+  /* Add common attributes to the line wrapper element */
   _addChatAttrs($e, event) {
     $e.attr("data-id", event.flags.id);
     $e.attr("data-user", event.user);
