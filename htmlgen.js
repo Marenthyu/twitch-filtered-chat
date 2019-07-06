@@ -625,34 +625,6 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return result;
   }
 
-  /* Returns whether or not the event contains mod antics */
-  hasAntics(event) {
-    let hasForce = false;
-    if (this.enableAntics && event.ismod && event.message.length > 0) {
-      let t0 = event.message.split(" ")[0];
-      switch (t0.replace(/-/g, "")) {
-        case "force":
-        case "!tfcforce":
-        case "forceeval":
-        case "!tfceval":
-        case "!tfcforceeval":
-        case "forcejs":
-        case "!tfcjs":
-        case "!tfcforcejs":
-        case "forcejsonly":
-        case "!tfcjsonly":
-        case "!tfcforcejsonly":
-        case "forcebits":
-        case "forcecheer":
-          hasForce = true;
-          break;
-        default:
-          hasForce = false;
-      }
-    }
-    return hasForce;
-  }
-
   /* Returns msginfo object */
   _genMsgInfo(event) {
     let $msg = $(`<span class="message" data-message="1"></span>`);
@@ -686,12 +658,21 @@ class HTMLGenerator { /* exported HTMLGenerator */
           event.flags.force = true;
           event.flags.force_kind = "forcejs";
           break;
+        case "forceevalonly":
+        case "!tfcevalonly":
+        case "!tfcforceevalonly":
+          /* Message is a JavaScript expression, for the matched tag(s) */
+          event.flags.force = true;
+          event.flags.force_kind = "forceeval";
+          event.flags.force_only = true;
+          break;
         case "forcejsonly":
         case "!tfcjsonly":
         case "!tfcforcejsonly":
-          /* As above, for the matched tag(s) */
+          /* Message is a JavaScript function call, for the matched tag(s) */
           event.flags.force = true;
-          event.flags.force_kind = "forcejsonly";
+          event.flags.force_kind = "forcejs";
+          event.flags.force_only = true;
           break;
         case "forcebits":
         case "forcecheer":
@@ -701,6 +682,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
           break;
         default:
           event.flags.force = false;
+          break;
       }
       if (event.flags.force_kind === "bits") {
         let wordlen = t0.length;
@@ -744,33 +726,39 @@ class HTMLGenerator { /* exported HTMLGenerator */
     if (event.ismod && this.enableAntics && event.flags.force) {
       /* NOTE: These will run twice for layout=double */
       let ts = event.message.split(" ").slice(1).join(" ");
-      if (event.flags.force_kind === "force") {
+      let tagMatch = true;
+      if (event.flags.force_only === true && ts.length > 0) {
+        tagMatch = false;
+        let tag = this.getValue("tag") || "";
+        let toks = ts.split(" ");
+        let t1 = toks[0];
+        ts = toks.slice(1).join(" ");
+        if (t1 === tag) tagMatch = true;
+        if (t1.startsWith("?")) {
+          if (tag.indexOf(t1.substr(1)) > -1) {
+            tagMatch = true;
+          }
+        }
+      }
+      if (!tagMatch) {
+        /* Tag doesn't match; do nothing */
+      } else if (event.flags.force_kind === "force") {
         /* force: use raw message with no formatting */
         message = ts;
       } else if (event.flags.force_kind === "forceeval") {
-        /* force-eval: evaluate ts as a function */
+        /* forceeval: evaluate ts as a function */
+        let code = `return ${ts}`;
         try {
-          let func = new Function(`return ${ts}`);
+          let func = new Function(code);
           message = JSON.stringify(func.bind(this)());
         }
         catch (e) {
-          message = `Can't let you do that, ${event.user}: ${e}`.escape();
+          message = `Can't let you do that, ${event.user}: ${e} (running ${code})`.escape();
+          Util.Error(e);
         }
       } else if (event.flags.force_kind === "forcejs") {
         /* forcejs: use raw message wrapped in script tags */
         message = `<script>${ts}</script>`;
-      } else if (event.flags.force_kind === "forcejsonly" && ts.length > 0) {
-        /* forcejs-only: forcejs, limited to a ?tag value:
-         *  <tag>: execute if ?tag value === <tag>
-         *  ?<tag>: execute if ?tag value contains <tag> */
-        let t1 = ts.split(" ")[0];
-        let tag = this.getValue("tag") || "";
-        let matches = false;
-        if (t1 === tag) matches = true;
-        if (t1.startsWith("?") && tag.indexOf(t1.substr(1)) > -1) matches = true;
-        if (matches) {
-          message = `<script>${ts.split(" ").slice(1).join(" ")}</script>`;
-        }
       }
     }
 
