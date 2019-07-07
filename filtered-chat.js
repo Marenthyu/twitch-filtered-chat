@@ -1001,29 +1001,29 @@ function doLoadClient() { /* exported doLoadClient */
   let config = {};
 
   /* Hook Logger messages to display in chat */
-  Util.Logger.add_hook(function(sev, with_stack, ...args) {
+  Util.Logger.addHook(function(sev, with_stack, ...args) {
     if (Util.DebugLevel >= Util.LEVEL_DEBUG) {
       let msg = Util.Logger.stringify(...args);
       Content.addErrorText("ERROR: " + msg);
     }
   }, "ERROR");
-  Util.Logger.add_hook(function(sev, with_stack, ...args) {
-    let msg = Util.Logger.stringify(...args);
+  Util.Logger.addHook(function(sev, with_stack, ...args) {
     if (args.length === 1 && args[0] instanceof TwitchEvent) {
       if (Util.DebugLevel >= Util.LEVEL_TRACE) {
         Content.addNoticeText("WARNING: " + JSON.stringify(args[0]));
       }
     } else if (Util.DebugLevel >= Util.LEVEL_DEBUG) {
+      let msg = Util.Logger.stringify(...args);
       Content.addNoticeText("WARNING: " + msg);
     }
   }, "WARN");
-  Util.Logger.add_hook(function(sev, with_stack, ...args) {
+  Util.Logger.addHook(function(sev, with_stack, ...args) {
     if (Util.DebugLevel >= Util.LEVEL_TRACE) {
       let msg = Util.Logger.stringify(...args);
       Content.add("DEBUG: " + msg);
     }
   }, "DEBUG");
-  Util.Logger.add_hook(function(sev, with_stack, ...args) {
+  Util.Logger.addHook(function(sev, with_stack, ...args) {
     if (Util.DebugLevel >= Util.LEVEL_TRACE) {
       let msg = Util.Logger.stringify(...args);
       Content.add("TRACE: " + msg);
@@ -1032,11 +1032,10 @@ function doLoadClient() { /* exported doLoadClient */
 
   if (Util.DebugLevel < Util.LEVEL_TRACE) {
     /* Filter out PING/PONG messages */
-    Util.Logger.add_filter(/ws recv> "PING :tmi.twitch.tv"/);
-    Util.Logger.add_filter(/ws send> "PONG :tmi.twitch.tv"/);
+    Util.Logger.addFilter(/ws (send|recv)>.+(PING|PONG) :tmi.twitch.tv/);
 
     /* Filter out users joining/parting channels */
-    Util.Logger.add_filter(/tmi.twitch.tv (JOIN|PART) #/);
+    Util.Logger.addFilter(/tmi.twitch.tv (JOIN|PART) #/);
   }
 
   /* Clear txtName and txtPass (to fix problems with browser autofills) */
