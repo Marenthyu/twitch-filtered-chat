@@ -744,7 +744,7 @@ function onCommandEmotes(cmd, tokens, client) {
   }
   if (tokens.indexOf("channel") > -1 || tokens.indexOf("all") > -1) {
     for (let [eset, emotes] of Object.entries(s_emotes)) {
-      if (eset !== 0) {
+      if (`${eset}` !== "0") {
         to_display.push(`Set ${eset}: ${emotes.join("")}`);
       }
     }
@@ -796,6 +796,7 @@ function onCommandEmotes(cmd, tokens, client) {
   if (to_display.length === 0) {
     this.printHelp();
     this.printUsage();
+    Content.addHelpText(`There are ${s_emotes.length} available emote sets`);
   } else {
     for (let msg of to_display) {
       Content.addNotice(msg);
