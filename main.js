@@ -23,23 +23,6 @@ const PATH_TWAPI = BASE_URI + "/" + MOD_TWAPI + (USE_DIST ? "/dist" : "");
 /* Asset storage object */
 var ASSETS = {};
 
-/* Log things to the console; usable even if the console is disabled */
-function _console(func, ...args) {
-  try {
-    console[func](...args);
-  }
-  catch (e) {
-    /* Do nothing */
-  }
-}
-
-/* Console wrappers */
-function _console_error(...args) { return _console("error", ...args); }
-function _console_warn(...args) { return _console("warn", ...args); }
-function _console_log(...args) { return _console("log", ...args); }
-function _console_info(...args) { return _console("info", ...args); }
-function _console_debug(...args) { return _console("debug", ...args); }
-
 /* Obtain the layout to use */
 function GetLayout() { /* exported GetLayout */
   let layout_raw = Util.ParseQueryString().layout || "double:chat";
@@ -57,7 +40,7 @@ function ParseLayout(str) { /* exported ParseLayout */
     } else if (v1 === "double") {
       layout.Cols = "double";
     } else {
-      _console_warn("Unknown layout", v1, "defaulting to double");
+      console.warn("Unknown layout", v1, "defaulting to double");
       layout.Cols = "double";
     }
     if (v2 === "nochat") {
@@ -66,7 +49,7 @@ function ParseLayout(str) { /* exported ParseLayout */
       layout.Slim = true;
       layout.Chat = false;
     } else if (v2 !== "chat") {
-      _console_warn("Unknown layout option", v2);
+      console.warn("Unknown layout option", v2);
     }
   } else if (str === "single") {
     layout.Cols = "single";
@@ -78,7 +61,7 @@ function ParseLayout(str) { /* exported ParseLayout */
     layout.Slim = true;
     layout.Tesla = true;
   } else {
-    _console_error("Failed to parse layout", str);
+    console.error("Failed to parse layout", str);
   }
   return layout;
 }
@@ -121,7 +104,7 @@ function AddAsset(src, tree=null, loadcb=null, errcb=null) {
       }
       break;
   }
-  _console_debug(`${src} @ ${tree} -> ${path}`);
+  console.debug(`${src} @ ${tree} -> ${path}`);
 
   /* Prevent double-loading */
   if (ASSETS[path]) {
@@ -133,7 +116,7 @@ function AddAsset(src, tree=null, loadcb=null, errcb=null) {
   ASSETS[path] = {};
   let asset = ASSETS[path];
   return new Promise(function(resolve, reject) {
-    _console_info("About to load asset", path);
+    console.info("About to load asset", path);
     asset.file = src;
     asset.src = path;
     asset.tree = tree;
@@ -143,14 +126,13 @@ function AddAsset(src, tree=null, loadcb=null, errcb=null) {
     asset.script.setAttribute("type", "text/javascript");
     asset.script.setAttribute("src", asset.src);
     asset.script.onload = function() {
-      _console_debug("Loaded", asset);
-      _console_log(`${asset.src} loaded`);
+      console.log(`${asset.src} loaded`);
       asset.loaded = true;
       if (loadcb) { loadcb(asset); }
       resolve(asset);
     };
     asset.script.onerror = function(e) {
-      _console_error("Failed loading", asset, e);
+      console.error("Failed loading", asset, e);
       asset.error = true;
       if (errcb) { errcb(asset, e); }
       reject(e);
@@ -199,8 +181,7 @@ function Main(global) { /* exported Main */
 
     /* Add the chat box */
     if (layout.Chat) {
-      let $ChatModule = null;
-      $ChatModule = layout.Cols === "single" ? $Module1 : $Module2;
+      let $ChatModule = layout.Cols === "single" ? $Module1 : $Module2;
       $ChatModule.removeClass("no-chat");
       $ChatModule.addClass("has-chat");
       $ChatModule.append($Chat);
@@ -213,10 +194,10 @@ function Main(global) { /* exported Main */
 
     /* If slim layout, remove the entire header */
     if (layout.Slim) {
-      $(".header").hide();
       $("body").addClass("tfc-slim");
       $(".module").addClass("slim");
       $(".content").addClass("slim");
+      $(".header").hide();
       $("#btnSettings").hide();
     }
 
@@ -235,7 +216,7 @@ function Main(global) { /* exported Main */
       try {
         doLoadClient();
       } catch(e) {
-        _console_error(e);
+        console.error(e);
         if (e.name === "ReferenceError") {
           let m = e.message || "";
           if (m.match(/\bdoLoadClient\b.*(?:not |un)defined\b/)) {
@@ -291,8 +272,8 @@ function Main(global) { /* exported Main */
   .catch((e) => {
     console.error(e);
     let msg = "TWAPI/TFC Failure ";
-    let t = e.target || e.srcElement || e.originalTarget;
-    if (t === null || !t) {
+    let t = e.target || e.srcElement || e.originalTarget || e;
+    if (!t) {
       msg += "while loading unknown target";
     } else if (t.attributes && t.attributes.src && t.attributes.src.value) {
       msg += "while loading " + t.attributes.src.value;
@@ -304,7 +285,7 @@ function Main(global) { /* exported Main */
       msg += "while loading " + t;
     }
     msg += `:\n${e}` + (e.stack ? `;\nstack: ${e.stack}` : ``);
-    _console_error(msg, e);
+    console.error(msg, e);
     alert(msg);
   });
 }
