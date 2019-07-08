@@ -172,11 +172,11 @@ class Fanfare { /* exported Fanfare */
   /* Start a new animation */
   addEffect(effect) {
     effect.load().then(() => {
-      Util.LogOnly(`Loaded effect ${effect.name}`);
+      Util.LogOnly(`Loaded effect ${effect}`);
       this._running.push(effect);
       this.startAnimation();
     }).catch((ev) => {
-      Util.Error(`Failed to load effect ${effect.name}`);
+      Util.Error(`Failed to load effect ${effect}`);
       Content.addErrorText(`${ev}`);
       Util.DebugOnly(ev);
     });
@@ -193,7 +193,7 @@ class Fanfare { /* exported Fanfare */
             effect.draw(this._context);
             stillRunning.push(effect);
           } else {
-            Util.LogOnly(`Completed effect ${effect.name}`);
+            Util.LogOnly(`Completed effect ${effect}`);
           }
         }
         this._running = stillRunning;
@@ -235,8 +235,10 @@ class Fanfare { /* exported Fanfare */
         Content.addHelpLine(plan, `Demonstrate a ${name} subscription`);
       }
       Content.addHelpText(`Available "//${cmd} config" arguments:`);
-      Content.addHelpLine(`config set &lt;k&gt; &lt;v&gt;`, "Set configuration key &lt;k&gt; to value &lt;v&gt;");
-      Content.addHelpLine(`config unset &lt;k&gt;`, "Unset configuration key &lt;k&gt;");
+      Content.addHelpLine(`config set &lt;k&gt; &lt;v&gt;`,
+                          "Set configuration key &lt;k&gt; to value &lt;v&gt;");
+      Content.addHelpLine(`config unset &lt;k&gt;`,
+                          "Unset configuration key &lt;k&gt;");
     } else if (t0 === "on") {
       self._on = true;
       Content.addInfoText("Fanfare is now enabled");
@@ -284,8 +286,10 @@ class Fanfare { /* exported Fanfare */
         } else {
           Content.addErrorText(`Fanfare: unknown config argument ${t1}`);
           Content.addHelpText(`Available arguments:`);
-          Content.addHelpLine(`config set &lt;k&gt; &lt;v&gt;`, "Set configuration key &lt;k&gt; to value &lt;v&gt;");
-          Content.addHelpLine(`config unset &lt;k&gt;`, "Unset configuration key &lt;k&gt;");
+          Content.addHelpLine(`config set &lt;k&gt; &lt;v&gt;`,
+                              "Set configuration key &lt;k&gt; to value &lt;v&gt;");
+          Content.addHelpLine(`config unset &lt;k&gt;`,
+                              "Unset configuration key &lt;k&gt;");
         }
       }
     } else {

@@ -8,12 +8,15 @@ class FanfareEffect { /* {{{0 */
     this._config = config || {};
     this._particles = [];
 
-    /* Event callbacks */
-    this._cb = {};
+    /* Frame counter for complex animations (increments on draw) */
+    this._frames = 0;
   }
 
   /* Configuration getter */
   config(k) { return this._config[k]; }
+
+  /* Number of frames drawn */
+  get frames() { return this._frames; }
 
   /* Total particle count */
   get count() { return this._particles.length; }
@@ -108,6 +111,7 @@ class FanfareEffect { /* {{{0 */
 
   /* Load the effect */
   _load(resolve, reject) {
+    this._frames = 0;
     this._loadImage()
       .then((img) => {
         this._image = img;
@@ -136,10 +140,17 @@ class FanfareEffect { /* {{{0 */
 
   /* Draw the particles to the given context */
   draw(context) {
+    this._frames += 1;
     for (let p of this._particles) {
       p.draw(context);
     }
   }
+
+  /* toString helper */
+  get [Symbol.toStringTag]() {
+    return this.name;
+  }
+
 } /* 0}}} */
 
 class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
@@ -164,6 +175,8 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
   static get background() {
     if ($("body").hasClass("light")) {
       return "light";
+    } else if ($("body").hasClass("transparent")) {
+      return "light";
     } else {
       return "dark";
     }
@@ -171,7 +184,7 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
 
   /* Default scale */
   static get scale() {
-    return "2";
+    return "1";
   }
 
   /* Get the URL for the given cheermote */
@@ -253,7 +266,7 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
         image: this._image,
         canvasWidth: this._host.width,
         canvasHeight: this._host.height,
-        borderAction: "bounce"
+        borderAction: FanfareParticle.BORDER_BOUNCE
       }));
     }
   }
@@ -270,6 +283,12 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
   /* Fanfare name */
   get name() { return "FanfareSubEffect"; }
 
+  /* Default emote */
+  static get emote() { return "HolidayPresent"; }
+
+  /* Default size */
+  static get size() { return "1.0"; }
+
   /* Determine the image URL to use */
   get imageUrl() {
     if (this.config("suburl")) {
@@ -277,8 +296,8 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
     } else if (this.config("imageurl")) {
       return this.config("imageurl");
     } else {
-      let emote = "HolidayPresent";
-      let size = "1.0";
+      let emote = FanfareSubEffect.emote;
+      let size = FanfareSubEffect.size;
       if (this.config("subemote")) {
         emote = this.config("subemote");
       } else if (this._kind === TwitchSubEvent.KIND_SUB) {
@@ -314,11 +333,12 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
         dxrange: [-5, 5],
         dyrange: [-4, 1],
         xforcerange: [-0.1, 0.1],
-        yforcerange: [-0.5, 0],
+        yforcerange: [-0.25, 0],
         image: this._image,
         canvasWidth: this._host.width,
         canvasHeight: this._host.height,
-        borderAction: "bounce"
+        lifeTick: 0.005,
+        borderAction: FanfareParticle.BORDER_BOUNCE
       }));
     }
   }
