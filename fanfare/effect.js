@@ -5,6 +5,7 @@
 class FanfareEffect { /* {{{0 */
   constructor(host, config) {
     this._host = host;
+    this._client = host._client;
     this._config = config || {};
     this._particles = [];
 
@@ -80,7 +81,7 @@ class FanfareEffect { /* {{{0 */
     return new Promise((function(resolve, reject) {
       let url = "";
       if (this.emote) {
-        url = this._host._client.GetEmote(this.emote);
+        url = this._client.GetEmote(this.emote);
       } else if (this.imageUrl) {
         url = this.imageUrl;
       } else {
@@ -91,20 +92,21 @@ class FanfareEffect { /* {{{0 */
       if (this.animated) {
         Util.SplitGIF(url)
           .then((framedata) => {
-            let frames = framedata.map((f) => Util.ImageFromPNGData(f));
             if (framedata.length > 0) {
-              let f0 = frames[0];
-              f0.onload = function() { resolve(frames); };
-              f0.onerror = function(err) { reject(err); };
+              let frames = framedata.map((f) => Util.ImageFromPNGData(f));
+              Util.PromiseElement(frames[0])
+                .then((e) => resolve(frames))
+                .catch((e) => reject(e));
             } else {
-              resolve(frames);
+              resolve([]);
             }
           })
           .catch((err) => reject(err));
       } else {
         let img = this._host.image(url);
-        img.onload = function(ev) { resolve(img); };
-        img.onerror = function(err) { reject(err); };
+        Util.PromiseElement(img)
+          .then((e) => resolve(img))
+          .catch((e) => reject(e));
       }
     }).bind(this));
   }
@@ -229,7 +231,7 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
       return this.config("cheerurl");
     } else if (this.config("imageurl")) {
       return this.config("imageurl");
-    } else if (!this._host._client.cheersLoaded) {
+    } else if (!this._client.cheersLoaded) {
       Util.Warn("Cheers are not yet loaded");
     } else {
       let cheermote = "Cheer";
@@ -243,7 +245,7 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
       if (this.config("cheerscale")) {
         scale = this.config("cheerscale");
       }
-      let cdef = this._host._client.GetGlobalCheer(cheermote);
+      let cdef = this._client.GetGlobalCheer(cheermote);
       return this.cheerToURL(cdef, this._bits, bg, scale);
     }
     return "";
@@ -282,12 +284,6 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
 
   /* Fanfare name */
   get name() { return "FanfareSubEffect"; }
-
-  /* Default emote (static so drawing code ignores it) */
-  static get emote() { return "HolidayPresent"; }
-
-  /* Default size */
-  static get size() { return "1.0"; }
 
   /* Determine the emote and size for the given kind and tier */
   _emote(kind, tier) {
@@ -338,7 +334,7 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
       return this.config("imageurl");
     } else {
       let [emote, size] = this._emote(this._kind, this._tier);
-      return this._host._client.GetEmote(emote, size);
+      return this._client.GetEmote(emote, size);
     }
   }
 
