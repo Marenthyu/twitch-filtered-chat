@@ -261,8 +261,8 @@ class FanfareCheerEffect extends FanfareEffect { /* {{{0 */
         ymax: this._host.height - ph,
         dxrange: [0, 1],
         dyrange: [0, 1],
-        xforcerange: [-0.1, 0.1],
-        yforcerange: [-0.5, 0],
+        dvxrange: [-0.1, 0.1],
+        dvyrange: [-0.5, 0],
         image: this._image,
         canvasWidth: this._host.width,
         canvasHeight: this._host.height,
@@ -283,11 +283,52 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
   /* Fanfare name */
   get name() { return "FanfareSubEffect"; }
 
-  /* Default emote */
+  /* Default emote (static so drawing code ignores it) */
   static get emote() { return "HolidayPresent"; }
 
   /* Default size */
   static get size() { return "1.0"; }
+
+  /* Determine the emote and size for the given kind and tier */
+  _emote(kind, tier) {
+    let emote = "HolidayPresent";
+    let size = "1.0";
+    if (this.config("emote")) {
+      emote = this.config("emote");
+    } else if (this.config("subemote")) {
+      emote = this.config("subemote");
+    } else if (kind === TwitchSubEvent.KIND_SUB) {
+      if (this.config("subemote_sub")) {
+        emote = this.config("subemote_sub");
+      } else {
+        emote = "MrDestructoid";
+      }
+    } else if (kind === TwitchSubEvent.KIND_RESUB) {
+      if (this.config("subemote_resub")) {
+        emote = this.config("subemote_resub");
+      } else {
+        emote = "PraiseIt";
+      }
+    } else if (kind === TwitchSubEvent.KIND_GIFTSUB) {
+      if (this.config("subemote_giftsub")) {
+        emote = this.config("subemote_giftsub");
+      } else {
+        emote = "HolidayPresent";
+      }
+    } else if (kind === TwitchSubEvent.KIND_ANONGIFTSUB) {
+      if (this.config("subemote_anongiftsub")) {
+        emote = this.config("subemote_anongiftsub");
+      } else {
+        emote = "HolidayPresent";
+      }
+    }
+    if (tier === TwitchSubEvent.PLAN_TIER2) {
+      size = "2.0";
+    } else if (tier === TwitchSubEvent.PLAN_TIER3) {
+      size = "3.0";
+    }
+    return [emote, size];
+  }
 
   /* Determine the image URL to use */
   get imageUrl() {
@@ -296,26 +337,7 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
     } else if (this.config("imageurl")) {
       return this.config("imageurl");
     } else {
-      let emote = FanfareSubEffect.emote;
-      let size = FanfareSubEffect.size;
-      if (this.config("subemote")) {
-        emote = this.config("subemote");
-      } else if (this._kind === TwitchSubEvent.KIND_SUB) {
-        emote = "MrDestructoid";
-      } else if (this._kind === TwitchSubEvent.KIND_RESUB) {
-        emote = "PraiseIt";
-      } else if (this._kind === TwitchSubEvent.KIND_GIFTSUB) {
-        emote = "HolidayPresent";
-      } else if (this._kind === TwitchSubEvent.KIND_ANONGIFTSUB) {
-        emote = "HolidayPresent";
-      } else if (this.config("emote")) {
-        emote = this.config("emote");
-      }
-      if (this._tier === TwitchSubEvent.PLAN_TIER2) {
-        size = "2.0";
-      } else if (this._tier === TwitchSubEvent.PLAN_TIER3) {
-        size = "3.0";
-      }
+      let [emote, size] = this._emote(this._kind, this._tier);
       return this._host._client.GetEmote(emote, size);
     }
   }
@@ -326,19 +348,28 @@ class FanfareSubEffect extends FanfareEffect { /* {{{0 */
     const ph = this.imageHeight || 30;
     for (let i = 0; i < this.num; ++i) {
       this._particles.push(new FanfareParticle({
+        /* Start anywhere along the bottom of the screen */
         xmin: 0,
         xmax: this._host.width - pw,
         ymin: this._host.height - ph - 60,
         ymax: this._host.height - ph,
-        dxrange: [-5, 5],
-        dyrange: [-4, 1],
-        xforcerange: [-0.1, 0.1],
-        yforcerange: [-0.25, 0],
+        /* Ease through [0, 1, 0, -1, 0] over 80 ticks; using a random starting
+         * location through the ease */
+        dxFunc: function(t, dx) {
+          return 4 * Math.sin((t % 80) / 80 * 2 * Math.PI + this.seed);
+        },
+        /* Particles gradually move upwards */
+        dyrange: [-1, 1],
+        dvyrange: [-0.15, 0],
+        /* Random starting ease */
+        seed: Math.random() * 2 * Math.PI,
         image: this._image,
         canvasWidth: this._host.width,
         canvasHeight: this._host.height,
+        /* Particles last much longer than usual */
         lifeTick: 0.005,
-        borderAction: FanfareParticle.BORDER_BOUNCE
+        /* Ignore the borders */
+        borderAction: FanfareParticle.BORDER_DEFAULT
       }));
     }
   }

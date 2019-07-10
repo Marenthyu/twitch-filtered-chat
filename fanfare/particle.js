@@ -4,79 +4,61 @@
 
 /** Particle configuration
  *
- * Particles have the following attributes:
- *  x             Horizontal offset from the left side of the canvas
- *  y             Vertical offset from the top of the canvas
- *  dx            Horizontal starting velocity
- *  dy            Vertical starting velocity
- *  xforce        Horizontal deceleration (i.e. gravity/drag) factor
- *  yforce        Vertical deceleration (i.e. gravity/drag) factor
- *  force         Directionless force (i.e. drag) coefficient
- *  xforceFunc    Advanced function to calculate xforce (see below)
- *  yforceFunc    Advanced function to calculate yforce (see below)
- *  forceFunc     Advanced function to calculate linear force (see below)
- *  a             Opacity: decrements every tick and particles "die" at 0
- *  image         Image instance or array of image instances (for animated GIFs)
- *  width         Default image width
- *  height        Default image height
- *  canvasWidth   Width of the containing canvas (for "bounce" calculation)
- *  canvasHeight  Height of the containing canvas (for "bounce" calculation)
- *  lifeTick      Amount which particles "decay" per tick (default: 0.01)
+ * Particles have the following attributes. Defaults are in brackets.
+ *  x             [0] Horizontal offset from the left side of the canvas
+ *  dx            [0] Horizontal starting velocity
+ *  dvx           [0] Horizontal change in velocity per tick (acceleration)
+ *  dxFunc        [Id] Advanced function to calculate x velocity (see below)
+ *  dvxFunc       [Id] Advanced function to calculate dvx (see below)
+ *  y             [0] Vertical offset from the top of the canvas
+ *  dy            [0] Vertical starting velocity
+ *  dvy           [0] Vertical change in velocity per tick (acceleration)
+ *  dyFunc        [Id] Advanced function to calculate y velocity (see below)
+ *  dvyFunc       [Id] Advanced function to calculate dvy (see below)
+ *  dv            [0] Directionless change in velocity per tick; can be used
+ *                to simulate friction
+ *  dvFunc        [Id] Advanced function to calculate dv (see below)
+ *  a             [1] Opacity: decrements every tick; particles "die" at 0
+ *  image         [null] Image instance or image array (for animated GIFs)
+ *  width         [0] Default image width
+ *  height        [0] Default image height
+ *  canvasWidth   [0] Width of the containing canvas (for "bounce")
+ *  canvasHeight  [0] Height of the containing canvas (for "bounce")
+ *  lifeTick      [0.01] Amount which particles "decay" per tick
+ *  seed          [0] Arbitrary number available to the advanced functions
+ *  borderAction  ["default"] Behavior when hitting a screen border: "default"
+ *                ignores the border, "bounce" bounces off the screen border
+ * [Id]: function(t, v) { return v; }
  *
  * Most of the variables above can be set via one of the following
  * configuration formats:
- *   "X"                use value directly
- *   "Xmin", "Xmax"     use a random number between "Xmin" and "Xmax"
- *   "Xrange"           use a random number between Xrange[0] and Xrange[1]
+ *  "X"                 use value directly
+ *  "Xmin", "Xmax"      use a random number between "Xmin" and "Xmax"
+ *  "Xrange"            use a random number between Xrange[0] and Xrange[1]
  * The attributes supporting this format are:
  *   x, y               position
  *   dx, dy             velocity
- *   xforce, yforce     "acceleration"
- *   force              directionless force coefficient
- * Other attributes:
- *   a                  particle opacity (also lifetime)
- *   lifeTick           decrease in opacity per tick
- *   image              DOM Image object
- *   width              image width (or 0 if no image is set/loaded)
- *   height             image height (or 0 if no image is set/loaded)
- *   left, top          particle's x, y
- *   right, bottom      particle's x + width, y + height
- *   borderAction       behavior when hitting a screen border: "default",
- *                      "bounce" (default: "default")
- *
- * The advanced force functions "xforceFunc", "yforceFunc", and "forceFunc"
- * allow special handling of the particle's acceleration:
- *   new_xforce = xforceFunc(tick, xforce)
- *   new_yforce = yforceFunc(tick, yforce)
- *   new_force = forceFunc(tick, force)
- * See below for how this is used.
+ *   dvx, dvy           acceleration
+ *   dv                 directionless acceleration
  *
  * Particles support animated images via passing an array to the "image"
  * configuration key. This is used by setting effect.animated to true and
- * using a GIF for the image URL. See the FanfareCheerEffect class
- * (fanfare/effect.js) for an example.
+ * using a GIF for the image URL. See FanfareCheerEffect (fanfare/effect.js)
+ * for an example.
  *
  * Every "tick", "living" particles are animated according to the following:
  *  p.tick += 1
  *  p.a -= p.lifeTick
  *  p.x += p.dx
  *  p.y += p.dy
- *  p.dx += p.xforce
- *  p.dy += p.yforce
- *  If p.force is nonzero:
- *    p.dx += p.force * Math.hypot(p.x, p.y) * Math.cos(Math.atan2(p.y, p.x))
- *    p.dy += p.force * Math.hypot(p.x, p.y) * Math.sin(Math.atan2(p.y, p.x))
- *  p.xforce = xforceFunc(p.tick, p.xforce)
- *  p.yforce = yforceFunc(p.tick, p.yforce)
- *  p.force = forceFunc(p.tick, p.force)
- *
- * Particles "die" if any of the following are true:
- *  p.a <= 0
- *  p.x + p.width < 0
- *  p.y + p.height < 0
- *  p.x > canvas width
- *  p.y > canvas height
- * Particles are "alive" if their opacity is greater than 0.
+ *  p.dx = dxFunc(p.tick, p.dx + p.dvx)
+ *  p.dy = dyFunc(p.tick, p.dy + p.dvy)
+ *  If p.dv is nonzero:
+ *    p.dx += p.dv * Math.hypot(p.x, p.y) * Math.cos(Math.atan2(p.y, p.x))
+ *    p.dy += p.dv * Math.hypot(p.x, p.y) * Math.sin(Math.atan2(p.y, p.x))
+ *  p.dvx = dvxFunc(p.tick, p.dvx)
+ *  p.dvy = dvyFunc(p.tick, p.dvy)
+ *  p.dv = dvFunc(p.tick, p.dv)
  */
 
 class FanfareParticle { /* exported FanfareParticle */
@@ -85,30 +67,29 @@ class FanfareParticle { /* exported FanfareParticle */
   static get BORDER_ACTIONS() {
     return [FanfareParticle.BORDER_DEFAULT, FanfareParticle.BORDER_BOUNCE];
   }
-  static get DEFAULT_FORCE_FUNC() { return (tick, force) => force; }
+  static get DEFAULT_FUNC() { return (tick, dv) => dv; }
 
   constructor(config) {
     this._config = config;
-    this.x = 0;
-    this.y = 0;
-    this.dx = 0;
-    this.dy = 0;
-    this.xforce = 0;
-    this.yforce = 0;
-    this.force = 0;
+    /* Configurable attributes */
+    [this.x, this.y] = [0, 0];
+    [this.dx, this.dy] = [0, 0];
+    [this.dvx, this.dvy] = [0, 0];
+    this.dv = 0;
     this.a = 1;
     this.lifeTick = 0.01;
+    this.seed = 0;
     this.borderAction = FanfareParticle.BORDER_DEFAULT;
-    /* Advanced force functions */
+    /* Advanced motion functions */
     this._tick = 0;
-    this._xforceFunc = (tick, xforce) => xforce;
-    this._yforceFunc = (tick, yforce) => yforce;
-    this._forceFunc = (tick, force) => force;
+    this._dxFunc = (tick, dx) => dx;
+    this._dyFunc = (tick, dy) => dy;
+    this._dvxFunc = (tick, dvx) => dvx;
+    this._dvyFunc = (tick, dvy) => dvy;
+    this._dvFunc = (tick, dv) => dv;
     /* Effect extrema */
-    this._xmin = 0;
-    this._xmax = 0;
-    this._ymin = 0;
-    this._ymax = 0;
+    [this._xmin, this._xmax] = [0, 0];
+    [this._ymin, this._ymax] = [0, 0];
     /* Image information */
     this._image = null;
     this._frames = null;
@@ -133,15 +114,12 @@ class FanfareParticle { /* exported FanfareParticle */
   get width() { return this._image ? this._image.width : 0; }
   get height() { return this._image ? this._image.height : 0; }
 
-  /* Get an image to draw: either a static image or the next frame */
+  /* Get the image to draw: either a static image or the next frame */
   get image() {
     let img = this._image;
     if (this._frames && this._frames.length > 0) {
       img = this._frames[this._framenr];
-      this._framenr += 1;
-      if (this._framenr >= this._frames.length) {
-        this._framenr = 0;
-      }
+      this._framenr = (this._framenr + 1) % this._frames.length;
     }
     return img;
   }
@@ -197,13 +175,18 @@ class FanfareParticle { /* exported FanfareParticle */
     this.dx = getValue("dx", 0);
     this.dy = getValue("dy", 0);
     this.a = getValue("a", 1);
-    this.xforce = getValue("xforce", 0);
-    this.yforce = getValue("yforce", 0);
-    this.force = getValue("force", 0);
+    this.dvx = getValue("dvx", 0);
+    this.dvy = getValue("dvy", 0);
+    this.dv = getValue("dv", 0);
     this.lifeTick = getValue("lifeTick", 0.01);
-    this._xforceFunc = opts.xforceFunc || FanfareParticle.DEFAULT_FORCE_FUNC;
-    this._yforceFunc = opts.yforceFunc || FanfareParticle.DEFAULT_FORCE_FUNC;
-    this._forceFunc = opts.forceFunc || FanfareParticle.DEFAULT_FORCE_FUNC;
+    this._dxFunc = opts.dxFunc || FanfareParticle.DEFAULT_FUNC;
+    this._dyFunc = opts.dyFunc || FanfareParticle.DEFAULT_FUNC;
+    this._dvxFunc = opts.dvxFunc || FanfareParticle.DEFAULT_FUNC;
+    this._dvyFunc = opts.dvyFunc || FanfareParticle.DEFAULT_FUNC;
+    this._dvFunc = opts.dvFunc || FanfareParticle.DEFAULT_FUNC;
+    if (opts.seed) {
+      this.seed = opts.seed;
+    }
     if (opts.image) {
       this.image = opts.image;
     }
@@ -224,52 +207,54 @@ class FanfareParticle { /* exported FanfareParticle */
     }
   }
 
-  /* Calculate change in velocity */
+  /* Calculate new velocity */
   _calcAccel() {
     let [dx, dy] = [this.dx, this.dy];
 
-    let xforce = Number.isNaN(this.xforce) ? 0 : this.xforce;
-    let yforce = Number.isNaN(this.yforce) ? 0 : this.yforce;
-    let force = Number.isNaN(this.force) ? 0 : this.force;
-    xforce = this._xforceFunc(this._tick, xforce);
-    yforce = this._yforceFunc(this._tick, yforce);
-    force = this._forceFunc(this._tick, force);
+    let dvx = Number.isNaN(this.dvx) ? 0 : this.dvx;
+    let dvy = Number.isNaN(this.dvy) ? 0 : this.dvy;
+    let dv = Number.isNaN(this.dv) ? 0 : this.dv;
+    dvx = this._dvxFunc(this._tick, dvx);
+    dvy = this._dvyFunc(this._tick, dvy);
+    dv = this._dvFunc(this._tick, dv);
 
-    dx += xforce;
-    dy += yforce;
-    if (force !== 0) {
-      const scale = force * Math.hypot(this.x, this.y);
+    dx += dvx;
+    dy += dvy;
+    if (dv !== 0) {
+      const scale = dv * Math.hypot(this.x, this.y);
       const angle = Math.atan2(this.y, this.x);
       dx += scale * Math.cos(angle);
       dy += scale * Math.sin(angle);
     }
-    return [dx, dy];
+    return [
+      this._dxFunc(this._tick, dx),
+      this._dyFunc(this._tick, dy)
+    ];
   }
 
   /* Handle particle movement and decrease opacity by this.lifeTick */
   tick() {
-    if (this.alive) {
-      this._tick += 1;
-      this.a -= this.lifeTick;
-      this.x += this.dx;
-      this.y += this.dy;
-      [this.dx, this.dy] = this._calcAccel();
-      if (this.borderAction === FanfareParticle.BORDER_BOUNCE) {
-        /* Handle bounce (if xmin !== xmax) */
-        if (this._xmin !== this._xmax) {
-          if (this.dx < 0 && this.nextLeft < this._xmin) {
-            this.dx *= -1;
-          } else if (this.dx > 0 && this.nextRight > this._xmax) {
-            this.dx *= -1;
-          }
+    if (!this.alive) return;
+    this._tick += 1;
+    this.a -= this.lifeTick;
+    this.x += this.dx;
+    this.y += this.dy;
+    [this.dx, this.dy] = this._calcAccel();
+    if (this.borderAction === FanfareParticle.BORDER_BOUNCE) {
+      /* Handle bounce (if xmin !== xmax) */
+      if (this._xmin !== this._xmax) {
+        if (this.dx < 0 && this.nextLeft < this._xmin) {
+          this.dx *= -1;
+        } else if (this.dx > 0 && this.nextRight > this._xmax) {
+          this.dx *= -1;
         }
-        /* Handle bounce (if ymin !== ymax) */
-        if (this._ymin !== this._ymax) {
-          if (this.dy < 0 && this.nextTop < this._ymin) {
-            this.dy *= -1;
-          } else if (this.dy > 0 && this.nextBottom > this._ymax) {
-            this.dy *= -1;
-          }
+      }
+      /* Handle bounce (if ymin !== ymax) */
+      if (this._ymin !== this._ymax) {
+        if (this.dy < 0 && this.nextTop < this._ymin) {
+          this.dy *= -1;
+        } else if (this.dy > 0 && this.nextBottom > this._ymax) {
+          this.dy *= -1;
         }
       }
     }
