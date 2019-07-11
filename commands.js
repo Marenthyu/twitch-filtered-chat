@@ -25,7 +25,6 @@
  */
 
 /* TODO
- * Implement addHelp for specific commands
  * Implement ChatCommands.addComplete(command, func)
  * Implement //plugins addremote <class> <url> [<config>]
  */
@@ -37,17 +36,32 @@ class ChatCommandManager {
     this._command_list = [];
     this._commands = {};
     this._aliases = {};
+    this._completions = {};
     this._help_text = [];
-    this.add("help", this.onCommandHelp.bind(this),
-             "Show help for a specific command or all commands");
-    this.addAlias("?", "help");
+    this.add("help", this.onCommandHelp.bind(this), "Show help information");
     this.addUsage("help", null, "Show help for all commands");
     this.addUsage("help", "command", "Show usage information for <command>");
+    this.addAlias("?", "help");
   }
 
   /* Trim leading "//" or "." */
   _trim(msg) {
     return msg.replace(/^\/\//, "").replace(/^\./, "");
+  }
+
+  /* Add text to be shown in //help */
+  addHelpText(text, opts=null) {
+    let o = opts || {};
+    let t = text;
+    if (o.indent) t = "&nbsp;&nbsp;" + t;
+    if (o.literal) t = t.escape();
+    if (o.args) t = this.formatArgs(t);
+    if (o.command) {
+      let cmd = t.substr(0, t.indexOf(":"));
+      let msg = t.substr(t.indexOf(":")+1);
+      t = this.helpLine(cmd, msg);
+    }
+    this._help_text.push(t);
   }
 
   /* Add a new command */
@@ -103,52 +117,44 @@ class ChatCommandManager {
     }
   }
 
-  /* Add text to be shown in //help */
-  addHelpText(text, opts=null) {
-    let o = opts || {};
-    let t = text;
-    if (o.indent) t = "&nbsp;&nbsp;" + t;
-    if (o.literal) t = t.escape();
-    if (o.args) t = this.formatArgs(t);
-    if (o.command) {
-      let cmd = t.substr(0, t.indexOf(":"));
-      let msg = t.substr(t.indexOf(":")+1);
-      t = this.helpLine(cmd, msg);
+  /* Tab completion API {{{0 */
+
+  /* Gather completions for user names */
+  tcGatherUsers(part, client) {
+    let matches = [];
+    let users = [client.GetName()];
+    for (let c of client.GetJoinedChannels()) {
+      let ci = client.GetChannelInfo(c);
+      if (ci.users) {
+        users = users.concat(ci.users);
+      }
     }
-    this._help_text.push(t);
+    for (let user of users) {
+      if (part.length === 0 || user.startsWith(part)) {
+        matches.push(user);
+      }
+    }
+    return matches;
   }
 
   /* Request completion of the given completion object */
-  complete(client, complete_args) {
-    let text = complete_args.orig_text;
-    let pos = complete_args.orig_pos;
-    let idx = complete_args.index;
-    /* "test te<tab>" -> "test te" */
-    let text_before = text.substr(0, pos);
-    /* "test te<tab>" -> "te" */
-    let word_pos = text_before.search(/\W[\w]*$/);
-    let curr_word = text_before;
-    if (word_pos > -1) {
-      curr_word = text_before.substr(word_pos).trimStart();
+  complete(client, cargs) {
+    let text = cargs.orig_text;
+    let pos = cargs.orig_pos;
+    let idx = cargs.index;
+    /* Text before tab: "test te<tab>" -> "test te" */
+    let textBefore = text.substr(0, pos);
+    /* Word being tab-completed: "test te<tab>" -> "te" */
+    let wordPos = textBefore.search(/\W[\w]*$/);
+    let currWord = textBefore;
+    if (wordPos > -1) {
+      currWord = textBefore.substr(wordPos).trimStart();
     }
-    let prefix = complete_args.orig_text;
+    let prefix = cargs.orig_text;
     let matches = [];
-    if (curr_word.startsWith("@")) {
+    if (currWord.startsWith("@")) {
       /* Complete @<user> sequences */
-      let part = curr_word.substr(1);
-      if (client.GetName().startsWith(part)) {
-        matches.push(client.GetName());
-      }
-      for (let c of client.GetJoinedChannels()) {
-        let cinfo = client.GetChannelInfo(c);
-        if (cinfo.users) {
-          for (let user of cinfo.users) {
-            if (part.length === 0 || user.startsWith(part)) {
-              matches.push(user);
-            }
-          }
-        }
-      }
+      matches = this.tcGatherUsers(currWord.substr(1), client);
       /* Clear the prefix so we can append a match below */
       if (matches.length > 0) {
         prefix = "@";
@@ -156,15 +162,13 @@ class ChatCommandManager {
     } else if (this.isCommandStr(text)) {
       /* Complete commands */
       let word = this._trim(text.substr(0, pos));
-      prefix = text;
-      if (word.length > 0) {
-        prefix = text.substr(0, text.indexOf(word));
-      }
       for (let k of Object.keys(this._commands).sort()) {
         if (word.length === 0 || k.startsWith(word)) {
           matches.push(k);
         }
       }
+      /* Clear the prefix so we can append a match below */
+      prefix = word ? text.substr(0, text.indexOf(word)) : text;
     }
 
     /* If matches were found, return one */
@@ -178,18 +182,20 @@ class ChatCommandManager {
         idx = 0;
       }
     } else {
-      text = complete_args.orig_text;
-      pos = complete_args.orig_pos;
+      text = cargs.orig_text;
+      pos = cargs.orig_pos;
     }
 
     return {
-      orig_text: complete_args.orig_text,
-      orig_pos: complete_args.orig_pos,
+      orig_text: cargs.orig_text,
+      orig_pos: cargs.orig_pos,
       curr_text: text,
       curr_pos: text.length,
       index: idx
     };
   }
+
+  /* End tab completion API 0}}} */
 
   /* Return whether or not the message is a command */
   isCommandStr(msg) {
@@ -263,6 +269,8 @@ class ChatCommandManager {
     return c;
   }
 
+  /* Formatting API {{{0 */
+
   /* Format the help text for the given command object */
   formatHelp(cmd) {
     return this.helpLine(`//${cmd.name}`, cmd.desc, true);
@@ -314,6 +322,8 @@ class ChatCommandManager {
     }
     return result;
   }
+
+  /* End formatting API 0}}} */
 
   /* Print the usage information for the given command object */
   printUsage(cmdobj) {
