@@ -3,6 +3,7 @@
 "use strict";
 
 /* FIXME:
+ * HTML injection via Content.addHelpLine
  * Username context window should slide rather than teleport to new names
  * Chat line backgrounds flicker between messages
  *   Caused by non-chat messagesclearing excess chat messages
@@ -274,7 +275,7 @@ function parseQueryString(config, qs=null) {
         Util.Error(e);
         key = val = null;
       }
-    } else if (key === "scheme") {
+    } else if (k === "scheme") {
       key = "ColorScheme";
       if (v === "light") {
         val = "light";
@@ -284,10 +285,10 @@ function parseQueryString(config, qs=null) {
         Util.WarnOnly(`Invalid scheme value ${v}, defaulting to dark`);
         val = "dark";
       }
-    } else if (key === "force" || key === "antics") {
+    } else if (k === "force" || k === "antics") {
       key = "EnableForce";
       val = Boolean(v);
-    } else if (key === "fanfare") {
+    } else if (k === "fanfare") {
       key = "Fanfare";
       val = {enable: false};
       try {
@@ -307,6 +308,9 @@ function parseQueryString(config, qs=null) {
         Util.Error("Failed parsing Fanfare config; disabling", e, v);
         key = val = null;
       }
+    } else if (k === "highlight") {
+      key = "Highlight";
+      val = `${v}`.split(",").map((s) => Util.StringToRegExp(s, "g"));
     }
     /* Skip items with a falsy key */
     if (key) {
@@ -1033,7 +1037,6 @@ function doLoadClient() { /* exported doLoadClient */
   if (Util.DebugLevel < Util.LEVEL_TRACE) {
     /* Filter out PING/PONG messages */
     Util.Logger.addFilter(/ws (send|recv)>.+(PING|PONG) :tmi.twitch.tv/);
-
     /* Filter out users joining/parting channels */
     Util.Logger.addFilter(/tmi.twitch.tv (JOIN|PART) #/);
   }
@@ -1187,6 +1190,11 @@ function doLoadClient() { /* exported doLoadClient */
       if (cfg.Fanfare) {
         qsAdd("fanfare", JSON.stringify(cfg.Fanfare));
       }
+      if (cfg.Highlight || client.get("HTMLGen").highlightMatches) {
+        let pats = cfg.Highlight || [];
+        pats = pats.concat(client.get("HTMLGen").highlightMatches || []);
+        qsAdd("highlight", pats.map((s) => `${s}`).join(","));
+      }
 
       /* Append a tag */
       let custom_tag = cfg.tag ? cfg.tag : "";
@@ -1277,14 +1285,14 @@ function doLoadClient() { /* exported doLoadClient */
     Util.DebugLevel = cfg.Debug;
 
     /* Change the document title to show our authentication state */
-    document.title += " -";
     if (cfg.Pass && cfg.Pass.length > 0) {
-      document.title += " Authenticated";
+      document.title += " - Authenticated";
     } else {
-      document.title += " Read-Only";
+      document.title += " - Read-Only";
+      /* Change the chat placeholder and border to reflect read-only */
       if (cfg.Layout.Chat) {
-        /* Change the chat placeholder and border to reflect read-only */
-        $("#txtChat").attr("placeholder", Strings.ANON_PLACEHOLDER + ": " + Strings.AUTH_PLACEHOLDER);
+        $("#txtChat").attr("placeholder",
+                           Strings.ANON_PLACEHOLDER + ": " + Strings.AUTH_PLACEHOLDER);
         Util.CSS.SetProperty("--chat-border", "#cd143c");
       }
     }
@@ -1405,6 +1413,12 @@ function doLoadClient() { /* exported doLoadClient */
   function updateHTMLGenConfig() {
     for (let [k, v] of Object.entries(getConfigObject())) {
       client.get("HTMLGen").setValue(k, v);
+    }
+  }
+
+  if (config.Highlight) {
+    for (let pat of config.Highlight) {
+      client.get("HTMLGen").addHighlightMatch(pat);
     }
   }
 
@@ -1533,6 +1547,7 @@ function doLoadClient() { /* exported doLoadClient */
       resetChatComplete();
       resetChatHistory();
     } else if (e.key === "Enter") {
+      /* Execute command or send message */
       if (t.value.trim().length > 0) {
         if (ChatCommands.isCommandStr(t.value)) {
           ChatCommands.execute(t.value, client);
@@ -1550,6 +1565,7 @@ function doLoadClient() { /* exported doLoadClient */
     } else if (e.key === "Process" && e.code === "Tab") {
       /* Not sure why this gets fired, but ignore it */
     } else if (e.key === "Tab") {
+      /* Tab completion */
       /* TODO: Complete command arguments */
       let orig_text = $t.attr("data-complete-text") || t.value;
       let orig_pos = Util.ParseNumber($t.attr("data-complete-pos"));
@@ -2100,7 +2116,7 @@ function doLoadClient() { /* exported doLoadClient */
     Content.addHTML(client.get("HTMLGen").raid(e));
   });
 
-  /* New user's YoHiYo */
+  /* New user's greeting message */
   client.bind("twitch-newuser", function _on_twitch_newuser(e) {
     Util.StorageAppend(LOG_KEY, e);
     let H = client.get("HTMLGen");
@@ -2110,7 +2126,7 @@ function doLoadClient() { /* exported doLoadClient */
     Content.addHTML(H.gen(e));
   });
 
-  /* User gifting rewards to the community */
+  /* User gifting rewards to the community (seasonal) */
   client.bind("twitch-rewardgift", function _on_twitch_rewardgift(e) {
     Util.StorageAppend(LOG_KEY, e);
     Content.addHTML(client.get("HTMLGen").rewardGift(e));

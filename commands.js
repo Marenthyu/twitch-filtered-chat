@@ -967,13 +967,7 @@ function onCommandHighlight(cmd, tokens, client) {
   } else if (tokens[0] === "add") {
     let patstr = tokens.slice(1).join(" ");
     if (patstr.length > 0) {
-      let pat = null;
-      let m = patstr.match(/^\/(.*)\/(\w*)$/);
-      if (m) {
-        pat = new RegExp(m[1], m[2]);
-      } else {
-        pat = new RegExp("\\b" + RegExp.escape(patstr) + "\\b", "g");
-      }
+      let pat = Util.StringToRegExp(patstr, "g");
       H.addHighlightMatch(pat);
       Content.addHelpText(`Added pattern ${pat}`);
     } else {
