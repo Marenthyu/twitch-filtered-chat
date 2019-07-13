@@ -987,11 +987,41 @@ body.slim #btnSettings {
  *  div#wrapper
  *   div#wrapper-loading.loading
  *   div#column1.column.left (or .full)
- *    div#module1.module.left.no-chat (or .full.chat, .full.no-chat)
+ *    div#module1.module.left.no-chat (or .full.chat, or .full.no-chat)
  *     <template:module-definition>
  *   div#column2.column.right
  *    div#module2.module.right.no-chat (or .chat)
  *     <template:module-definition>
+ *  div#settings
+ *   header
+ *    span.fl
+ *     span.btn#btnSettingsHelp
+ *    span.fr.btn#btnSettingsBuiler
+ *   section
+ *    ul
+ *     li label input#txtChannel
+ *     li label input#txtNick
+ *     li
+ *      label
+ *      input#txtPass
+ *      input#txtPassDummy
+ *     li label input#cbScroll
+ *     li label input#cbTransparent
+ *     li label input#cbClips
+ *     li label input#cbForce
+ *     li label select#selDebug
+ *   section#advSettings
+ *    header
+ *     span.fl "Advanced Settings"
+ *     span.fr.btn#btnAdvHide
+ *    ul
+ *     li label input#cbAnimCheers
+ *     li label input#txtFont
+ *     li label input#txtFontSize
+ *     li label input#txtTag
+ *   footer
+ *    span.fl.btn#btnReconnect
+ *    span.fr.btn#btnAdvanced
  *
  ** <template:module-definition>:
  * div.header
