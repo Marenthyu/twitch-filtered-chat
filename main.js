@@ -9,12 +9,14 @@ const MOD_TWAPI = "twitch-api";
 /* Obtain information based on window.location and navigator.userAgent */
 const URI = `${window.location}`;
 const IS_TESLA = Boolean(navigator.userAgent.match(/\bTesla\b/));
-const ASK_DIST = Boolean(window.location.search.match(/\busedist\b/));
-const USE_DIST = ASK_DIST || IS_TESLA;
+const USE_DIST = IS_TESLA || Boolean(window.location.search.match(/\busedist\b/));
 const BASE_URI = URI.substr(0, URI.indexOf(MOD_TFC)).replace(/\/$/, "");
 const SELF_URI = URI.replace(/\/index.html(\?.*)?$/, "");
 const GIT_URL = "https://kaedenn.github.io/twitch-filtered-chat/index.html";
-const CUR_URL = ((l) => `${l.protocol}//${l.hostname}${l.pathname}`)(window.location);
+const CUR_URL = (() => {
+  let l = window.location;
+  return `${l.protocol}//${l.hostname}${l.pathname}`;
+})();
 
 /* Paths to modules */
 const PATH_TFC = SELF_URI + (USE_DIST ? "/dist" : "");
@@ -23,10 +25,11 @@ const PATH_TWAPI = BASE_URI + "/" + MOD_TWAPI + (USE_DIST ? "/dist" : "");
 /* Asset storage object */
 var ASSETS = {};
 
+/* Layout {{{0 */
+
 /* Obtain the layout to use */
 function GetLayout() { /* exported GetLayout */
-  let layout_raw = Util.ParseQueryString().layout || "double:chat";
-  return ParseLayout(layout_raw);
+  return ParseLayout(Util.ParseQueryString().layout || "double:chat");
 }
 
 /* Parse layout= query string value */
@@ -40,7 +43,7 @@ function ParseLayout(str) { /* exported ParseLayout */
     } else if (v1 === "double") {
       layout.Cols = "double";
     } else {
-      console.warn("Unknown layout", v1, "defaulting to double");
+      console.warn(`Unknown layout "${v1}"; defaulting to double`);
       layout.Cols = "double";
     }
     if (v2 === "nochat") {
@@ -68,53 +71,51 @@ function ParseLayout(str) { /* exported ParseLayout */
 
 /* Generate layout= query string value */
 function FormatLayout(layout) { /* exported FormatLayout */
-  let k = "";
-  let v = "";
   if (layout.Tesla) {
     return "tesla";
-  } else if (layout.Cols === "single") {
-    k = "single";
-  } else if (layout.Cols === "double") {
-    k = "double";
-  }
-  if (layout.Slim) {
-    v = "slim";
-  } else if (layout.Chat) {
-    v = "chat";
   } else {
-    v = "nochat";
+    let [k, v] = ["", ""];
+    if (layout.Cols === "single") {
+      k = "single";
+    } else if (layout.Cols === "double") {
+      k = "double";
+    }
+    if (layout.Slim) {
+      v = "slim";
+    } else if (layout.Chat) {
+      v = "chat";
+    } else {
+      v = "nochat";
+    }
+    return `${k}:${v}`;
   }
-  return `${k}:${v}`;
 }
+
+/* End of layout functions 0}}} */
 
 /* Add an asset to be loaded; returns a Promise */
 function AddAsset(src, tree=null, loadcb=null, errcb=null) {
+  /* Callback defaults */
+  let loadFunc = loadcb || (() => null);
+  let errorFunc = errcb || (() => null);
   /* Determine the final path to the asset */
   let path = src;
-  switch (tree) {
-    case MOD_TFC:
-      path = PATH_TFC + "/" + src;
-      break;
-    case MOD_TWAPI:
-      path = PATH_TWAPI + "/" + src;
-      break;
-    default:
-      if (src.startsWith("//")) {
-        path = window.location.protocol + src;
-      }
-      break;
+  if (tree === MOD_TFC) {
+    path = PATH_TFC + "/" + src;
+  } else if (tree === MOD_TWAPI) {
+    path = PATH_TWAPI + "/" + src;
+  } else if (src.startsWith("//")) {
+    path = window.location.protocol + src;
   }
   console.debug(`${src} @ ${tree} -> ${path}`);
 
   /* Prevent double-loading */
   if (ASSETS[path]) {
-    let astr = JSON.stringify(ASSETS[path]);
-    throw new Error(`Asset ${path} already added: ${astr}`);
+    throw new Error(`Duplicate asset ${path}: ${JSON.stringify(ASSETS[path])}`);
   }
 
   /* Construct and load the asset */
-  ASSETS[path] = {};
-  let asset = ASSETS[path];
+  let asset = ASSETS[path] = {};
   return new Promise(function(resolve, reject) {
     console.info("About to load asset", path);
     asset.file = src;
@@ -128,13 +129,13 @@ function AddAsset(src, tree=null, loadcb=null, errcb=null) {
     asset.script.onload = function() {
       console.log(`${asset.src} loaded`);
       asset.loaded = true;
-      if (loadcb) { loadcb(asset); }
+      loadFunc(asset);
       resolve(asset);
     };
     asset.script.onerror = function(e) {
       console.error("Failed loading", asset, e);
       asset.error = true;
-      if (errcb) { errcb(asset, e); }
+      errorFunc(asset, e);
       reject(e);
     };
     document.head.appendChild(asset.script);
@@ -154,8 +155,9 @@ function Main(global) { /* exported Main */
     let layout = GetLayout();
 
     /* Create the chat input elements */
-    let $Chat = $(`<div id="chat"></div>`)
-      .append($(`<textarea id="txtChat" placeholder="Send a message"></textarea>`));
+    let $ChatBox = $(`<textarea id="txtChat"></textarea>`)
+      .attr("placeholder", "Send a message");
+    let $Chat = $(`<div id="chat"></div>`).append($ChatBox);
 
     /* Apply default settings and formatting */
     let $Columns = $(".column");
@@ -291,8 +293,8 @@ function Main(global) { /* exported Main */
 }
 
 /* eslintrc config: */
-/* exported MOD_TFC MOD_TWAPI IS_TESLA ASK_DIST USE_DIST */
-/* exported URI BASE_URI SELF_URI GIT_URL CUR_URL PATH_TFC PATH_TWAPI */
+/* exported MOD_TFC MOD_TWAPI USE_DIST URI BASE_URI SELF_URI GIT_URL CUR_URL */
+/* exported PATH_TFC PATH_TWAPI */
 /* globals InitChatCommands doLoadClient */
 
 /* vim: set ts=2 sts=2 sw=2 et: */
