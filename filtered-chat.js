@@ -588,7 +588,9 @@ function genConfigURL(config, options=null) {
   if (config.__clientid_override) {
     qsAdd("clientid", config.ClientID);
   }
-  qsAdd("channels", config.Channels.join(","));
+  if (config.Channels) {
+    qsAdd("channels", config.Channels.join(","));
+  }
   if (config.NoAssets) {
     qsAdd("noassets", config.NoAssets);
   }
@@ -602,9 +604,13 @@ function genConfigURL(config, options=null) {
     qsAdd("hmax", config.HistorySize);
   }
   for (let module of Object.keys(getModules())) {
-    qsAdd(module, formatModuleConfig(config[module]));
+    if (config[module]) {
+      qsAdd(module, formatModuleConfig(config[module]));
+    }
   }
-  qsAdd("layout", FormatLayout(config.Layout));
+  if (config.Layout) {
+    qsAdd("layout", FormatLayout(config.Layout));
+  }
   if (config.Transparent) {
     qsAdd("trans", "1");
   }
@@ -1813,6 +1819,8 @@ function doLoadClient() { /* exported doLoadClient */
   /* Clicking elsewhere on the document: reconnect, username context window */
   $(document).click(function(e) {
     let $t = $(e.target);
+    let cx = e.clientX;
+    let cy = e.clientY;
 
     /* Clicking on or off of the module settings button or box */
     for (let module of Object.values(getModules())) {
@@ -1820,11 +1828,14 @@ function doLoadClient() { /* exported doLoadClient */
       let $mm = $m.find(".menu");
       let $mh = $m.find(".header");
       let $ms = $m.find(".settings");
-      if (Util.PointIsOn(e.clientX, e.clientY, $mm)) {
+      if (Util.PointIsOn(cx, cy, $mm)) {
+        /* Clicked on the menu button */
         toggleModuleSettings($m);
       } else if ($ms.is(":visible")) {
-        if (!Util.PointIsOn(e.clientX, e.clientY, $ms)) {
-          if (!Util.PointIsOn(e.clientX, e.clientY, $mh)) {
+        if (!Util.PointIsOn(cx, cy, $ms)) {
+          /* Clicked off of the settings window */
+          if (!Util.PointIsOn(cx, cy, $mh)) {
+            /* Clicked off of the header */
             closeModuleSettings($m);
           }
         }
@@ -1834,14 +1845,22 @@ function doLoadClient() { /* exported doLoadClient */
     /* Clicking off the main settings window */
     let $sw = $("#settings");
     if ($sw.is(":visible")) {
-      if (!Util.PointIsOn(e.clientX, e.clientY, $sw)) {
+      let close = true;
+      if ($sw.has(e.target || e.currentTarget).length > 0) {
+        /* Clicking on an element within the settings window: don't close */
+        close = false;
+      } else if (Util.PointIsOn(cx, cy, $sw)) {
+        /* Clicking within the settings window: don't close */
+        close = false;
+      }
+      if (close) {
         closeSettings();
       }
     }
 
     /* Clicking on the username context window */
     let $cw = $("#userContext");
-    if (Util.PointIsOn(e.clientX, e.clientY, $cw)) {
+    if (Util.PointIsOn(cx, cy, $cw)) {
       let ch = $cw.attr("data-channel");
       let user = $cw.attr("data-user");
       let userid = $cw.attr("data-user-id");
