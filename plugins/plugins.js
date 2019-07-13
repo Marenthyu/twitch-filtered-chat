@@ -4,7 +4,7 @@
 
 /* TODO: Make a README.md */
 
-/** Plugin configuration
+/* Plugin configuration
  *
  * To configure plugins, pass a plugincfg= value in the query string. Value
  * must be a URI-encoded object of the following form:
@@ -19,7 +19,7 @@
  * documentation for their expected tag and configuration keys.
  */
 
-/** Plugin registration and usage
+/* Plugin registration and usage
  *
  * To add your own plugins, place them in this directory and call
  * Plugins.add with the plugin's definition object:
@@ -37,23 +37,21 @@
  * order. Default order is 1000.
  */
 
-/*** Expected plugin API
+/* Expected plugin API
  *
- ** constructor(resolve, reject[, client [, args[, config]]])
- *    resolve: call with `this` when the plugin has finished constructing
- *    reject:  call with an Error() if loading the plugin fails
- *    client:  reference to the TwitchClient object
- *    args:    value of the plugin definition "args" key
- *    config:  configuration object, excluding sensitive items
- ** name:      plugin's name, as a string or getter attribute
+ * constructor(resolve, reject[, client [, args[, config]]])
+ *   resolve: call with `this` when the plugin has finished constructing
+ *   reject:  call with an Error() if loading the plugin fails
+ *   client:  reference to the TwitchClient object
+ *   args:    value of the plugin definition "args" key
+ *   config:  configuration object, excluding sensitive items
+ * name       plugin's name, as a string or getter attribute
  *
- *** Available plugin API
- *
- ** shouldFilter(module, event)
- *  Return true to filter out the event, false to hide it, or some other
- *  value to continue testing subsequent filters.
- *    module:  a HTML DOM element referring to one of the modules
- *    event:   a TwitchEvent (or TwitchChatEvent, or TwitchSubEvent)
+ * shouldFilter(module, event)
+ *   Return true to filter out the event, false to show it, or null to continue
+ *   the filtering logic.
+ *   module:  a HTML DOM element referring to one of the modules
+ *   event:   a TwitchEvent (or TwitchChatEvent, or TwitchSubEvent)
  */
 
 class PluginStorageClass {
