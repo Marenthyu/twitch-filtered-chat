@@ -875,28 +875,28 @@ function onCommandClient(cmd, tokens, client) {
   let us = client.SelfUserState() || {};
   Content.addHelpText("Client information:");
   Content.addHelpLine("Socket:", cstatus.open ? "Open" : "Closed");
-  Content.addHelpLine("Endpoint:", cstatus.endpoint);
+  Content.addHelpLine("Endpoint:", cstatus.endpoint, true);
   Content.addHelpLine("Status:", cstatus.connected ? "Connected" : "Not connected");
   Content.addHelpLine("Identified:", cstatus.identified ? "Yes" : "No");
   Content.addHelpLine("Authenticated:", cstatus.authed ? "Yes" : "No");
-  Content.addHelpLine("Name:", client.GetName());
+  Content.addHelpLine("Name:", client.GetName(), true);
   Content.addHelpLine("FFZ:", client.FFZEnabled() ? "Enabled" : "Disabled");
   Content.addHelpLine("BTTV:", client.BTTVEnabled() ? "Enabled" : "Disabled");
-  Content.addHelpLine("User ID:", `${us.userid}`);
+  Content.addHelpLine("User ID:", `${us.userid}`, true);
   Content.addHelpText(`Channels connected to: ${channels.length}`);
   for (let c of channels) {
     let ui = us[c] || {};
     let ci = client.GetChannelInfo(c) || {};
     let rooms = Object.keys(ci.rooms || {});
     Content.addHelpText(`Channel ${c}:`);
-    Content.addHelpLine("Status:", `${ci.online ? "On" : "Off"}line`);
-    Content.addHelpLine("ID:", ci.id);
-    Content.addHelpLine("Active users:", ci.users ? ci.users.length : 0);
-    Content.addHelpLine(`Rooms: ${rooms.length}`, rooms.join(", "));
+    Content.addHelpLine("Status:", `${ci.online ? "On" : "Off"}line`, true);
+    Content.addHelpLine("ID:", ci.id, true);
+    Content.addHelpLine("Active users:", ci.users ? ci.users.length : 0, true);
+    Content.addHelpLine(`Rooms: ${rooms.length}`, rooms.join(", "), true);
     if (Object.entries(ui).length > 0) {
-      Content.addHelpLine("User Color:", ui.color || "not set");
-      Content.addHelpLine("User Badges:", JSON.stringify(ui.badges));
-      Content.addHelpLine("Display Name:", `${ui["display-name"]}`);
+      Content.addHelpLine("User Color:", ui.color || "not set", true);
+      Content.addHelpLine("User Badges:", JSON.stringify(ui.badges), true);
+      Content.addHelpLine("Display Name:", `${ui["display-name"]}`, true);
       Content.addHelpText(`User Info: ${JSON.stringify(ui)}`);
     }
   }
@@ -962,7 +962,7 @@ function onCommandHighlight(cmd, tokens, client) {
     Content.addHelpText("Current highlight patterns:");
     for (let idx = 0; idx < H.highlightMatches.length; ++idx) {
       let pat = H.highlightMatches[idx];
-      Content.addHelpLine(`Index ${idx+1}`, `${pat}`);
+      Content.addHelpLine(`Index ${idx+1}`, `${pat}`, true);
     }
   } else if (tokens[0] === "add") {
     let patstr = tokens.slice(1).join(" ");

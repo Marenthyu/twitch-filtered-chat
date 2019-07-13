@@ -994,21 +994,20 @@ class HTMLGenerator { /* exported HTMLGenerator */
   }
 
   /* Returns jquery node */
-  mysteryGift(event) {
+  mysteryGift(event) { /* TODO */
     let message = `${event.command} TODO`;
     return $(`<div class="message">${message}</div>`);
   }
 
   /* Returns jquery node */
-  giftUpgrade(event) {
+  giftUpgrade(event) { /* TODO */
+    /* Called for giftupgrade, primeupgrade, anongiftupgrade */
     let message = `${event.command} TODO`;
     return $(`<div class="message">${message}</div>`);
   }
 
   /* Returns jquery node */
-  genClip(slug, clip_data, game_data) {
-    /* TODO: Polish, CSS */
-    Util.Debug("genClip", slug, clip_data, game_data);
+  genClip(slug, clip_data, game_data) { /* TODO */
     let $w = $("<div class=\"clip-preview\"></div>");
     let streamer = clip_data.broadcaster_name;
     let game = game_data.name;

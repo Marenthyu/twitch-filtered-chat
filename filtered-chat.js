@@ -3,11 +3,8 @@
 "use strict";
 
 /* FIXME:
- * HTML injection via Content.addHelpLine
+ * Possible HTML injection via Content.addHelpLine
  * Username context window should slide rather than teleport to new names
- * Chat line backgrounds flicker between messages
- *   Caused by non-chat messagesclearing excess chat messages
- * Browser autofills prevent disabling authentication
  */
 
 /* TODO (in approximate decreasing priority):
@@ -34,24 +31,29 @@
 
 /* Call func when the input element is changed */
 function onChange(elem, func) {
+  /* Default function wrapper */
+  function wrapper(event) {
+    return func.bind(this)(event);
+  }
   for (let e of $(elem)) {
     let $e = $(e);
     if ($e.is("input")) {
       let type = $e.attr("type");
       if (type === "text") {
+        /* input type=text: Enter keyup and blur */
         $e.keyup(function(event) {
           if (event.key === "Enter") {
             return func.bind(this)(event);
           }
         });
-        $e.blur(function(event) { func.bind(this)(event); });
-      } else if (type === "checkbox") {
-        $e.change(function(event) { func.bind(this)(event); });
+        $e.blur(wrapper);
       } else {
-        $e.change(function(event) { func.bind(this)(event); });
+        /* Other input types: change */
+        $e.change(wrapper);
       }
     } else {
-      $e.change(function(event) { func.bind(this)(event); });
+      /* Other elements: change */
+      $e.change(wrapper);
     }
   }
 }
@@ -145,9 +147,9 @@ class Content { /* exported Content */
     Content.addPre($(`<div class="help"></div>`).text(s));
   }
 
-  /* Add help line pair: does not escape */
-  static addHelpLine(c, s) {
-    Content.addHelp(ChatCommands.helpLine(c, s));
+  /* Add help line pair: escapes when escape=true (default false) */
+  static addHelpLine(c, s, escape=false) {
+    Content.addHelp(ChatCommands.helpLine(c, s, escape));
   }
 }
 
@@ -570,6 +572,105 @@ function mergeConfigObject(to_merge=null) {
   }
   Util.SetWebStorage(config);
   window.liveStorage = config;
+}
+
+/* Generate a URL from the given config object */
+function genConfigURL(config, options=null) {
+  let opts = options || {};
+  let base = opts.git ? GIT_URL : CUR_URL;
+  let qs = [];
+  let qsAdd = (k, v) => qs.push(`${k}=${encodeURIComponent(v)}`);
+
+  if (opts.key) {
+    qsAdd("key", opts.key);
+  }
+  if (config.Debug > 0) {
+    qsAdd("debug", config.Debug);
+  }
+  if (config.__clientid_override) {
+    qsAdd("clientid", config.ClientID);
+  }
+  qsAdd("channels", config.Channels.join(","));
+  if (config.NoAssets) {
+    qsAdd("noassets", config.NoAssets);
+  }
+  if (config.NoFFZ) {
+    qsAdd("noffz", config.NoFFZ);
+  }
+  if (config.NoBTTV) {
+    qsAdd("nobttv", config.NoBTTV);
+  }
+  if (config.HistorySize) {
+    qsAdd("hmax", config.HistorySize);
+  }
+  for (let module of Object.keys(getModules())) {
+    qsAdd(module, formatModuleConfig(config[module]));
+  }
+  qsAdd("layout", FormatLayout(config.Layout));
+  if (config.Transparent) {
+    qsAdd("trans", "1");
+  }
+  if (config.NoAutoReconnect) {
+    qsAdd("norec", "1");
+  }
+  let font_curr = Util.CSS.GetProperty("--body-font-size");
+  let font_dflt = Util.CSS.GetProperty("--body-font-size-default");
+  if (font_curr !== font_dflt) {
+    qsAdd("size", font_curr.replace(/[^0-9]/g, ""));
+  }
+  if (config.Plugins) {
+    qsAdd("plugins", "1");
+  }
+  if (config.MaxMessages !== TwitchClient.DEFAULT_MAX_MESSAGES) {
+    qsAdd("max", `${config.MaxMessages}`);
+  }
+  if (config.Font) {
+    qsAdd("font", config.Font);
+  }
+  if (config.Scroll) {
+    qsAdd("scroll", "1");
+  }
+  if (config.ShowClips) {
+    qsAdd("clips", "1");
+  }
+  if (opts.auth && config.Name && config.Pass) {
+    qsAdd("user", config.Name);
+    qsAdd("pass", config.Pass);
+  }
+  if (config.DisableEffects) {
+    qsAdd("disable", config.DisableEffects.join(","));
+  }
+  if (config.EnableEffects) {
+    qsAdd("enable", config.EnableEffects.join(","));
+  }
+  if (config.PluginConfig) {
+    qsAdd("plugincfg", JSON.stringify(config.PluginConfig));
+  }
+  if (config.ColorScheme === "dark") {
+    qsAdd("scheme", "dark");
+  } else if (config.ColorScheme === "light") {
+    qsAdd("scheme", "light");
+  }
+  if (config.EnableForce) {
+    qsAdd("force", "1");
+  }
+  if (config.Fanfare) {
+    qsAdd("fanfare", JSON.stringify(config.Fanfare));
+  }
+  if (config.Highlight) {
+    qsAdd("highlight", config.Highlight.map((s) => `${s}`).join(","));
+  }
+  if (opts.tag) {
+    qsAdd("tag", opts.tag);
+  } else if (config.tag) {
+    qsAdd("tag", config.tag);
+  }
+
+  if (opts.base64) {
+    return base + "?base64=" + encodeURIComponent(btoa(qs.join("&")));
+  } else {
+    return base + "?" + qs.join("&");
+  }
 }
 
 /* Module configuration {{{1 */
@@ -1066,18 +1167,15 @@ function doLoadClient() { /* exported doLoadClient */
           mcfgs.push([k, v]);
         }
         if (key !== null) {
-          Content.addHelpLine(key, val);
+          Content.addHelpLine(`${key}`, `${val}`, true);
         }
       }
       Content.addHelp(`<em>Window Configuration Values:</em>`);
       for (let [k, v] of mcfgs) {
-        let quote = (e) => `&quot;${e}&quot`;
-        let kstr = `<span class="arg">${k}</span>`;
-        let vstr = `&quot;${v.Name}&quot;`;
-        Content.addHelpText(`Module ${kstr}: ${vstr}`);
+        Content.addHelpText(`Module ${k}: ${v.Name}`);
         for (let [ck, cv] of Object.entries(v)) {
           if (ck !== "Name") {
-            Content.addHelpLine(ck, quote(cv));
+            Content.addHelpLine(`${ck}`, `${cv}`, true);
           }
         }
       }
@@ -1093,9 +1191,10 @@ function doLoadClient() { /* exported doLoadClient */
       Content.addHelpLine("git", "Force URL to target github.io");
       Content.addHelpLine("text", "Force URL to be un-encoded");
       Content.addHelpLine("auth", "Include passwords in URL");
-      Content.addHelpLine("tag=&lt;value&gt;", "Set the tag to &lt;value&gt;");
-      Content.addHelpText("//config set <key> <value>: Change <key> to <value> (dangerous!)");
-      Content.addHelpText("//config setobj <key> <value>: Change <key> to JSON-encoded <value> (dangerous!)");
+      Content.addHelpLine("tag=<value>", "Set the tag to <value>", true);
+      Content.addHelpLine("key=<value>", "Use config key to <value>", true);
+      Content.addHelpText("//config set <key> <value>: Directly change <key> to <value> (dangerous!)");
+      Content.addHelpText("//config setobj <key> <value>: Directly change <key> to JSON-encoded <value> (dangerous!)");
       Content.addHelpText("//config unset <key>: Remove <key> (dangerous!)");
     } else if (t0 === "export") {
       Util.Open(AssetPaths.CONFIG_EXPORT_WINDOW, "_blank", {});
@@ -1104,116 +1203,26 @@ function doLoadClient() { /* exported doLoadClient */
       window.liveStorage = {};
       Content.addNoticeText(`Purged storage "${Util.GetWebStorageKey()}"`);
     } else if (t0 === "clientid") {
-      Content.addHelpLine("ClientID", cfg.ClientID);
+      Content.addHelpLine("ClientID", cfg.ClientID, true);
     } else if (t0 === "pass") {
-      Content.addHelpLine("Pass", cfg.Pass);
+      Content.addHelpLine("Pass", cfg.Pass, true);
     } else if (t0 === "url") {
       /* Generate a URL with the current configuration, omitting items
        * left at default values */
-
-      /* Base URL, query string array, and function to add items */
-      let url = tokens.indexOf("git") > -1 ? GIT_URL : CUR_URL;
-      let qs = [];
-      let qsAdd = (k, v) => qs.push(`${k}=${encodeURIComponent(v)}`);
-
-      /* Generate and append query string items */
-      if (cfg.Debug > 0) {
-        qsAdd("debug", cfg.Debug);
+      let opts = {
+        git: 0,
+        auth: 0,
+        base64: 1,
+        tag: config.tag || ""
+      };
+      for (let t of tokens) {
+        if (t === "git") opts.git = 1;
+        if (t === "auth") opts.auth = 1;
+        if (t === "text") opts.base64 = 0;
+        if (t.startsWith("tag=")) opts.tag = t.substr(4);
+        if (t.startsWith("key=")) opts.key = t.substr(4);
       }
-      if (cfg.__clientid_override) {
-        qsAdd("clientid", cfg.ClientID);
-      }
-      qsAdd("channels", cfg.Channels.join(","));
-      if (cfg.NoAssets) {
-        qsAdd("noassets", cfg.NoAssets);
-      }
-      if (cfg.NoFFZ) {
-        qsAdd("noffz", cfg.NoFFZ);
-      }
-      if (cfg.NoBTTV) {
-        qsAdd("nobttv", cfg.NoBTTV);
-      }
-      if (cfg.HistorySize) {
-        qsAdd("hmax", cfg.HistorySize);
-      }
-      for (let module of Object.keys(getModules())) {
-        qsAdd(module, formatModuleConfig(cfg[module]));
-      }
-      qsAdd("layout", FormatLayout(cfg.Layout));
-      if (cfg.Transparent) {
-        qsAdd("trans", "1");
-      }
-      if (cfg.NoAutoReconnect) {
-        qsAdd("norec", "1");
-      }
-      let font_curr = Util.CSS.GetProperty("--body-font-size");
-      let font_dflt = Util.CSS.GetProperty("--body-font-size-default");
-      if (font_curr !== font_dflt) {
-        qsAdd("size", font_curr.replace(/[^0-9]/g, ""));
-      }
-      if (cfg.Plugins) {
-        qsAdd("plugins", "1");
-      }
-      if (cfg.MaxMessages !== TwitchClient.DEFAULT_MAX_MESSAGES) {
-        qsAdd("max", `${cfg.MaxMessages}`);
-      }
-      if (cfg.Font) {
-        qsAdd("font", cfg.Font);
-      }
-      if (cfg.Scroll) {
-        qsAdd("scroll", "1");
-      }
-      if (cfg.ShowClips) {
-        qsAdd("clips", "1");
-      }
-      if (tokens.indexOf("auth") > -1) {
-        qsAdd("user", cfg.Name);
-        qsAdd("pass", cfg.Pass);
-      }
-      if (cfg.DisableEffects) {
-        qsAdd("disable", cfg.DisableEffects.join(","));
-      }
-      if (cfg.EnableEffects) {
-        qsAdd("enable", cfg.EnableEffects.join(","));
-      }
-      if (cfg.PluginConfig) {
-        qsAdd("plugincfg", JSON.stringify(cfg.PluginConfig));
-      }
-      if (cfg.ColorScheme === "dark") {
-        qsAdd("scheme", "dark");
-      } else if (cfg.ColorScheme === "light") {
-        qsAdd("scheme", "light");
-      }
-      if (cfg.EnableForce) {
-        qsAdd("force", "1");
-      }
-      if (cfg.Fanfare) {
-        qsAdd("fanfare", JSON.stringify(cfg.Fanfare));
-      }
-      if (cfg.Highlight || client.get("HTMLGen").highlightMatches) {
-        let pats = cfg.Highlight || [];
-        pats = pats.concat(client.get("HTMLGen").highlightMatches || []);
-        qsAdd("highlight", pats.map((s) => `${s}`).join(","));
-      }
-
-      /* Append a tag */
-      let custom_tag = cfg.tag ? cfg.tag : "";
-      for (let t of tokens.slice(1)) {
-        if (t.startsWith("tag=")) {
-          custom_tag = t.substr(4);
-        }
-      }
-      if (custom_tag) {
-        qsAdd("tag", custom_tag);
-      }
-
-      /* Append query string to the URL */
-      if (tokens.includes("text")) {
-        url += "?" + qs.join("&");
-      } else {
-        url += "?base64=" + encodeURIComponent(btoa(qs.join("&")));
-      }
-
+      let url = genConfigURL(cfg, opts);
       Content.addHelp($(`<a></a>`).attr("href", url).text(url));
     } else if ((t0 === "set" || t0 === "setobj") && tokens.length > 2) {
       /* Allow changing configuration by command (dangerous) */
@@ -1244,13 +1253,13 @@ function doLoadClient() { /* exported doLoadClient */
         let oldval = Util.ObjectGet(cfg, key);
         let oldstr = JSON.stringify(oldval);
         Content.addHelpText(`Changing ${key} from "${oldstr}" to "${newstr}"`);
-        Content.addHelpLine(key, oldstr);
-        Content.addHelpLine(key, newstr);
+        Content.addHelpLine(key, oldstr, true);
+        Content.addHelpLine(key, newstr, true);
         Util.ObjectSet(cfg, key, newval);
         mergeConfigObject(cfg);
       } else {
         Content.addHelpText(`Adding key ${key} with value "${newstr}"`);
-        Content.addHelpLine(key, newstr);
+        Content.addHelpLine(key, newstr, true);
         Util.ObjectSet(cfg, key, newval);
         mergeConfigObject(cfg);
       }
@@ -1271,7 +1280,7 @@ function doLoadClient() { /* exported doLoadClient */
       }
     } else if (Util.ObjectHas(cfg, t0)) {
       Content.addHelpText("Configuration:");
-      Content.addHelpLine(t0, JSON.stringify(Util.ObjectGet(cfg, t0)));
+      Content.addHelpLine(t0, JSON.stringify(Util.ObjectGet(cfg, t0)), true);
     } else {
       let tok = `"${t0}"`;
       Content.addErrorText(`Unknown config command or key ${tok}`, true);
@@ -1312,20 +1321,16 @@ function doLoadClient() { /* exported doLoadClient */
   });
 
   /* Disable configured events */
-  if (config.DisableEffects) {
-    for (let effect of config.EnableEffects) {
-      if (CSSCheerStyles[effect]) {
-        CSSCheerStyles[effect]._disabled = true;
-      }
+  for (let effect of config.EnableEffects || []) {
+    if (CSSCheerStyles[effect]) {
+      CSSCheerStyles[effect]._disabled = true;
     }
   }
 
   /* Enable configured effects */
-  if (config.EnableEffects) {
-    for (let effect of config.EnableEffects) {
-      if (CSSCheerStyles[effect]) {
-        CSSCheerStyles[effect]._disabled = false;
-      }
+  for (let effect of config.EnableEffects || []) {
+    if (CSSCheerStyles[effect]) {
+      CSSCheerStyles[effect]._disabled = false;
     }
   }
 
@@ -1524,14 +1529,14 @@ function doLoadClient() { /* exported doLoadClient */
     $("#txtChat").attr("data-hist-index", "-1");
   }
 
-  /* Initialize chat auto-completion and history */
-  resetChatComplete();
-  resetChatHistory();
-
   /* Open the settings builder page */
   function openSettingsTab() {
     Util.Open(AssetPaths.BUILDER_WINDOW, "_blank", {});
   }
+
+  /* Initialize chat auto-completion and history */
+  resetChatComplete();
+  resetChatHistory();
 
   /* Add command to open the settings builder page */
   ChatCommands.add("builder", function _on_cmd_builder(cmd, tokens, client_) {
@@ -1877,6 +1882,11 @@ function doLoadClient() { /* exported doLoadClient */
       Content.addNoticeText("Reconnecting...");
       client.Connect();
     }
+  });
+
+  /* Document gained focus: clear notification icon */
+  $(document).focus(function(e) {
+    setNotify(false);
   });
 
   /* WebSocket opened */
