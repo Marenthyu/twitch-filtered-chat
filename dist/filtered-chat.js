@@ -1,4 +1,6 @@
 /* Twitch Filtered Chat Main Module */"use strict";/* TODO (in approximate decreasing priority):
+ * Provide switch between /twitch-api and /twitch-filtered-chat/twitch-api
+ *   Git URL must default to /twitch-filtered-chat/twitch-api
  * Add to content to both of the settings help and builder links
  *   Change AssetPaths.BUILDER_WINDOW to use the new builder
  *   shayd3 is working on the builder
