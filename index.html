@@ -8,9 +8,6 @@
   <script type="text/javascript" src="assets/jquery-3.4.0.js"></script>
   <!-- CSS.escape polyfill -->
   <script type="text/javascript" src="assets/css.escape.js"></script>
-  <!-- TODO: Investigate whether or not this is a better idea
-  <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?flags=gated&features=default%2Ces6%2Ces7%2Ces5%2CElement.prototype.cloneNode%2CElement.prototype.toggleAttribute%2CFunction.prototype.name%2CObject.entries%2CObject.is%2CObject.values%2CPromise.prototype.finally%2CRegExp.prototype.flags%2Cconsole%2Cconsole.info%2Cconsole.log%2Cconsole.error%2Cconsole.debug%2Cconsole.warn%2Cconsole.trace%2Cfetch%2ClocalStorage%2Cconsole.time%2Cconsole.timeEnd%2Cconsole.timeStamp%2Cconsole.profile%2Cconsole.profileEnd%2Cconsole.profiles%2Cconsole.group%2Cconsole.groupEnd%2Cconsole.groupCollapsed%2Cconsole.exception%2CrequestAnimationFrame"></script>
-  -->
   <!-- Script injector (NOTE: All JS here must be ES5-compliant) -->
   <script type="text/javascript" id="main-inject">
 
@@ -200,24 +197,26 @@ function onLoad() {
       <span class="fl">Settings<span class="btn" id="btnSettingsHelp">?</span></span>
       <span class="fr btn" id="btnSettingsBuilder">Builder</span>
     </header>
-    <ul>
-      <!-- General settings (formatted to remove unwanted Text elements) -->
-      <li><label for="txtChannel">Channels:</label><input type="text" id="txtChannel" /></li>
-      <li><label for="txtNick">Nick:</label><input type="text" id="txtNick" /></li>
-      <li><label for="txtPass">OAuth:</label><input type="password" id="txtPass" /><input type="text" id="txtPassDummy" value="Cached" disabled /></li>
-      <li><label for="cbScroll">Scrollbars:</label><input type="checkbox" id="cbScroll" class="middle" /></li>
-      <li><label for="cbTransparent">Transparent:</label><input type="checkbox" id="cbTransparent" class="middle" /></li>
-      <li><label for="cbClips">Show Clips:</label><input type="checkbox" id="cbClips" class="middle" /></li>
-      <li><label for="cbForce">Mod Antics:</label><input type="checkbox" id="cbForce" class="middle" /></li>
-      <li><label for="selDebug">Debugging:</label><select id="selDebug"><option value="0" selected>Disabled</option><option value="1">Debug</option><option value="2">Trace</option></select></li>
-    </ul>
+    <!-- General settings section -->
+    <section>
+      <ul>
+        <li><label for="txtChannel">Channels:</label><input type="text" id="txtChannel" /></li>
+        <li><label for="txtNick">Nick:</label><input type="text" id="txtNick" /></li>
+        <li><label for="txtPass">OAuth:</label><input type="password" id="txtPass" /><input type="text" id="txtPassDummy" value="Cached" disabled /></li>
+        <li><label for="cbScroll">Scrollbars:</label><input type="checkbox" id="cbScroll" class="middle" /></li>
+        <li><label for="cbTransparent">Transparent:</label><input type="checkbox" id="cbTransparent" class="middle" /></li>
+        <li><label for="cbClips">Show Clips:</label><input type="checkbox" id="cbClips" class="middle" /></li>
+        <li><label for="cbForce">Mod Antics:</label><input type="checkbox" id="cbForce" class="middle" /></li>
+        <li><label for="selDebug">Debugging:</label><select id="selDebug"><option value="0" selected>Disabled</option><option value="1">Debug</option><option value="2">Trace</option></select></li>
+      </ul>
+    </section>
+    <!-- Advanced settings section -->
     <section id="advSettings" style="display: none">
       <header style="display: inline-block; width: 100%">
         <span class="fl">Advanced Settings</span>
         <span class="fr btn" id="btnAdvHide">Hide</span>
       </header>
       <ul>
-        <!-- Advanced settings (formatted to remove unwanted Text elements) -->
         <li><label for="cbAnimCheers" style="width: 10em">Animated Cheers:</label><input type="checkbox" id="cbAnimCheers" class="middle" /></label></li>
         <li><label for="txtBGStyle">BG Image:</label><input type="text" id="txtBGStyle" /></li>
         <li><label for="txtFont">Font:</label><input type="text" id="txtFont" /></li>
