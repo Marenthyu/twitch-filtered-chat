@@ -84,7 +84,7 @@ const Strings = { /* exported Strings */
   NewUser: (user) => `${user} is new here! Say hello!`
 };
 
-/* CSS cheer styles */
+/* CSS cheer styles; not const to encourage modifications */
 var CSSCheerStyles = { /* exported CSSCheerStyles */
   slide: {
     _disabled: true,
@@ -169,7 +169,7 @@ function GetCheerStyle(word) { /* exported GetCheerStyle */
   return null;
 }
 
-/* Colors usable in cheer effects */
+/* Colors usable in cheer effects; not const to encourage modifications */
 var ColorNames = { /* exported ColorNames */
   "dust": "#b2996e",
   "tea": "#65ab7c",
