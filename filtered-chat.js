@@ -841,17 +841,6 @@ function setChannels(client, channels) {
 /* Return whether or not the event should be filtered */
 function shouldFilter(module, event) {
   let rules = getModuleSettings(module);
-  if (window.Plugins && !window.PluginsAreDisabled) {
-    let plugin_results = Plugins.invoke("shouldFilter", module, event);
-    if (plugin_results && plugin_results.length > 0) {
-      for (let i of plugin_results) {
-        if (typeof(i) === "boolean") {
-          return i;
-        }
-        /* Other values: continue the filtering logic */
-      }
-    }
-  }
   if (event instanceof TwitchChatEvent) {
     let user = event.user || "";
     let message = event.message ? event.message.toLowerCase() : "";
@@ -891,6 +880,17 @@ function shouldFilter(module, event) {
     if (!rules.Event) {
       if (event.command === "USERNOTICE" || event.command === "NOTICE") {
         return true;
+      }
+    }
+  }
+  if (window.Plugins && !window.PluginsAreDisabled) {
+    let plugin_results = Plugins.invoke("shouldFilter", module, event);
+    if (plugin_results && plugin_results.length > 0) {
+      for (let i of plugin_results) {
+        if (typeof(i) === "boolean") {
+          return i;
+        }
+        /* Other values: continue the filtering logic */
       }
     }
   }
