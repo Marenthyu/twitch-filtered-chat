@@ -2,28 +2,24 @@
 
 "use strict";
 
-/* FIXME:
- * Possible HTML injection via Content.addHelpLine
- * Username context window should slide rather than teleport to new names
- */
-
 /* TODO (in approximate decreasing priority):
- * Add to content to both #settings help and builder links
+ * Add to content to both of the settings help and builder links
  *   Change AssetPaths.BUILDER_WINDOW to use the new builder
  *   shayd3 is working on the builder
- * Move authentication to using Twitch's implicit OAuth flow?
+ * Authenticate using Twitch's implicit OAuth flow?
+ *   Ensure this doesn't preclude query string configuration, or if it does,
+ *   somehow work around it
  * Create a README.md file for the plugins directory. Include documentation on:
  *   Commands
  *   Filtering
  *   Plugin configuration (?plugincfg)
- * Add configurable message highlighting (//highlight)
  * Auto-complete command arguments
  * Remove F1 hotkey binding
  */
 
 /* IDEAS:
  * Add layout selection box to #settings (reloads page on change)?
- * Allow for a configurable number of columns?
+ * Allow for a configurable number of columns? Configurable layout?
  * Add re-include (post-exclude) filtering options for Mods, Bits, Subs, etc?
  */
 
@@ -859,11 +855,14 @@ function shouldFilter(module, event) {
   if (event instanceof TwitchChatEvent) {
     let user = event.user || "";
     let message = event.message ? event.message.toLowerCase() : "";
-    /* NOTE: pleb < sub < vip < mod */
+    /* NOTE: pleb < sub < vip < mod < caster */
     let role = "pleb";
     if (event.issub) role = "sub";
     if (event.isvip) role = "vip";
     if (event.ismod) role = "mod";
+    if (event.iscaster) role = "caster";
+    /* Never filter caster messages */
+    if (role === "caster") return false;
     /* Includes take priority over excludes */
     if (rules.IncludeUser.any((u) => u.equalsLowerCase(user))) return false;
     if (rules.IncludeKeyword.any((k) => message.indexOf(k) > -1)) return false;
@@ -1571,7 +1570,6 @@ function doLoadClient() { /* exported doLoadClient */
       /* Not sure why this gets fired, but ignore it */
     } else if (e.key === "Tab") {
       /* Tab completion */
-      /* TODO: Complete command arguments */
       let orig_text = $t.attr("data-complete-text") || t.value;
       let orig_pos = Util.ParseNumber($t.attr("data-complete-pos"));
       let compl_index = Util.ParseNumber($t.attr("data-complete-index"));
@@ -1866,7 +1864,6 @@ function doLoadClient() { /* exported doLoadClient */
           $cw.fadeOut();
         } else {
           /* Clicked on a different name */
-          /* FIXME: Slide to new user rather than teleport */
           showUserContextWindow(client, $cw, $l);
         }
       } else {
