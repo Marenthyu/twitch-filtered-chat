@@ -228,17 +228,15 @@ class Fanfare { /* exported Fanfare */
       Content.addHelpText("Add a number to cheerdemo to simulate that number of bits");
       Content.addHelpText("Available arguments for subdemo:");
       for (let kind of TwitchSubEvent.KINDS) {
-        Content.addHelpLine(kind, `Demonstrate the ${kind} type of subscription`);
+        Content.addHelpLine(kind, `Demonstrate the ${kind} type of subscription`, true);
       }
       for (let plan of TwitchSubEvent.PLANS) {
         let name = TwitchSubEvent.PlanName(plan);
-        Content.addHelpLine(plan, `Demonstrate a ${name} subscription`);
+        Content.addHelpLine(plan, `Demonstrate a ${name} subscription`, true);
       }
       Content.addHelpText(`Available "//${cmd} config" arguments:`);
-      Content.addHelpLine(`config set &lt;k&gt; &lt;v&gt;`,
-                          "Set configuration key &lt;k&gt; to value &lt;v&gt;");
-      Content.addHelpLine(`config unset &lt;k&gt;`,
-                          "Unset configuration key &lt;k&gt;");
+      Content.addHelpLine(`config set <k> <v>`, "Set key <k> to value <v>", true);
+      Content.addHelpLine(`config unset <k>`, "Unset key <k>", true);
     } else if (t0 === "on") {
       self._on = true;
       Content.addInfoText("Fanfare is now enabled");
@@ -274,7 +272,7 @@ class Fanfare { /* exported Fanfare */
       }
       self._onSubEvent(self._client, {kind: kind, plan: plan}, true);
     } else if (t0 === "config") {
-      Content.addHelpLine("config", JSON.stringify(self._config));
+      Content.addHelpLine("config", JSON.stringify(self._config), true);
       if (tokens.length > 2) {
         let t1 = tokens[1];
         let t2 = tokens[2];
@@ -286,10 +284,8 @@ class Fanfare { /* exported Fanfare */
         } else {
           Content.addErrorText(`Fanfare: unknown config argument ${t1}`);
           Content.addHelpText(`Available arguments:`);
-          Content.addHelpLine(`config set &lt;k&gt; &lt;v&gt;`,
-                              "Set configuration key &lt;k&gt; to value &lt;v&gt;");
-          Content.addHelpLine(`config unset &lt;k&gt;`,
-                              "Unset configuration key &lt;k&gt;");
+          Content.addHelpLine(`config set <k> <v>`, "Set key <k> to value <v>", true);
+          Content.addHelpLine(`config unset <k>`, "Unset key <k>", true);
         }
       }
     } else {
