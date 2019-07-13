@@ -17,14 +17,15 @@
  *
  * Example:
  * Run the following JavaScript:
- *   ChatCommands.add("mycommand", mycommandfunc, "My new command", 1, 2)
+ *   ChatCommands.add("mycommand", myFunc, "My new command", 1, 2)
  * Type the following into chat:
  *   "//mycommand value1 value2"
  * This results in the following call:
- *   mycommandfunc("mycommand", ["value1", "value2"], client, 1, 2)
+ *   myFunc("mycommand", ["value1", "value2"], client, 1, 2)
  */
 
 /* TODO
+ * Retain text after tab completion: "foo @<tab> foo" -> "foo @user foo"
  * Implement ChatCommands.addComplete(command, func)
  * Implement //plugins addremote <class> <url> [<config>]
  */
@@ -139,26 +140,25 @@ class ChatCommandManager {
 
   /* Request completion of the given completion object */
   complete(client, cargs) {
-    let text = cargs.orig_text;
-    let pos = cargs.orig_pos;
+    let text = cargs.oText;
+    let pos = cargs.oPos;
     let idx = cargs.index;
+    let matches = [];
     /* Text before tab: "test te<tab>" -> "test te" */
     let textBefore = text.substr(0, pos);
     /* Word being tab-completed: "test te<tab>" -> "te" */
     let wordPos = textBefore.search(/\W[\w]*$/);
     let currWord = textBefore;
+    /* Text to insert before the match (including any leading symbols) */
+    let prefix = cargs.oText;
     if (wordPos > -1) {
+      prefix = textBefore.substr(0, wordPos);
       currWord = textBefore.substr(wordPos).trimStart();
     }
-    let prefix = cargs.orig_text;
-    let matches = [];
     if (currWord.startsWith("@")) {
       /* Complete @<user> sequences */
       matches = this.tcGatherUsers(currWord.substr(1), client);
-      /* Clear the prefix so we can append a match below */
-      if (matches.length > 0) {
-        prefix = "@";
-      }
+      prefix = prefix + "@";
     } else if (this.isCommandStr(text)) {
       /* Complete commands */
       let word = this._trim(text.substr(0, pos));
@@ -167,8 +167,15 @@ class ChatCommandManager {
           matches.push(k);
         }
       }
-      /* Clear the prefix so we can append a match below */
       prefix = word ? text.substr(0, text.indexOf(word)) : text;
+    } else if (currWord.startsWith("#")) {
+      /* Complete channel-specific messages */
+      let word = text.substr(0, pos).toLowerCase();
+      for (let c of client.GetJoinedChannels()) {
+        if (word.length === 0 || c.toLowerCase().startsWith(word)) {
+          matches.push(c);
+        }
+      }
     }
 
     /* If matches were found, return one */
@@ -182,15 +189,15 @@ class ChatCommandManager {
         idx = 0;
       }
     } else {
-      text = cargs.orig_text;
-      pos = cargs.orig_pos;
+      text = cargs.oText;
+      pos = cargs.oPos;
     }
 
     return {
-      orig_text: cargs.orig_text,
-      orig_pos: cargs.orig_pos,
-      curr_text: text,
-      curr_pos: text.length,
+      oText: cargs.oText,
+      oPos: cargs.oPos,
+      cText: text,
+      cPos: text.length,
       index: idx
     };
   }

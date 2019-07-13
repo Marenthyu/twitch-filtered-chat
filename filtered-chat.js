@@ -876,7 +876,7 @@ function shouldFilter(module, event) {
       return true;
     }
   } else if (event instanceof TwitchEvent) {
-    /* Filter out events and notices */
+    /* Event filtering: notices and user notices */
     if (!rules.Event) {
       if (event.command === "USERNOTICE" || event.command === "NOTICE") {
         return true;
@@ -887,7 +887,7 @@ function shouldFilter(module, event) {
     let plugin_results = Plugins.invoke("shouldFilter", module, event);
     if (plugin_results && plugin_results.length > 0) {
       for (let i of plugin_results) {
-        if (typeof(i) === "boolean") {
+        if (i === true || i === false) {
           return i;
         }
         /* Other values: continue the filtering logic */
@@ -1551,14 +1551,20 @@ function doLoadClient() { /* exported doLoadClient */
       resetChatComplete();
       resetChatHistory();
     } else if (e.key === "Enter") {
-      /* Execute command or send message */
-      if (t.value.trim().length > 0) {
-        if (ChatCommands.isCommandStr(t.value)) {
-          ChatCommands.execute(t.value, client);
+      let text = t.value;
+      let t0 = text.indexOf(" ") > -1 ? text.split(" ")[0] : "";
+      if (text.trim().length > 0) {
+        if (ChatCommands.isCommandStr(text)) {
+          /* Execute chat command */
+          ChatCommands.execute(text, client);
+        } else if (client.channels.any((c) => t0.equalsLowerCase(c))) {
+          /* #channel: send message to #channel */
+          client.SendMessage(t0, text.substr(t0.length).strip());
         } else {
-          client.SendMessageToAll(t.value);
+          /* Send message to all channels */
+          client.SendMessageToAll(text);
         }
-        client.AddHistory(t.value);
+        client.AddHistory(text);
         t.value = "";
         resetChatComplete();
         resetChatHistory();
@@ -1570,41 +1576,42 @@ function doLoadClient() { /* exported doLoadClient */
       /* Not sure why this gets fired, but ignore it */
     } else if (e.key === "Tab") {
       /* Tab completion */
-      let orig_text = $t.attr("data-complete-text") || t.value;
-      let orig_pos = Util.ParseNumber($t.attr("data-complete-pos"));
-      let compl_index = Util.ParseNumber($t.attr("data-complete-index"));
-      if (Number.isNaN(orig_pos) || orig_pos === -1) {
-        orig_pos = t.selectionStart;
+      let oText = $t.attr("data-complete-text") || t.value;
+      let oPos = Util.ParseNumber($t.attr("data-complete-pos"));
+      let complIndex = Util.ParseNumber($t.attr("data-complete-index"));
+      if (Number.isNaN(oPos) || oPos === -1) {
+        oPos = t.selectionStart;
       }
-      if (Number.isNaN(compl_index)) {
-        compl_index = 0;
+      if (Number.isNaN(complIndex)) {
+        complIndex = 0;
       }
-      let compl_obj = {
-        orig_text: orig_text,
-        orig_pos: orig_pos,
-        curr_text: t.value,
-        curr_pos: t.selectionStart,
-        index: compl_index
+      let complObj = {
+        oText: oText,
+        oPos: oPos,
+        cText: t.value,
+        cPos: t.selectionStart,
+        index: complIndex
       };
-      compl_obj = ChatCommands.complete(client, compl_obj);
-      $t.attr("data-complete-text", compl_obj.orig_text);
-      $t.attr("data-complete-pos", compl_obj.orig_pos);
-      $t.attr("data-complete-index", compl_obj.index);
-      t.value = compl_obj.curr_text;
+      complObj = ChatCommands.complete(client, complObj);
+      $t.attr("data-complete-text", complObj.oText);
+      $t.attr("data-complete-pos", complObj.oPos);
+      $t.attr("data-complete-index", complObj.index);
+      t.value = complObj.cText;
       requestAnimationFrame(() => {
-        t.selectionStart = compl_obj.curr_pos;
-        t.selectionEnd = compl_obj.curr_pos;
+        t.selectionStart = complObj.cPos;
+        t.selectionEnd = complObj.cPos;
       });
       resetChatHistory();
       e.preventDefault();
       return false;
     } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       /* Handle traversing message history */
-      let i = Util.ParseNumber($t.attr("data-hist-index"));
-      let d = (e.key === "ArrowUp" ? 1 : -1);
+      let l = client.GetHistoryLength();
+      let d = ({ArrowUp: 1, ArrowDown: -1})[e.key];
+      let i = d + Util.ParseNumber($t.attr("data-hist-index"));
       /* Restrict i to [-1, length-1] */
-      i = Math.clamp(i + d, -1, client.GetHistoryLength() - 1);
-      let val = client.GetHistoryItem(i);
+      let val = client.GetHistoryItem(Math.clamp(i, -1, l - 1));
+      /* Update the text if the value is present (non-null) */
       if (val !== null) {
         t.value = val.trim();
       }
