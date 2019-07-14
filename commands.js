@@ -914,17 +914,6 @@ function onCommandRaw(cmd, tokens, client) {
   client.SendRaw(tokens.join(" "));
 }
 
-/* //to: send a message to a specific channel */
-function onCommandTo(cmd, tokens, client) {
-  if (tokens.length >= 2) {
-    let ch = client.ParseChannel(tokens[0]);
-    let msg = tokens.slice(2).join(" ");
-    client.SendMessge(ch, msg);
-  } else {
-    this.printUsage();
-  }
-}
-
 /* //channels: display connected channels */
 function onCommandChannels(cmd, tokens, client) {
   Content.addHelpText("Active channels:");
@@ -1126,13 +1115,6 @@ function InitChatCommands() { /* exported InitChatCommands */
       desc: "Send a raw message to Twitch (for advanced users only!)",
       usage: [
         ["<message>", "Send <message> to Twitch servers (for advanced users only!)"]
-      ]
-    },
-    "to": {
-      func: onCommandTo,
-      desc: "Send a command to a specific joined channel",
-      usage: [
-        ["<channel> <message>", "Send <message> to <channel>"]
       ]
     },
     "channels": {
