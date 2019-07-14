@@ -721,9 +721,10 @@ function setModuleSettings(module, config) {
       }
     }
   }
-  addInput("include_user", "From: ", config.IncludeUser);
+  /* TODO: Use <label> value instead of label parameter */
+  addInput("include_user", "From user: ", config.IncludeUser);
   addInput("include_keyword", "Contains: ", config.IncludeKeyword);
-  addInput("exclude_user", "From: ", config.ExcludeUser);
+  addInput("exclude_user", "From user: ", config.ExcludeUser);
   addInput("exclude_startswith", "Starts with: ", config.ExcludeStartsWith);
   addInput("from_channel", "Channel: ", config.FromChannel);
 }
@@ -753,10 +754,10 @@ function getModuleSettings(module) {
   $module.find("input.include_keyword:checked").each(function _get_inckey() {
     s.IncludeKeyword.push($(this).val());
   });
-  $module.find("input.exclude_user:checked").each(function _get_exuser() {
+  $module.find("input.exclude_user:checked").each(function _get_excuser() {
     s.ExcludeUser.push($(this).val());
   });
-  $module.find("input.exclude_startswith:checked").each(function _get_es() {
+  $module.find("input.exclude_startswith:checked").each(function _get_excsw() {
     s.ExcludeStartsWith.push($(this).val());
   });
   $module.find("input.from_channel:checked").each(function _get_from() {
