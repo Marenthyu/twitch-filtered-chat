@@ -702,37 +702,40 @@ function setModuleSettings(module, config) {
   $module.find("input.event").check(config.Event);
   $module.find("input.bits").check(config.Bits);
   $module.find("input.me").check(config.Me);
-  function addInput(cls, label, values) {
-    if (values && values.length > 0) {
-      for (let val of values) {
-        let $li = $(`<li></li>`);
-        let isel = `input.${CSS.escape(cls)}[value="${CSS.escape(val)}"]`;
-        if ($module.find(isel).length === 0) {
-          let $la = $(`<label></label>`).val(label);
-          let $cb = $(`<input type="checkbox" checked />`);
-          $cb.addClass(cls);
-          $cb.attr("value", val);
-          $cb.click(updateModuleConfig);
-          $la.append($cb);
-          $la.html($la.html() + label + val.escape());
-          $li.append($la);
-          $module.find(`li.${CSS.escape(cls)}`).before($li);
-        }
+  function addInput(cls, values) {
+    /* Add checkbox for the given values */
+    let clse = CSS.escape(cls);
+    let $setting = $module.find(`li.${clse}`);
+    let label = $setting.find(`label`).last().html() + " ";
+    for (let val of values) {
+      let vale = CSS.escape(val);
+      /* Add checkbox if value isn't already present */
+      if ($module.find(`input.${clse}[value="${vale}"]`).length === 0) {
+        let $cb = $(`<input type="checkbox" checked />`)
+          .addClass(cls)
+          .attr("value", val)
+          .click(updateModuleConfig);
+        let $la = $(`<label></label>`)
+          .val(label)
+          .append($cb);
+        $la.html($la.html() + label + val.escape());
+        let $li = $(`<li></li>`)
+          .append($la);
+        $setting.before($li);
       }
     }
   }
-  /* TODO: Use <label> value instead of label parameter */
-  addInput("include_user", "From user: ", config.IncludeUser);
-  addInput("include_keyword", "Contains: ", config.IncludeKeyword);
-  addInput("exclude_user", "From user: ", config.ExcludeUser);
-  addInput("exclude_startswith", "Starts with: ", config.ExcludeStartsWith);
-  addInput("from_channel", "Channel: ", config.FromChannel);
+  addInput("include_user", config.IncludeUser || []);
+  addInput("include_keyword", config.IncludeKeyword || []);
+  addInput("exclude_user", config.ExcludeUser || []);
+  addInput("exclude_startswith", config.ExcludeStartsWith || []);
+  addInput("from_channel", config.FromChannel || []);
 }
 
 /* Obtain the settings from the module's settings HTML */
 function getModuleSettings(module) {
   let $module = $(module);
-  let s = {
+  let settings = {
     Name: $module.find("input.name").val(),
     Pleb: $module.find("input.pleb").is(":checked"),
     Sub: $module.find("input.sub").is(":checked"),
@@ -749,22 +752,22 @@ function getModuleSettings(module) {
   };
 
   $module.find("input.include_user:checked").each(function _get_incuser() {
-    s.IncludeUser.push($(this).val());
+    settings.IncludeUser.push($(this).val());
   });
   $module.find("input.include_keyword:checked").each(function _get_inckey() {
-    s.IncludeKeyword.push($(this).val());
+    settings.IncludeKeyword.push($(this).val());
   });
   $module.find("input.exclude_user:checked").each(function _get_excuser() {
-    s.ExcludeUser.push($(this).val());
+    settings.ExcludeUser.push($(this).val());
   });
   $module.find("input.exclude_startswith:checked").each(function _get_excsw() {
-    s.ExcludeStartsWith.push($(this).val());
+    settings.ExcludeStartsWith.push($(this).val());
   });
   $module.find("input.from_channel:checked").each(function _get_from() {
-    s.FromChannel.push($(this).val());
+    settings.FromChannel.push($(this).val());
   });
 
-  return s;
+  return settings;
 }
 
 /* Parse a module configuration object from a query string component */
