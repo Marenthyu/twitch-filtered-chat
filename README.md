@@ -11,8 +11,8 @@ It's Twitch Chat, but Filtered!
 <li><a href="#query-string-options">Query String Options</a></li>
 <li><a href="#layout">Layout</a></li>
 <li><a href="#module-configuration">Module Configuration</a></li>
-<li><a href="#cheer-effects">Cheer Effects</a></li>
 <li><a href="#examples">Examples</a></li>
+<li><a href="#cheer-effects">Cheer Effects</a></li>
 <li><a href="#hotkeys">Hotkeys</a></li>
 </ol>
 <li><a href="#development">Development</a></li>
@@ -32,39 +32,39 @@ URL: `https://kaedenn.github.io/twitch-filtered-chat/index.html?<OPTIONS>`
 
 ### Query String Options
 
-| Option Key     | Option Value |
-|----------------|--------------|
-|  `layout`      | Layout (see below) |
-|  `config_key`  | Custom configuration key (see below) |
-|  `config`      | Alias for `config_key` |
-|  `key`         | Alias for `config_key` |
-|  `clientid`    | ClientID override to use for Twitch asset loading |
-|  `user`        | Username to use (requires `pass`) |
-|  `pass`        | OAuth token to use (requires `user`; removed once parsed) |
-|  `debug`       | Either a number or one of `false` (0), `true` (1), `debug` (1), or `trace` (2) (default: 0) |
-|  `channels`    | Channels to join (with or without #), separated by commas |
-|  `noffz`       | Disable FFZ support (badges and emotes) entirely |
-|  `nobttv`      | Disable BTTV support (emotes) entirely |
-|  `noassets`    | Prevents loading of image (badge, emote, cheer) assets (implies `noffz` and `nobttv`) |
-|  `hmax`        | Maximum size of sent chat history (default 300) |
-|  `trans`       | Makes the backgrounds completely transparent |
-|  `module1`     | The encoded module configuration for module 1 (explained below) |
-|  `module2`     | The encoded module configuration for module 2 (explained below) |
-|  `norec`       | If present, don't automatically reconnect if connection is lost |
-|  `size`        | Overrides the body font size (in pt) (default: 18) |
-|  `plugins`     | If present, enables use of plugins (see plugins directory) |
-|  `disable`     | Disable specific cheer effects, separated by commas |
-|  `enable`      | Enable specific cheer effects, separated by commas |
-|  `max`         | Maximum number of chat messages to retain (default 100) |
-|  `font`        | Override default font `'Segoe UI', Tahoma, Geneva, Verdana, sans-serif` |
-|  `scroll`      | If non-empty, show scroll bars (default: hidden) |
-|  `clips`       | If non-empty, show clip information in chat (default: hidden) |
-|  `nols`        | Forcibly disable `localStorage` support. Note that this disables `pass` support entirely, as `localStorage` is needed to store passwords |
-|  `scheme`      | Color scheme to use. Valid values: `light` and `dark`. Default: `dark` |
-|  `enableforce` | Enable mod antics (see below) |
-|  `fanfare`     | Fanfare configuration: either `1` or `true` to enable, or a JSON-encoded string to set specific options |
-|  `highlight`   | Comma-separated patterns (either regexes of the form `/pat/[flags]` or strings) to highlight |
-|  `tag`         | Set a specific name for the chat, for debugging and antics usage (highly recommended!) |
+| Option Key    | Option Value |
+|---------------|--------------|
+| `layout`      | Layout (see below) |
+| `config_key`  | Custom configuration key (see below) |
+| `config`      | Alias for `config_key` |
+| `key`         | Alias for `config_key` |
+| `clientid`    | ClientID override to use for Twitch asset loading |
+| `user`        | Username to use (requires `pass`) |
+| `pass`        | OAuth token to use (requires `user`; removed once parsed) |
+| `debug`       | Either a number or one of `false` (0), `true` (1), `debug` (1), or `trace` (2) (default: 0) |
+| `channels`    | Channels to join (with or without #), separated by commas |
+| `noffz`       | Disable FFZ support (badges and emotes) entirely |
+| `nobttv`      | Disable BTTV support (emotes) entirely |
+| `noassets`    | Prevents loading of all image (badge, emote, cheer) assets (implies `noffz` and `nobttv`) |
+| `hmax`        | Maximum size of sent chat history (default 300) |
+| `trans`       | Makes the backgrounds completely transparent |
+| `module1`     | The encoded module configuration for module 1 (explained below) |
+| `module2`     | The encoded module configuration for module 2 (explained below) |
+| `norec`       | If present, don't automatically reconnect if connection is lost |
+| `size`        | Overrides the body font size (in pt) (default: 18) |
+| `plugins`     | If present, enables use of plugins (see plugins directory) |
+| `disable`     | Disable specific cheer effects, separated by commas |
+| `enable`      | Enable specific cheer effects, separated by commas |
+| `max`         | Maximum number of chat messages to retain (default 100) |
+| `font`        | Override default font `'Segoe UI', Tahoma, Geneva, Verdana, sans-serif` |
+| `scroll`      | If non-empty, show scroll bars (default: hidden) |
+| `clips`       | If non-empty, show clip information in chat (default: hidden) |
+| `nols`        | Forcibly disable `localStorage` support. Note that this disables `pass` support entirely, as `localStorage` is needed to store passwords |
+| `scheme`      | Color scheme to use. Valid values: `light` and `dark`. Default: `dark` |
+| `enableforce` | Enable mod antics (see below) |
+| `fanfare`     | Fanfare configuration: either `1` or `true` to enable, or a JSON-encoded string to set specific options |
+| `highlight`   | Comma-separated patterns (either regexes of the form `/pat/[flags]` or strings) to highlight |
+| `tag`         | Set a specific name for the chat, for debugging and antics usage (highly recommended!) |
 
 The default configuration key is `tfc-config`. If `config_key` is present, then `tfc-config-${config_key}` is used instead.
 
@@ -114,6 +114,10 @@ If `layout` is `single`, `module1` is shown. Otherwise, `module1` is the left mo
 
 Default: `module1=Chat,1111111,,,,,&module2=Chat,1111111,,,,,`
 
+### Examples
+
+
+
 ### Cheer Effects
 
 The following cheer effects are available and cost one bit each.
@@ -133,35 +137,19 @@ The following cheer effects are available and cost one bit each.
 | `small` | Message is smaller than normal |
 | `rainbow` | Message is rainbow (red -> yellow -> green -> cyan -> blue -> purple -> red) |
 | `disco` | Message cycles through the rainbow colors in order |
-| _color_ | Message will use the color specified, by name (won't work with rainbow). Almost every color you can think of should work (see `config.js` `ColorNames`) |
+| _color_ | Message will use the color specified, by name (won't work with `rainbow`). Almost every color you can think of should work (see `config.js` `ColorNames`) |
 
 To use them, add them to the message after the cheer:
 
-  `cheer3 bold marquee rainbow Hello streamer`: This message is big, rainbow, and scrolling across the screen`
+  `cheer3 bold marquee rainbow Hello streamer`: This message is big, rainbow, and scrolling across the screen
 
-  `cheer1 rainbow marquee Hello`: This message isn't scrolling because effects cost one bit each`
+  `cheer1 rainbow marquee Hello`: This message isn't scrolling because effects cost one bit each
 
   `marquee cheer1 Hey there`: This message has no extra formatting; the effect must be immediately after the cheer.
 
-  `cheer1 big blue bold Greetings`: The message is big, bold, and blue.
+  `cheer3 big blue bold Greetings`: The message is big, bold, and blue.
 
-### Examples
-
-Connect to `#dwangoAC` with default configuration:
-
-  `?channels=dwangoAC`
-
-Connect to `#pangaeapanga` with no chat:
-
-  `?channels=pangaeapanga&layout=double:nochat`
-
-Connect to `#dwangoAC` in slim mode, filtering `TAS9000` and messages starting with `!`:
-
-  `?channels=dwangoac&module1=Chat,1111111,,,TAS9000,!,&layout=single:slim`
-
-Connect to `#dwangoAC` and `#pangaeapanga`, showing `#dwangoAC` chat in the left column and `#pangaeapanga` in the right column. Filter out `Stay_Hydrated_Bot`, `Nightbot`, and `TAS9000`.
-
-  `?channels=%23dwangoac%2C%23pangaeapanga&module1=dwangoAC's%2520Chat%2C1111111%2C%2C%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C%252523dwangoAC&module2=pangaeapanga's%2520Chat%2C1111111%2C%2C%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C&layout=double%3Anochat&tag=sample1`
+  `cheer1 big bold blue Greetings`: The message is big but neither bold nor blue, as effects cost one bit each.
 
 ### Hotkeys
 
@@ -194,18 +182,18 @@ Chat command documentation is coming relatively soon.
 
 ## Antics
 
-If enabled (either `&force=1` present in the query string or `Mod Antics` checkbox in the upper-right settings window is checked), moderators are able to take control of the chat in various ways.
+If enabled (either `&force=1` present in the query string or `Mod Antics` checkbox in the main settings window is checked), moderators are able to take control of the chat in various ways.
 
 By starting their message with one of the following words, moderators can do the following:
 
 | Word | Action |
 | -------- | -------- |
-| force | Interpret the rest of the message as literal HTML |
-| force-eval | Interpret the rest of the message as a JavaScript expression, displaying the result in the chat |
-| forcejs | Interpret the rest of the message as a JavaScript function |
-| forcejs-only | If the next word matches the value of `&tag` in the query string, or if the word is `"any"`, or if the word is `"match-`_expression_`"` and the value of `&tag` starts with _expression_, then interpret the rest of the message as a JavaScript function |
-| forcebits | Prepend `"cheer1000"` to the message, for demonstrating cheer effects |
-| forcecheer | As above; prepend `"cheer1000"` to the message |
+| `force` | Interpret the rest of the message as literal HTML |
+| `forceeval` | Interpret the rest of the message as a JavaScript expression, displaying the result in the chat |
+| `forcejs` | Interpret the rest of the message as a JavaScript function |
+| `forcejs-only` | If the next word matches the value of `&tag` in the query string, or if the word is `"any"`, or if the word is `"match-`_expression_`"` and the value of `&tag` starts with _expression_, then interpret the rest of the message as a JavaScript function |
+| `forcebits` | Prepend `"cheer1000"` to the message, for demonstrating cheer effects |
+| `forcecheer` | As above; prepend `"cheer1000"` to the message |
 
 ### Antics Examples
 
@@ -219,34 +207,34 @@ By starting their message with one of the following words, moderators can do the
 
 Only enable antics if you completely trust your moderators. Furthermore, antics gives access to your OAuth token if one is present.
 
-If you're using an OAuth token, then ensure antics are disabled. Enable antics at your own risk.
+I *highly* recommend disabling antics if you're using an OAuth token. Enable antics at your own risk.
 
 ## Testing
 
 Please test the filtered chat in your own browser. Load it up and ensure you can change settings and that things work as you'd expect.
 
-[https://kaedenn.github.io/twitch-filtered-chat/index.html?debug=1&channels=%23dwangoac&module1=DwangoAC%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C%252523dwangoAC&module2=Main%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C&layout=double%3Achat&tag=sample1&fanfare=true](https://kaedenn.github.io/twitch-filtered-chat/index.html?debug=1&channels=%23dwangoac&module1=DwangoAC%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C%252523dwangoAC&module2=Main%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C&layout=double%3Achat&tag=sample1&fanfare=true)
+<a href="https://kaedenn.github.io/twitch-filtered-chat/index.html?debug=1&channels=%23kaedenn_&module1=Kaedenn%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C%252523Kaedenn_&module2=Main%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C&layout=double%3Achat&tag=sample1&fanfare=true">https://kaedenn.github.io/twitch-filtered-chat/index.html?debug=1&channels=%23kaedenn_&module1=Kaedenn%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C%252523Kaedenn_&module2=Main%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C&layout=double%3Achat&tag=sample1&fanfare=true</a>
 
-If you have errors loading that, try the following link which forces ES5 via `usedist=1`:
+If you have errors loading that or if you're using a very old browser, try the following link which forces ES5 via `usedist=1`:
 
-[https://kaedenn.github.io/twitch-filtered-chat/index.html?debug=1&channels=%23dwangoac&module1=DwangoAC%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C%252523dwangoAC&module2=Main%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C&layout=double%3Achat&usedist=1&tag=sample2&fanfare=true](https://kaedenn.github.io/twitch-filtered-chat/index.html?debug=1&channels=%23dwangoac&module1=DwangoAC%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C%252523dwangoAC&module2=Main%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C&layout=double%3Achat&usedist=1&tag=sample2&fanfare=true)
+<a href="https://kaedenn.github.io/twitch-filtered-chat/index.html?debug=1&channels=%23kaedenn_&module1=Kaedenn%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C%252523Kaedenn_&module2=Main%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C&layout=double%3Achat&usedist=1&tag=sample2&fanfare=true">https://kaedenn.github.io/twitch-filtered-chat/index.html?debug=1&channels=%23kaedenn_&module1=Kaedenn%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C%252523Kaedenn_&module2=Main%2520Chat%2C1111111%2C%2CKaedenn_%2CTAS9000%252CNightbot%252CStay_Hydrated_Bot%2C!%2C&layout=double%3Achat&usedist=1&tag=sample2&fanfare=true</a>
 
 The test URLs above have the following configuration:
 
 <ol>
 <li>Enable debugging (<code>debug=1</code>)</li>
-<li>Connect to <code>#dwangoAC</code> (<code>channels=%23dwangoac</code>)</li>
+<li>Connect to <code>#Kaedenn_</code> (<code>channels=%23kaedenn_</code>)</li>
 <li>There are two modules, side-by-side, with a visible chat window (<code>layout=double%3achat</code>)</li>
 <li>Module 1 (left module)</li>
 <ol>
-<li>Module is named <code>DwangoAC Chat</code> (<code>DwangoAC%2520Chat</code>)</li>
+<li>Module is named <code>Kaedenn Chat</code> (<code>Kaedenn%2520Chat</code>)</li>
 <li>Module does not filter specific message types (<code>1111111</code>)</li>
 <li>Module shows all messages from <code>Kaedenn_</code></li>
 <li>Module hides all messages from <code>TAS9000</code>, <code>Nightbot</code>, and <code>Stay_Hydrated_Bot</code> (<code>TASBot%252CNightbot%252CStay_Hydrated_Bot</code>)</li>
 </ol>
 <ol>
 <li>Module hides all messages starting with a <code>!</code></li>
-<li>Module only shows messages originating from <code>#dwangoAC</code> (<code>%2523dwangoAC</code>)</li>
+<li>Module only shows messages originating from <code>#Kaedenn_</code> (<code>%2523Kaedenn_</code>)</li>
 </ol>
 <li>Module 2 (right module)</li>
 <ol>
