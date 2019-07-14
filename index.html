@@ -3,13 +3,21 @@
 <head>
   <title>Filtered Chat</title>
   <meta charset="utf-8" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Twitch Filtered Chat" />
+  <meta
+    property="og:title"
+    content="Twitch Filtered Chat - Twitch chat client with message filtering" />
+  <meta
+    property="og:description"
+    content="Connect to a Twitch channel to receive the messages you care about, ignoring the uninteresting noise! Embed into OBS to have chat appear on your stream!" />
   <link href="assets/settings_white.png" rel="shortcut icon" type="image/png" />
   <link href="assets/main.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="assets/jquery-3.4.0.js"></script>
-  <!-- CSS.escape polyfill -->
   <script type="text/javascript" src="assets/css.escape.js"></script>
-  <!-- Script injector (NOTE: All JS here must be ES5-compliant) -->
   <script type="text/javascript" id="main-inject">
+
+/* NOTE: Everything here must be ES5 compliant for distification to work */
 
 /* Prepend `msg` to the debug span */
 function debug(msg) {
