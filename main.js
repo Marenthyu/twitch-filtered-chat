@@ -19,8 +19,30 @@ const CUR_URL = (() => {
 })();
 
 /* Paths to modules */
-const PATH_TFC = SELF_URI + (USE_DIST ? "/dist" : "");
-const PATH_TWAPI = BASE_URI + "/" + MOD_TWAPI + (USE_DIST ? "/dist" : "");
+function addDistPath(base) {
+  return base + (USE_DIST ? "/dist" : "");
+}
+const PATH_TFC = addDistPath(SELF_URI);
+const PATH_TWAPI_EXTERNAL = addDistPath(BASE_URI + "/" + MOD_TWAPI);
+const PATH_TWAPI_INTERNAL = addDistPath(SELF_URI + "/" + MOD_TWAPI);
+
+/* Determine the order of the twapi modules */
+const PATH_TWAPIS = (() => {
+  let externalFirst = [PATH_TWAPI_EXTERNAL, PATH_TWAPI_INTERNAL];
+  let internalFirst = [PATH_TWAPI_INTERNAL, PATH_TWAPI_EXTERNAL];
+  if (window.location.search.indexOf("twapi=") > -1) {
+    if (window.location.search.indexOf("twapi=e") > -1) {
+      return externalFirst;
+    } else if (window.location.search.indexOf("twapi=i") > -1) {
+      return internalFirst;
+    }
+  }
+  if (window.location.protocol === "file:") {
+    return externalFirst;
+  } else {
+    return internalFirst;
+  }
+})();
 
 /* Asset storage object */
 var ASSETS = {};
@@ -99,12 +121,8 @@ function AddAsset(src, tree=null, loadcb=null, errcb=null) {
   let loadFunc = loadcb || (() => null);
   let errorFunc = errcb || (() => null);
   /* Determine the final path to the asset */
-  let path = src;
-  if (tree === MOD_TFC) {
-    path = PATH_TFC + "/" + src;
-  } else if (tree === MOD_TWAPI) {
-    path = PATH_TWAPI + "/" + src;
-  } else if (src.startsWith("//")) {
+  let path = (tree ? tree + "/" : "") + src;
+  if (src.startsWith("//")) {
     path = window.location.protocol + src;
   }
   console.debug(`${src} @ ${tree} -> ${path}`);
@@ -255,21 +273,28 @@ function Main(global) { /* exported Main */
     };
   })(jQuery);
 
-  /* Add TWAPI assets, then TFC assets, and then call indexMain */
+  /* Load the TWAPI assets, trying each path until success */
   Promise.all([
-    AddAsset("utility.js", MOD_TWAPI, null, null),
-    AddAsset("client.js", MOD_TWAPI, null, null)])
-  .then(() => AddAsset("config.js", MOD_TFC, null, null))
+    AddAsset("utility.js", PATH_TWAPIS[0], null, null),
+    AddAsset("client.js", PATH_TWAPIS[0], null, null)])
+  .catch(() => Promise.all([
+    AddAsset("utility.js", PATH_TWAPIS[1], null, null),
+    AddAsset("client.js", PATH_TWAPIS[1], null, null)]))
+  /* Then load the config script */
+  .then(() => AddAsset("config.js", PATH_TFC, null, null))
+  /* Then load TFC */
   .then(() => Promise.all([
-    AddAsset("htmlgen.js", MOD_TFC, null, null),
-    AddAsset("commands.js", MOD_TFC, null, null),
-    AddAsset("filtered-chat.js", MOD_TFC, null, null),
-    AddAsset("plugins/plugins.js", MOD_TFC, null, null)]))
+    AddAsset("htmlgen.js", PATH_TFC, null, null),
+    AddAsset("commands.js", PATH_TFC, null, null),
+    AddAsset("filtered-chat.js", PATH_TFC, null, null),
+    AddAsset("plugins/plugins.js", PATH_TFC, null, null)]))
+  /* Then load the fanfare scripts */
   .then(() => Promise.all([
-    AddAsset("fanfare/particle.js", MOD_TFC),
-    AddAsset("fanfare/effect.js", MOD_TFC),
-    AddAsset("fanfare/fanfare.js", MOD_TFC)
+    AddAsset("fanfare/particle.js", PATH_TFC),
+    AddAsset("fanfare/effect.js", PATH_TFC),
+    AddAsset("fanfare/fanfare.js", PATH_TFC)
   ]))
+  /* And finally call main */
   .then(indexMain)
   .catch((e) => {
     console.error(e);
@@ -294,7 +319,7 @@ function Main(global) { /* exported Main */
 
 /* eslintrc config: */
 /* exported MOD_TFC MOD_TWAPI USE_DIST URI BASE_URI SELF_URI GIT_URL CUR_URL */
-/* exported PATH_TFC PATH_TWAPI */
+/* exported PATH_TFC */
 /* globals InitChatCommands doLoadClient */
 
 /* vim: set ts=2 sts=2 sw=2 et: */

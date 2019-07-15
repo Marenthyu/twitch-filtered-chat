@@ -9,6 +9,7 @@ It's Twitch Chat, but Filtered!
 <li><a href="#usage">Usage</a></li>
 <ol>
 <li><a href="#query-string-options">Query String Options</a></li>
+<li><a href="#twitch-api">Twitch API</a></li>
 <li><a href="#layout">Layout</a></li>
 <li><a href="#module-configuration">Module Configuration</a></li>
 <li><a href="#examples">Examples</a></li>
@@ -34,6 +35,7 @@ URL: `https://kaedenn.github.io/twitch-filtered-chat/index.html?<OPTIONS>`
 
 | Option Key    | Option Value |
 |---------------|--------------|
+| `twapi`       | Force external (`e`) or internal (`i`) Twitch API library (see below) |
 | `layout`      | Layout (see below) |
 | `config_key`  | Custom configuration key (see below) |
 | `config`      | Alias for `config_key` |
@@ -73,6 +75,17 @@ Note that `user` and `pass` must be supplied together: if a username is given, t
 `tag` is used to identify unique chats for debugging and antics use. It is highly recommended to have a `tag` present in your query string!
 
 All option values must be URL-encoded.
+
+### Twitch API
+
+The Twitch Filtered Chat depends on the Twitch API (known casually as _twapi_), which can be in one of two locations. Both locations are examined and the first successful location is used.
+
+| Type | Path | When Used |
+| ---- | ---- | --------- |
+| Internal | `twitch-filtered-chat/twitch-api` | Default |
+| External | `twitch-api` | When `window.location.protocol === "file:"` |
+
+Passing `twapi=i` forces the internal submodule to be scanned first. Passing `twapi=e` forces the external submodule to be scanned first. See the <a href="#development">Development</a> section for more information.
 
 ### Layout
 
@@ -116,7 +129,7 @@ Default: `module1=Chat,1111111,,,,,&module2=Chat,1111111,,,,,`
 
 ### Examples
 
-
+Example configurations are coming relatively soon.
 
 ### Cheer Effects
 
@@ -162,15 +175,34 @@ The following hotkeys are available:
 
 ## Development
 
-For getting started, you will need both this and `twitch-api`:
+For getting started, you will need both this repository and the `twitch-api` repository. The `twitch-api` can be used either as a submodule or an external repository.
+
+#### Internal Twitch API (submodule)
+
 ```bash
 mkdir tfc && cd tfc # optional
-checkout https://github.com/Kaedenn/twitch-filtered-chat
-checkout https://github.com/Kaedenn/twitch-api
+git clone https://github.com/Kaedenn/twitch-filtered-chat
 cd twitch-filtered-chat
-firefox index.html # or chrome, or whatever browser you fancy
+git submodule init # initialize twitch-api submodule
+git submodule update # fetch twitch-api submodule contents from github
+firefox index.html # or whichever browser you fancy
 ```
-and have fun!
+
+#### External Twitch API (parallel repository)
+
+```bash
+mkdir tfc && cd tfc # optional
+git clone https://github.com/Kaedenn/twitch-filtered-chat
+git clone https://github.com/Kaedenn/twitch-api
+firefox twitch-filtered-chat/index.html # or whichever browser you fancy
+```
+
+The filtered chat will scan for twapi in both locations, using the first successful location. The order of the locations is determined as follows:
+
+1. If the query string has `twapi=e`, then prefer external
+2. If the query string has `twapi=i`, then prefer internal
+3. If the URL has the protocol `file:`, then prefer external
+4. Otherwise, prefer internal
 
 ### Plugins
 
