@@ -30,7 +30,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       "darkorchid",
       "crimson"];
     this._user_colors = {};
-    this._bg_colors = ["#1d1d1d", "#0a0a0a", "#d1d1d1"];
+    this._shadow_colors = ["#1d1d1d", "#0a0a0a", "#d1d1d1"];
     this._highlights = [];
 
     /* Ensure config has certain values */
@@ -101,11 +101,13 @@ class HTMLGenerator { /* exported HTMLGenerator */
 
   /* Returns array of [css attr, css value] */
   genBorderCSS(color) {
-    let border = Util.GetMaxContrast(color, this._bg_colors);
+    let border = Util.GetMaxContrast(color, this._shadow_colors);
     return [
       "text-shadow",
-      `-0.8px -0.8px 0 ${border}, 0.8px -0.8px 0 ${border},
-       -0.8px  0.8px 0 ${border}, 0.8px  0.8px 0 ${border}`
+      `-0.8px -0.8px 0 ${border},` +
+      ` 0.8px -0.8px 0 ${border},` +
+      `-0.8px  0.8px 0 ${border},` +
+      ` 0.8px  0.8px 0 ${border}`
     ];
   }
 
@@ -368,8 +370,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
   _genName(event) {
     /* Display upper-case name, assign color to lower-case name */
     let user = event.name || event.user;
-    let color = event.flags.color || this.getColorFor(event.user);
-    if (!color) { color = "#ffffff"; }
+    let color = event.flags.color || this.getColorFor(event.user) || "#ffffff";
     return this.genName(user, color);
   }
 
@@ -1008,16 +1009,16 @@ class HTMLGenerator { /* exported HTMLGenerator */
 
   /* Returns jquery node */
   genClip(slug, clip_data, game_data) { /* TODO */
-    let $w = $("<div class=\"clip-preview\"></div>");
+    let $w = $(`<div class="clip-preview"></div>`);
     let streamer = clip_data.broadcaster_name;
     let game = game_data.name;
     let clipper = clip_data.creator_name;
     let title = clip_data.title;
     let image = clip_data.thumbnail_url;
-    let $thumbnail = $("<img class=\"clip-thumbnail\" height=\"48px\"/>");
-    let $title = $("<div class=\"clip-title\"></div>");
-    let $desc = $("<div class=\"clip-desc\"></div>");
-    let $creator = $("<div class=\"clip-creator\"></div>");
+    let $thumbnail = $(`<img class="clip-thumbnail" height="48px"/>`);
+    let $title = $(`<div class="clip-title"></div>`);
+    let $desc = $(`<div class="clip-desc"></div>`);
+    let $creator = $(`<div class="clip-creator"></div>`);
     $w.attr("data-slug", slug);
     $w.append($thumbnail.attr("src", image));
     $w.append($title.text(title));
