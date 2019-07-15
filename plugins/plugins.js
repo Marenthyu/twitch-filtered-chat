@@ -115,7 +115,7 @@ class PluginStorageClass {
         catch (e) {
           if (self._plugins[ctor].silent) {
             Util.ErrorOnly(e);
-            resolve();
+            resolve(self._plugins[ctor].obj);
           } else {
             self._plugins[ctor]._error = true;
             self._plugins[ctor]._error_obj = e;
@@ -132,7 +132,7 @@ class PluginStorageClass {
           Util.ErrorOnly(err);
           reject(err);
         } else {
-          resolve();
+          resolve(self._plugins[ctor].obj);
         }
       };
       document.head.appendChild(s);
