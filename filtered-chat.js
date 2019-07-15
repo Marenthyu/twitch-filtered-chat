@@ -1771,6 +1771,7 @@ function doLoadClient() { /* exported doLoadClient */
   /* Pressing enter or escape on one of the module menu text boxes */
   $(`.module .settings input[type="text"]`).keyup(function(e) {
     if (e.key === "Enter") {
+      /* Enter: add a new entry */
       let v = $(this).val();
       if (v.length > 0) {
         let $cli = $(this).closest("li");
@@ -1783,6 +1784,7 @@ function doLoadClient() { /* exported doLoadClient */
         updateModuleConfig();
       }
     } else if (e.key === "Escape") {
+      /* Escape: close settings */
       closeModuleSettings($(this).parentsUntil(".column").last());
     }
   });
