@@ -3,18 +3,7 @@
 "use strict";
 
 /* TODO:
- * Format clip information
  * USERNOTICEs:
- *   rewardgift
- *   submysterygift
- *   primepaidupgrade
- *   giftpaidupgrade
- *     msg-param-promo-gift-total
- *     msg-param-promo-name
- *   anongiftpaidupgrade
- *     msg-param-promo-gift-total
- *     msg-param-promo-name
- *   unraid
  *   bitsbadgetier
  */
 
@@ -960,9 +949,8 @@ class HTMLGenerator { /* exported HTMLGenerator */
       $m.text(event.flags["system-msg"]);
     } else {
       /* Unlikely */
-      let raider = event.flags["msg-param-displayName"] ||
-                   event.flags["msg-param-login"];
-      let count = event.flags["msg-param-viewerCount"];
+      let raider = event.param("displayName") || event.param("login");
+      let count = event.param("viewerCount");
       $m.html(Strings.Raid(raider, count));
     }
     $w.append($m);
@@ -998,16 +986,30 @@ class HTMLGenerator { /* exported HTMLGenerator */
   }
 
   /* Returns jquery node */
-  mysteryGift(event) { /* TODO */
-    let message = `${event.command} TODO`;
-    return $(`<div class="message">${message}</div>`);
+  mysteryGift(event) {
+    let $e = $(`<div class="chat-line mysterygift notice"></div>`);
+    let $msg = $(`<span class="message" data-message="1"></span>`);
+    this._addChatAttrs($e, event);
+    $e.append(this._genBadges(event));
+    $e.append(this._genName(event));
+    $msg.text(event.flags["system-msg"]);
+    $e.html($e.html() + ":&nbsp;");
+    $e.append($msg);
+    return $e;
   }
 
   /* Returns jquery node */
-  giftUpgrade(event) { /* TODO */
+  giftUpgrade(event) {
     /* Called for giftupgrade, primeupgrade, anongiftupgrade */
-    let message = `${event.command} TODO`;
-    return $(`<div class="message">${message}</div>`);
+    let $e = $(`<div class="chat-line giftupgrade notice"></div>`);
+    let $msg = $(`<span class="message" data-message="1"></span>`);
+    this._addChatAttrs($e, event);
+    $e.append(this._genBadges(event));
+    $e.append(this._genName(event));
+    $msg.text(event.flags["system-msg"]);
+    $e.html($e.html() + ":&nbsp;");
+    $e.append($msg);
+    return $e;
   }
 
   /* Returns jquery node */
