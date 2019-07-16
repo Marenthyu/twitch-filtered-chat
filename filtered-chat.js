@@ -16,6 +16,7 @@
  * Create a README.md file for the plugins directory. Include documentation on:
  *   Commands
  *   Filtering
+ *   Plugin creation and loading
  *   Plugin configuration (?plugincfg)
  * Auto-complete command arguments
  * Remove F1 hotkey binding

@@ -141,8 +141,7 @@ TEST_MESSAGES.EFFECT3 = BuildMessage({"bits": "100"}, "PRIVMSG",
   "cheer100 bold italic underline upsidedown strikethrough big rainbow " +
   "This text is using almost every effect except marquee");
 
-TEST_MESSAGES.CLIP = BuildMessage({"emotes": "25:5-9,75-79"},
-  "PRIVMSG",
+TEST_MESSAGES.CLIP = BuildMessage({"emotes": "25:5-9,75-79"}, "PRIVMSG",
   "Test Kappa test https://clips.twitch.tv/BillowingCreativePastaHeyGuys " +
   "test Kappa test");
 

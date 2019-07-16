@@ -62,20 +62,26 @@ const AssetPaths = { /* exported AssetPaths */
 
 /* Strings constants and message-building functions */
 const Strings = { /* exported Strings */
+  /* Chat input placeholder strings */
   ANON_PLACEHOLDER: "Authentication needed to send messages",
   AUTH_PLACEHOLDER: "type //auth for more information",
 
+  /* Reconnect link, here to simplify code elsewhere */
   RECONNECT: `<span class="reconnect" data-reconnect="1">Reconnect</span>`,
 
+  /* Username and password to display in the settings panel */
   NAME_AUTOGEN: "Auto-Generated",
   PASS_CACHED: "Cached",
 
+  /* Streamer URL with optional text */
   Streamer: (name, text=null) => `<a href="https://twitch.tv/${name.replace(/[^\w]/g, "")}" target="_blank">${text || name}</a>`,
 
+  /* Streamer is online/offline messages */
   StreamOnline: (ch) => `${Strings.Streamer(ch)} is streaming`,
   StreamInfo: (name, game, viewers) => `${Strings.Streamer(name)} is streaming ${Strings.Streamer(name, game)} for ${viewers} viewer${viewers === 1 ? "" : "s"}`,
   StreamOffline: (ch) => `${Strings.Streamer(ch)} is not currently streaming`,
 
+  /* Default messages for various USERNOTICE types */
   Sub: (plan) => `just subscribed with a ${plan} subscription!`,
   ResubStreak: (months, plan, streak) => `resubscribed for ${months} months with a ${plan} subscription! They're on a streak of ${streak} months!`,
   Resub: (months, plan) => `resubscribed for ${months} months with a ${plan} subscription!`,

@@ -1011,19 +1011,19 @@ class HTMLGenerator { /* exported HTMLGenerator */
   }
 
   /* Returns jquery node */
-  genClip(slug, clip_data, game_data) { /* TODO */
-    let $w = $(`<div class="clip-preview"></div>`);
+  genClip(slug, clip_data, game_data) {
     let streamer = clip_data.broadcaster_name;
+    let $w = $(`<div class="clip-preview"></div>`);
     let $thumbnail = $(`<img class="clip-thumbnail" height="100px"/>`);
     let $text = $(`<span class="clip-text"></span>`);
     let $title = $(`<div class="clip-title"></div>`);
     let $desc = $(`<div class="clip-desc"></div>`);
     let $creator = $(`<div class="clip-creator"></div>`);
-    $w.attr("data-slug", slug);
-    $w.append($thumbnail.attr("src", clip_data.thumbnail_url));
     $text.append($title.text(clip_data.title));
     $text.append($desc.text(`${streamer} playing ${game_data.name}`));
     $text.append($creator.text(`Clipped by ${clip_data.creator_name}`));
+    $w.attr("data-slug", slug);
+    $w.append($thumbnail.attr("src", clip_data.thumbnail_url));
     $w.append($text);
     return $w;
   }

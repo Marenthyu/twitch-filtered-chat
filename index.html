@@ -16,7 +16,6 @@
   <script type="text/javascript" src="assets/jquery-3.4.0.js"></script>
   <script type="text/javascript" src="assets/css.escape.js"></script>
   <script type="text/javascript" id="main-inject">
-
 /* NOTE: Everything here must be ES5 compliant for distification to work */
 
 /* Prepend `msg` to the debug span */
@@ -35,7 +34,7 @@ function doLoadScript(src, onload) {
   document.head.appendChild(s);
 }
 
-/* Load Babel ES6 polyfill */
+/* Load Babel ES6 polyfills */
 function doLoadPolyfill(cb) {
   doLoadScript("dist/polyfill.js", cb);
 }
