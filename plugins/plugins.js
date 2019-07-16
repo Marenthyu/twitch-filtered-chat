@@ -118,7 +118,7 @@ class PluginStorageClass {
           obj._plugin_name = ctor;
           this._plugins[ctor]._loaded = true;
           this._plugins[ctor].obj = obj;
-          Util.DebugOnly(`Plugin ${this._plugins[ctor]} loaded`);
+          Util.DebugOnly("Plugin", this._plugins[ctor], "loaded");
         }
         catch (e) {
           if (this._plugins[ctor].silent) {
