@@ -584,6 +584,9 @@ class HTMLGenerator { /* exported HTMLGenerator */
         pattern = new RegExp(pat, pat.flags + "g");
       }
       while ((arr = pattern.exec(event.message)) !== null) {
+        if (!$msg.hasClass("highlight")) {
+          $msg.addClass("highlight");
+        }
         let whole = arr[0];
         let part = arr.length > 1 ? arr[1] : arr[0];
         let start = arr.index + whole.indexOf(part);

@@ -3,8 +3,6 @@
 "use strict";
 
 /* TODO (in approximate decreasing priority):
- * Provide switch between /twitch-api and /twitch-filtered-chat/twitch-api
- *   Git URL must default to /twitch-filtered-chat/twitch-api
  * Add to content to both of the settings help and builder links
  *   Change AssetPaths.BUILDER_WINDOW to use the new builder
  *   shayd3 is working on the builder
@@ -1113,7 +1111,7 @@ function setNotify(notify=true) { /* exported setNotify */
 
 /* Called once when the document loads */
 function doLoadClient() { /* exported doLoadClient */
-  let client;
+  let client = null;
   let config = {};
 
   /* Hook Logger messages to display in chat */
@@ -1146,6 +1144,7 @@ function doLoadClient() { /* exported doLoadClient */
     }
   }, "TRACE");
 
+  /* Filtering */
   if (Util.DebugLevel < Util.LEVEL_TRACE) {
     /* Filter out PING/PONG messages */
     Util.Logger.addFilter(/ws (send|recv)>.+(PING|PONG) :tmi.twitch.tv/);
@@ -1154,8 +1153,8 @@ function doLoadClient() { /* exported doLoadClient */
   }
 
   /* Clear txtName and txtPass (to fix problems with browser autofills) */
-  $("#txtNick").val();
-  $("#txtPass").val();
+  $("#txtNick").val("");
+  $("#txtPass").val("");
 
   /* Add the //config command */
   ChatCommands.add("config", function(cmd, tokens, client_) {
@@ -1377,18 +1376,10 @@ function doLoadClient() { /* exported doLoadClient */
   }
 
   /* Apply the show-clips config to the settings div */
-  if (config.ShowClips) {
-    $("#cbClips").check();
-  } else {
-    $("#cbClips").uncheck();
-  }
+  $("#cbClips").check(config.ShowClips);
 
   /* Apply the no-force config to the settings div */
-  if (config.EnableForce) {
-    $("#cbForce").check();
-  } else {
-    $("#cbForce").uncheck();
-  }
+  $("#cbForce").check(config.EnableForce);
 
   /* Apply the selected color scheme; if any */
   if (config.ColorScheme === "dark") {
@@ -1397,26 +1388,19 @@ function doLoadClient() { /* exported doLoadClient */
     setLightScheme();
   }
 
-  if (config.NoAnim) {
-    $("#cbAnimCheers").uncheck();
-  } else {
-    $("#cbAnimCheers").check();
-  }
+  /* Apply the animated cheers config to the settings div */
+  $("#cbAnimCheers").uncheck(config.NoAnim);
 
+  /* Clear the background style */
   $("#txtBGStyle").val("");
 
-  if (config.Font) {
-    $("#txtFont").val(config.Font);
-  } else {
-    $("#txtFont").val(Util.CSS.GetProperty("--body-font"));
-  }
+  /* Set the font config in the settings div */
+  $("#txtFont").val(config.Font || Util.CSS.GetProperty("--body-font"));
 
-  if (config.Size) {
-    $("#txtFontSize").val(config.Size);
-  } else {
-    $("#txtFontSize").val(Util.CSS.GetProperty("--body-font-size"));
-  }
+  /* Set the font size config in the settings div */
+  $("#txtFontSize").val(config.Size || Util.CSS.GetProperty("--body-font-size"));
 
+  /* Show the tag in the settings div */
   if (config.tag) {
     $("#txtTag").val(config.tag);
   }
@@ -1432,6 +1416,7 @@ function doLoadClient() { /* exported doLoadClient */
     }
   }
 
+  /* Add highlight patterns */
   if (config.Highlight) {
     for (let pat of config.Highlight) {
       client.get("HTMLGen").addHighlightMatch(pat);
@@ -1563,6 +1548,7 @@ function doLoadClient() { /* exported doLoadClient */
       resetChatComplete();
       resetChatHistory();
     } else if (e.key === "Enter") {
+      /* Send a message */
       let text = t.value;
       let t0 = text.indexOf(" ") > -1 ? text.split(" ")[0] : "";
       if (text.trim().length > 0) {
@@ -1677,8 +1663,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Changing the "stream is transparent" checkbox */
   $("#cbTransparent").change(function() {
-    let val = $(this).is(":checked");
-    updateTransparency(val);
+    updateTransparency($(this).is(":checked"));
     updateHTMLGenConfig();
   });
 
@@ -1696,7 +1681,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Changing the debug level */
   $("#selDebug").change(function(e) {
-    let v = parseInt($(this).val());
+    let v = Util.ParseNumber($(this).val());
     Util.Log(`Changing debug level from ${Util.DebugLevel} to ${v}`);
     Util.DebugLevel = v;
   });
@@ -1917,7 +1902,13 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Document gained focus: clear notification icon */
   $(document).focus(function(e) {
+    client.get("HTMLGen").setValue("focus", true);
     setNotify(false);
+  });
+
+  /* Document lost focus: track it */
+  $(document).blur(function(e) {
+    client.get("HTMLGen").setValue("focus", false);
   });
 
   /* WebSocket opened */
@@ -2034,6 +2025,7 @@ function doLoadClient() { /* exported doLoadClient */
   client.bind("twitch-chat", function _on_twitch_chat(e) {
     if (e instanceof TwitchChatEvent) {
       let m = typeof(e.message) === "string" ? e.message : "";
+      /* Handle !tfc commands */
       if (e.flags && e.flags.mod && m.indexOf(" ") > -1) {
         let tokens = m.split(" ");
         if (tokens[0] === "!tfc") {
@@ -2074,11 +2066,14 @@ function doLoadClient() { /* exported doLoadClient */
     $(".module").each(function() {
       let H = client.get("HTMLGen");
       if (!shouldFilter($(this), e)) {
+        /* Not filtering; format and display the event */
         let $c = $(this).find(".content");
         let $e = H.gen(e);
+        /* If a clip is present, display that too */
         let $clip = $e.find(".message[data-clip]");
         if ($clip.length > 0) {
           let slug = $clip.attr("data-clip");
+          /* Nested because the second then() needs both clip and game data */
           client.GetClip(slug)
             .then((clip_data) => {
               client.GetGame(clip_data.game_id)
@@ -2087,6 +2082,13 @@ function doLoadClient() { /* exported doLoadClient */
                 });
             });
         }
+        /* If .at-self or .highlight is given, set the notification icon */
+        if ($e.find(".message.at-self") || $e.find(".highlight")) {
+          if (!H.getValue("focus")) {
+            setNotify(true);
+          }
+        }
+        /* And finally, add it to the page */
         Content.addHTML($e, $c);
       }
     });
