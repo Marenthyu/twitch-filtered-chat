@@ -1120,32 +1120,28 @@ function doLoadClient() { /* exported doLoadClient */
   let config = {};
 
   /* Hook Logger messages to display in chat */
-  Util.Logger.addHook(function(sev, with_stack, ...args) {
+  Util.Logger.addHook(function(sev, dispStack, ...args) {
     if (Util.DebugLevel >= Util.LEVEL_DEBUG) {
-      let msg = Util.Logger.stringify(...args);
-      Content.addErrorText("ERROR: " + msg);
+      Content.addErrorText("ERROR: " + Util.Logger.stringify(...args));
     }
   }, "ERROR");
-  Util.Logger.addHook(function(sev, with_stack, ...args) {
+  Util.Logger.addHook(function(sev, dispStack, ...args) {
     if (args.length === 1 && args[0] instanceof TwitchEvent) {
       if (Util.DebugLevel >= Util.LEVEL_TRACE) {
         Content.addNoticeText("WARNING: " + JSON.stringify(args[0]));
       }
     } else if (Util.DebugLevel >= Util.LEVEL_DEBUG) {
-      let msg = Util.Logger.stringify(...args);
-      Content.addNoticeText("WARNING: " + msg);
+      Content.addNoticeText("WARNING: " + Util.Logger.stringify(...args));
     }
   }, "WARN");
-  Util.Logger.addHook(function(sev, with_stack, ...args) {
+  Util.Logger.addHook(function(sev, dispStack, ...args) {
     if (Util.DebugLevel >= Util.LEVEL_TRACE) {
-      let msg = Util.Logger.stringify(...args);
-      Content.add("DEBUG: " + msg);
+      Content.add("DEBUG: " + Util.Logger.stringify(...args));
     }
   }, "DEBUG");
-  Util.Logger.addHook(function(sev, with_stack, ...args) {
+  Util.Logger.addHook(function(sev, dispStack, ...args) {
     if (Util.DebugLevel >= Util.LEVEL_TRACE) {
-      let msg = Util.Logger.stringify(...args);
-      Content.add("TRACE: " + msg);
+      Content.add("TRACE: " + Util.Logger.stringify(...args));
     }
   }, "TRACE");
 
@@ -1970,9 +1966,13 @@ function doLoadClient() { /* exported doLoadClient */
   client.bind("twitch-notice", function _on_twitch_notice(e) {
     let channel = Twitch.FormatChannel(e.channel);
     let message = e.message;
-    Content.addNoticeText(`${channel}: ${message}`);
-    if (e.noticeMsgId === "cmds_available") {
+    if (e.noticeMsgId === "host_on") {
+      /* This is handled in twitch-hosttarget */
+    } else if (e.noticeMsgId === "cmds_available") {
+      Content.addNoticeText(`${channel}: ${message}`);
       Content.addInfoText("Use //help to see Twitch Filtered Chat commands");
+    } else {
+      Content.addNoticeText(`${channel}: ${message}`);
     }
   });
 
@@ -2213,13 +2213,28 @@ function doLoadClient() { /* exported doLoadClient */
     /* TODO: unraid, bitsbadgetier */
   });
 
+  /* Streamer is hosting someone else */
+  client.bind("twitch-hosttarget", function _on_twitch_hosttarget(e) {
+    let channel = e.channelString.escape();
+    let target = Strings.Streamer(e.user);
+    let $m = $(`<span class="host-message"></span>`);
+    let $btn = $(`<span class="btn url">Click here to join!</span>`);
+    $m.html(`${channel} is hosting #${target}: `);
+    /* Leave the hosting channel and join the hosted channel */
+    $m.click(() => {
+      client.LeaveChannel(channel);
+      client.JoinChannel(e.user);
+    });
+    $m.append($btn);
+    Content.addNotice($m);
+  });
+
   /* Received a reconnect request from Twitch (handled automatically) */
   client.bind("twitch-reconnect", function _on_twitch_reconnect(e) {});
 
   /* Bind to the rest of the events */
   client.bind("twitch-join", function _on_twitch_join(e) {});
   client.bind("twitch-part", function _on_twitch_part(e) {});
-  client.bind("twitch-hosttarget", function _on_twitch_hosttarget(e) {});
   client.bind("twitch-userstate", function _on_twitch_userstate(e) {});
   client.bind("twitch-roomstate", function _on_twitch_roomstate(e) {});
   client.bind("twitch-globaluserstate", function _on_twitch_globaluserstate(e) {});

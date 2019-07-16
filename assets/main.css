@@ -135,6 +135,14 @@ em {
   text-decoration: underline;
 }
 
+.url {
+  color: #999999;
+}
+
+body.light .url {
+  color: #777777;
+}
+
 /* End top-level rules 0}}} */
 
 /* Column and module CSS {{{0 */

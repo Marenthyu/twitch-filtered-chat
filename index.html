@@ -44,7 +44,7 @@ function doLoadMain() {
   /* Use either main.js or dist/main.js based on ?usedist */
   var dist = window.location.search.match(/\busedist\b/);
   var uri = dist ? "dist/main.js" : "main.js";
-  doLoadScript(uri, function() { (new Function("Main(window)"))(); });
+  doLoadScript(uri, new Function("Main(window)"));
 }
 
 /* Called by body.onload */
