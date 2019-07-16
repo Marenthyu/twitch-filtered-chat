@@ -2,7 +2,10 @@
 
 "use strict";
 
-/* TODO: Make a README.md */
+/* TODO:
+ * Make a README
+ * Require an async load() function from plugins
+ */
 
 /* Plugin configuration
  *
@@ -69,24 +72,28 @@ class PluginStorageClass {
     return this._plugins;
   }
 
+  /* Determine the path to the plugin */
+  _getPath(plugin) {
+    if (plugin.remote) {
+      return plugin.file;
+    } else {
+      let base = window.location.pathname;
+      if (base.endsWith("/index.html")) {
+        base = base.substr(0, base.lastIndexOf("/"));
+      }
+      return `${base}/plugins/${plugin.file}`;
+    }
+  }
+
   /* Load the given plugin object with the TwitchClient instance given */
   _load(plugin, client, config) {
     if (this.disabled || PluginStorageClass.disabled) { return; }
     Util.LogOnly("Loading plugin " + JSON.stringify(plugin));
-    let self = this;
     let ctor = plugin.ctor;
-    return new Promise(function(resolve, reject) {
+    return new Promise((resolve, reject) => {
       let s = document.createElement("script");
-      if (plugin.remote) {
-        s.src = plugin.file;
-      } else {
-        let base = window.location.pathname;
-        if (base.endsWith("/index.html")) {
-          base = base.substr(0, base.lastIndexOf("/"));
-        }
-        s.src = `${base}/plugins/${plugin.file}`;
-      }
-      s.onload = function() {
+      s.src = this._getPath(plugin);
+      s.onload = () => {
         /* Construct the plugin */
         if (!Util.Defined(ctor)) {
           reject(new Error(`Constructor "${ctor}" not found`));
@@ -101,6 +108,7 @@ class PluginStorageClass {
           if (!cfgobj.PluginConfig) {
             cfgobj.PluginConfig = {};
           }
+          /* Construct the plugin */
           let obj = new (cfunc)(resolve, reject, client, plugin.args, cfgobj);
           /* Ensure plugin defines a name attribute */
           if (typeof(obj.name) !== "string") {
@@ -108,31 +116,31 @@ class PluginStorageClass {
           }
           /* Store the plugin and mark it as loaded */
           obj._plugin_name = ctor;
-          self._plugins[ctor]._loaded = true;
-          self._plugins[ctor].obj = obj;
-          Util.DebugOnly("Plugin", self._plugins[ctor], "loaded");
+          this._plugins[ctor]._loaded = true;
+          this._plugins[ctor].obj = obj;
+          Util.DebugOnly(`Plugin ${this._plugins[ctor]} loaded`);
         }
         catch (e) {
-          if (self._plugins[ctor].silent) {
-            Util.ErrorOnly(e);
-            resolve(self._plugins[ctor].obj);
+          if (this._plugins[ctor].silent) {
+            Util.LogOnly(e);
+            resolve(null);
           } else {
-            self._plugins[ctor]._error = true;
-            self._plugins[ctor]._error_obj = e;
+            this._plugins[ctor]._error = true;
+            this._plugins[ctor]._error_obj = e;
             reject(e);
           }
         }
       };
-      s.onerror = function(e) {
+      s.onerror = (e) => {
         /* Silent plugins fail silently */
-        if (!self._plugins[ctor].silent) {
+        if (this._plugins[ctor].silent) {
+          resolve(null);
+        } else {
           let err = new Error(`Loading ${ctor} failed: ${JSON.stringify(e)}`);
-          self._plugins[ctor]._error = true;
-          self._plugins[ctor]._error_obj = err;
+          this._plugins[ctor]._error = true;
+          this._plugins[ctor]._error_obj = err;
           Util.ErrorOnly(err);
           reject(err);
-        } else {
-          resolve(self._plugins[ctor].obj);
         }
       };
       document.head.appendChild(s);
@@ -149,7 +157,7 @@ class PluginStorageClass {
     if (!Util.IsArray(plugin_def.args)) {
       plugin_def.args = [];
     }
-    if (typeof(plugin_def.order) === "undefined") {
+    if (typeof(plugin_def.order) !== "number") {
       plugin_def.order = 1000;
     }
     this._plugins[plugin_def.ctor] = plugin_def;
@@ -159,35 +167,19 @@ class PluginStorageClass {
   /* Load all added plugin objects */
   loadAll(client, config) {
     if (this.disabled || PluginStorageClass.disabled) { return; }
-    return new Promise((function(resolve, reject) {
-      Promise.all(Object.values(this._plugins).map((p) => {
-        this._load(p, client, config);
-      }))
-        .then(() => resolve())
-        .catch((e) => reject(e));
-    }).bind(this));
+    let plugins = Object.values(this._plugins);
+    return Promise.all(plugins.map((p) => this._load(p, client, config)));
   }
 
   /* Load a plugin by name */
   load(ctor, client, config) {
     if (this.disabled || PluginStorageClass.disabled) { return; }
-    return new Promise((function(resolve, reject) {
-      let plugin_def = this._plugins[ctor];
-      if (plugin_def) {
-        try {
-          this._load(plugin_def, client, config)
-            .then(function() { resolve(); })
-            .catch(function(e) { reject(e); });
-        }
-        catch (e) {
-          Util.Error("Failed loading plugin", ctor, plugin_def, e);
-          Content.addError(e);
-          reject(e);
-        }
-      } else {
-        reject(new Error(`Invalid plugin ${ctor}`));
-      }
-    }).bind(this));
+    this._load(this._plugins[ctor], client, config)
+      .catch((e) => {
+        Util.Error("Failed loading plugin", ctor, e);
+        Content.addError(e);
+        throw e;
+      });
   }
 
   /* Call a plugin function and return an array of results */
