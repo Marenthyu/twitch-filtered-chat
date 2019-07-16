@@ -602,18 +602,39 @@ body.light .module .content a {
 
 /* Clip preview box {{{1 */
 
+/* Clip layout:
+ * div.clip-preview
+ *  img.clip-thumbnail
+ *  span.clip-text
+ *   div.clip-title
+ *   div.clip-desc
+ *   div.clip-creator
+ */
+
 .clip-preview {
-  border: 2px lightgray inset;  
-  padding: 2px 2px 2px 2px;
-  vertical-align: middle;
+  border: 6px lightgray inset;  
+  padding: 0 0 0 0;
+  display: flex;
+  align-items: flex-start;
+  overflow: auto;
 }
 
 .clip-preview .clip-thumbnail {
-  float: left;
+  border: 4px darkgray inset;
+  padding: 0 0 0 0;
+  margin: 0 0 0 0;
+  flex: inherit;
+}
+
+.clip-preview .clip-text {
+  flex: 1;
+  padding: 5px;
 }
 
 .clip-preview .clip-title {
   font-style: italic;
+  font-weight: bold;
+  font-size: 120%;
 }
 
 /* End of clip preview box 1}}} */

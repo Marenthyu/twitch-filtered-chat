@@ -70,9 +70,11 @@ const Strings = { /* exported Strings */
   NAME_AUTOGEN: "Auto-Generated",
   PASS_CACHED: "Cached",
 
-  StreamOnline: (ch) => `<a href="https://twitch.tv/${ch.replace(/^#/, "")}">${ch}</a> is streaming`,
-  StreamInfo: (name, game, viewers) => `${name} is streaming <a href="https://www.twitch.tv/${name}" target="_blank">${game}</a> for ${viewers} viewer${viewers === 1 ? "" : "s"}`,
-  StreamOffline: (ch) => `<a href="https://twitch.tv/${ch.replace(/^#/, "")}" target="_blank">${ch}</a> is not currently streaming`,
+  Streamer: (name, text=null) => `<a href="https://twitch.tv/${name.replace(/[^\w]/g, "")}" target="_blank">${text || name}</a>`,
+
+  StreamOnline: (ch) => `${Strings.Streamer(ch)} is streaming`,
+  StreamInfo: (name, game, viewers) => `${Strings.Streamer(name)} is streaming ${Strings.Streamer(name, game)} for ${viewers} viewer${viewers === 1 ? "" : "s"}`,
+  StreamOffline: (ch) => `${Strings.Streamer(ch)} is not currently streaming`,
 
   Sub: (plan) => `just subscribed with a ${plan} subscription!`,
   ResubStreak: (months, plan, streak) => `resubscribed for ${months} months with a ${plan} subscription! They're on a streak of ${streak} months!`,
