@@ -1,7 +1,7 @@
 <!DOCTYPE xhtml>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>Filtered Chat Settings</title>
+  <title>Filtered Chat Help</title>
   <meta charset="utf-8" />
   <link href="../assets/main.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="../assets/jquery-3.4.0.js"></script>
@@ -10,20 +10,14 @@
 function addEntry(text) {
   $(".content").append($("<pre></pre>").text(text));
 }
-function setConfig(config) {
-  addEntry(`Obtained configuration: ${JSON.stringify(config).length} characters`);
-  console.log("Obtained configuration:", config);
-  console.log(window.hostFunc);
-}
-function setOpener(w) {
-  window.opener = w;
-  console.log(w);
-}
   </script>
 </head>
 <body>
-<span class="debug" id="debug" style="display: none">Debug active</span>
-<div class="content">
+  <span class="debug" id="debug" style="display: none">Debug active</span>
+  <div class="content">
+  </div>
+</body>
+</html>
 <!--
 IDEAS:
 
@@ -60,6 +54,3 @@ One or two columns based on layout choice:
 Live-updated URL at the bottom
   Checkbox for base64?
 -->
-</div>
-</body>
-</html> 

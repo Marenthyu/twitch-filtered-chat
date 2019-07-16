@@ -131,8 +131,8 @@ class Fanfare { /* exported Fanfare */
 
   /* Create an element with some default attributes */
   elem(type, classes, ...attrs) {
-    let e = document.createElement(type);
-    let setAttr = (k, v) => {
+    const e = document.createElement(type);
+    const setAttr = (k, v) => {
       if (k === "innerHTML") e.innerHTML = v;
       else if (k === "innerText") e.innerText = v;
       else e.setAttribute(k, v);

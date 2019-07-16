@@ -2,6 +2,10 @@
 
 "use strict";
 
+/* FIXME:
+ * Fanfares ignore cbAnimCheers
+ */
+
 /* TODO (in approximate decreasing priority):
  * Add to content to both of the settings help and builder links
  *   Change AssetPaths.BUILDER_WINDOW to use the new builder
@@ -432,7 +436,7 @@ function getConfigObject(inclSensitive=false) {
   /* Populate configs from each module */
   $(".module").each(function _config_get_module_settings() {
     let id = $(this).attr("id");
-    let toArray = (val) => Util.IsArray(val) ? val : [];
+    const toArray = (val) => Util.IsArray(val) ? val : [];
     if (!config[id]) {
       config[id] = getModuleSettings($(this));
     }
@@ -575,7 +579,7 @@ function genConfigURL(config, options=null) {
   let opts = options || {};
   let base = opts.git ? GIT_URL : CUR_URL;
   let qs = [];
-  let qsAdd = (k, v) => qs.push(`${k}=${encodeURIComponent(v)}`);
+  const qsAdd = (k, v) => qs.push(`${k}=${encodeURIComponent(v)}`);
 
   if (opts.key) {
     qsAdd("key", opts.key);
@@ -770,7 +774,7 @@ function getModuleSettings(module) {
 
 /* Parse a module configuration object from a query string component */
 function parseModuleConfig(value) {
-  let Decode = (vals) => vals.map((v) => decodeURIComponent(v));
+  const Decode = (vals) => vals.map((v) => decodeURIComponent(v));
   let parts = Decode(value.split(/,/g));
   while (parts.length < 7) parts.push("");
   /* Upgrade configuration from 6x to 7x */
@@ -797,7 +801,7 @@ function parseModuleConfig(value) {
 
 /* Format the module configuration object into a query string component */
 function formatModuleConfig(cfg) {
-  let Encode = (vals) => vals.map((v) => encodeURIComponent(v));
+  const Encode = (vals) => vals.map((v) => encodeURIComponent(v));
   let bits = [cfg.Pleb, cfg.Sub, cfg.VIP, cfg.Mod, cfg.Event, cfg.Bits, cfg.Me];
   let values = [
     cfg.Name,
@@ -829,7 +833,7 @@ function updateModuleConfig() {
 
 /* Set the joined channels to the list given */
 function setChannels(client, channels) {
-  let fmt_ch = (ch) => Twitch.FormatChannel(Twitch.ParseChannel(ch));
+  const fmt_ch = (ch) => Twitch.FormatChannel(Twitch.ParseChannel(ch));
   let new_chs = channels.map(fmt_ch);
   let old_chs = client.GetJoinedChannels().map(fmt_ch);
   let to_join = new_chs.filter((c) => old_chs.indexOf(c) === -1);
@@ -957,7 +961,7 @@ function showUserContextWindow(client, cw, line) {
     $i.text(text);
     return $i;
   }
-  let $Em = (s) => $(`<span class="em pad"></span>`).html(s);
+  const $Em = (s) => $(`<span class="em pad"></span>`).html(s);
 
   /* Add user's display name */
   let $username = $l.find(".username");
@@ -1310,8 +1314,8 @@ function doLoadClient() { /* exported doLoadClient */
       document.title += " - Read-Only";
       /* Change the chat placeholder and border to reflect read-only */
       if (cfg.Layout.Chat) {
-        $("#txtChat").attr("placeholder",
-                           Strings.ANON_PLACEHOLDER + ": " + Strings.AUTH_PLACEHOLDER);
+        let message = Strings.ANON_PLACEHOLDER + ": " + Strings.AUTH_PLACEHOLDER;
+        $("#txtChat").attr("placeholder", message);
         Util.CSS.SetProperty("--chat-border", "#cd143c");
       }
     }

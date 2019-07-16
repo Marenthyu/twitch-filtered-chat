@@ -5,6 +5,9 @@
 /* To use: AddAsset("tests/inject.js"); */
 
 function BuildMessage(flag_obj, cmd, msg=null) {
+  const encodeFlag = (k, v) => `${k}=${Twitch.EncodeFlag(String(v))}`;
+  const user = "kaedenn_!kaedenn_@kaedenn_.tmi.twitch.tv";
+  const ch = "#dwangoac";
   let flags = {};
   flags["badge-info"] = "subscriber/12";
   flags["badges"] = "moderator/1,subscriber/12,bits/1000";
@@ -28,10 +31,6 @@ function BuildMessage(flag_obj, cmd, msg=null) {
       flags[k] = v;
     }
   }
-  let user = "kaedenn_!kaedenn_@kaedenn_.tmi.twitch.tv";
-  let ch = "#dwangoac";
-
-  let encodeFlag = (k, v) => `${k}=${Twitch.EncodeFlag(String(v))}`;
   let fstr = Object.entries(flags).map(([k, v]) => encodeFlag(k, v)).join(";");
   let message = `@${fstr} :${user} ${cmd} ${ch}`;
   if (msg !== null) {

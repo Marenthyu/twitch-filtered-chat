@@ -375,7 +375,7 @@ class ChatCommandManager {
 function onCommandLog(cmd, tokens, client) {
   let t0 = tokens.length > 0 ? tokens[0] : "";
   let logs = Util.GetWebStorage(LOG_KEY) || [];
-  let plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
   Content.addHelpText(`Debug message log length: ${logs.length}`);
   /* JSON-encode an object, inserting spaces around items */
   function toJSONString(obj) {
@@ -688,7 +688,7 @@ function onCommandCheers(cmd, tokens, client) {
   else if (tokens.includes("scale4")) scale = "4";
   if (tokens.includes("static")) state = "static";
   else if (tokens.includes("animated")) state = "animated";
-  let formatCheer = (ch, c) => {
+  const formatCheer = (ch, c) => {
     let html = [];
     let [img_bg, img_scale, img_state] = [bg, scale, state];
     if (bg === null) {

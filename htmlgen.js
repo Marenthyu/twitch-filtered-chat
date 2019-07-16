@@ -221,9 +221,9 @@ class HTMLGenerator { /* exported HTMLGenerator */
 
   /* Returns jquery node */
   _wrapBadge(elem) {
+    const getData = (aname) => elem.attr(`data-${aname}`) || "";
     let $e = $(elem);
     let $s = $(`<span class="badge"></span>`);
-    let getData = (aname) => elem.attr(`data-${aname}`) || "";
     let lines = [];
     let info_str = getData("badge");
     let badge_desc = `${getData("badge-name")}`;

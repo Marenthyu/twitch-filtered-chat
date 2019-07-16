@@ -261,6 +261,7 @@ function Main(global) { /* exported Main */
       let cond = args.length > 0 ? Boolean(args[0]) : true;
       this.each((i, n) => {
         n.checked = cond;
+        n.setAttribute("checked", "checked");
         n.dispatchEvent(new Event("change"));
       });
     };
@@ -268,6 +269,7 @@ function Main(global) { /* exported Main */
     $jQuery.fn.uncheck = function() {
       this.each((i, n) => {
         n.checked = false;
+        n.removeAttribute("checked");
         n.dispatchEvent(new Event("change"));
       });
     };
