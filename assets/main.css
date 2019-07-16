@@ -313,6 +313,9 @@ body.light .loading {
 .help-line {
   display: grid;
   grid-template-columns: 20% auto;
+}
+
+.help-line, .help-text-line {
   margin-left: 1.5em;
 }
 

@@ -317,6 +317,12 @@ class ChatCommandManager {
     return `<div class="help-line">${d1}${d2}</div>`;
   }
 
+  /* Helper: format a help line similar to helpLine */
+  helpTextLine(text, esc=false) {
+    let d = `<div>${esc ? text.escape() : text}</div>`;
+    return `<div class="help-text-line">${d}</div>`;
+  }
+
   /* Helper: format "<arg>" and "*arg*" in the given string */
   formatArgs(s) {
     let result = s;
@@ -333,8 +339,10 @@ class ChatCommandManager {
   /* End formatting API 0}}} */
 
   /* Print the usage information for the given command object */
-  printUsage(cmdobj) {
-    Content.addHelpText("Usage:");
+  printUsage(cmdobj, inclUsageString=true) {
+    if (inclUsageString) {
+      Content.addHelpText("Usage:");
+    }
     for (let line of this.formatUsage(cmdobj)) {
       Content.addHelp(line);
     }
@@ -811,9 +819,9 @@ function onCommandEmotes(cmd, tokens, client) {
     }
   }
   if (to_display.length === 0) {
-    this.printHelp();
     this.printUsage();
-    Content.addHelpText(`There are ${s_emotes.length} available emote sets`);
+    let num = Object.entries(s_emotes).length;
+    Content.addHelpTextLine(`There are ${num} available emote sets`);
   } else {
     for (let msg of to_display) {
       Content.addNotice(msg);
@@ -864,8 +872,9 @@ function onCommandPlugins(cmd, tokens, client) {
         Content.addErrorText("//plugins add: not enough arguments");
       }
     } else if (t0 === "help") {
+      Content.addHelpText("Help for //plugins:");
       this.printHelp();
-      this.printUsage();
+      this.printUsage(false);
     } else {
       Content.addErrorText(`Unknown command ${t0}`);
       this.printHelp();

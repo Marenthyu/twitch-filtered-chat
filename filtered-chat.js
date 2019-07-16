@@ -152,6 +152,11 @@ class Content { /* exported Content */
   static addHelpLine(c, s, escape=false) {
     Content.addHelp(ChatCommands.helpLine(c, s, escape));
   }
+
+  /* Add a help line with indent; escapes when escape=true (default false) */
+  static addHelpTextLine(s, escape=false) {
+    Content.addHelp(ChatCommands.helpTextLine(s, escape));
+  }
 }
 
 /* End document writing functions 0}}} */
@@ -1930,8 +1935,8 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* WebSocket closed */
   client.bind("twitch-close", function _on_twitch_close(e) {
-    let code = e.object.event.code;
-    let reason = e.object.event.reason;
+    let code = e.values.event.code;
+    let reason = e.values.event.reason;
     let msg = `(code ${code} ${Util.WSStatus[code]})`;
     if (reason) {
       msg = `(code ${code} ${Util.WSStatus[code]}: ${reason})`;
