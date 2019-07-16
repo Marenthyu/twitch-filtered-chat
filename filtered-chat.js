@@ -2087,8 +2087,10 @@ function doLoadClient() { /* exported doLoadClient */
             });
         }
         /* If .at-self or .highlight is given, set the notification icon */
-        if ($e.find(".message.at-self") || $e.find(".highlight")) {
-          if (!H.getValue("focus")) {
+        if (!H.getValue("focus")) {
+          if ($e.find(".message.at-self").length > 0) {
+            setNotify(true);
+          } else if ($e.find(".highlight").length > 0) {
             setNotify(true);
           }
         }

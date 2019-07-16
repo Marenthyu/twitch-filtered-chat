@@ -17,9 +17,8 @@
  ** Defining a new color (see ColorNames below):
  *  <color-name>: #<color-hex>
  *
- ** Plugins are able (and encouraged!) to define new cheer styles and colors:
- *  Add cheer styles by adding to or modifying CSSCheerStyles directly.
- *  Define new colors by adding to or modifying ColorNames directly.
+ ** Plugins are able (and encouraged!) to define new cheer styles and colors by
+ *  editing CSSCheerStyles or ColorNames directly.
  *
  ** Line format:
  *  <div class="line line-wrapper">
@@ -71,9 +70,9 @@ const Strings = { /* exported Strings */
   NAME_AUTOGEN: "Auto-Generated",
   PASS_CACHED: "Cached",
 
-  StreamOnline: (ch) => `${ch} is streaming`,
-  StreamInfo: (name, game, viewers) => `${name} is streaming <a href="https://www.twitch.tv/${name}">${game}</a> for ${viewers} viewer${viewers === 1 ? "" : "s"}`,
-  StreamOffline: (ch) => `${ch} is not currently streaming`,
+  StreamOnline: (ch) => `<a href="https://twitch.tv/${ch.replace(/^#/, "")}">${ch}</a> is streaming`,
+  StreamInfo: (name, game, viewers) => `${name} is streaming <a href="https://www.twitch.tv/${name}" target="_blank">${game}</a> for ${viewers} viewer${viewers === 1 ? "" : "s"}`,
+  StreamOffline: (ch) => `<a href="https://twitch.tv/${ch.replace(/^#/, "")}" target="_blank">${ch}</a> is not currently streaming`,
 
   Sub: (plan) => `just subscribed with a ${plan} subscription!`,
   ResubStreak: (months, plan, streak) => `resubscribed for ${months} months with a ${plan} subscription! They're on a streak of ${streak} months!`,
