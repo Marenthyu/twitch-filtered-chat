@@ -842,6 +842,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       msg_def.e.css(attr, val);
     }
     $e.html($e.html() + "&nbsp;");
+    /* Apply the calculated style information */
     let html_pre = [];
     let html_post = [];
     if (msg_def.effects.length > 0) {
@@ -854,6 +855,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
         if (effect.html_post) html_post.unshift(effect.html_post);
       }
     }
+    /* Build and return the message */
     let pre_html = html_pre.join("");
     let msg_html = msg_def.e[0].outerHTML;
     let post_html = html_post.join("");
@@ -914,7 +916,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       let plan = TwitchSubEvent.PlanName(`${event.plan_id}`);
       $m.text(Strings.GiftSub(gifter, plan, user));
     }
-    $m.html($m.html() + e + "&nbsp;");
+    $m.html($m.html() + "&nbsp;" + e);
     $w.append($m);
     this._checkUndefined(event, $w);
     return $w;
@@ -933,7 +935,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       let plan = TwitchSubEvent.PlanName(`${event.plan_id}`);
       $m.text(Strings.AnonGiftSub(plan, user));
     }
-    $m.html($m.html() + e + "&nbsp;");
+    $m.html($m.html() + "&nbsp;" + e);
     $w.append($m);
     this._checkUndefined(event, $w);
     return $w;
