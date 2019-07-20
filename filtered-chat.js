@@ -6,6 +6,45 @@
  * Fanfares ignore cbAnimCheers
  */
 
+/* AUTHENTICATION
+ *
+ * https://id.twitch.tv/oauth2/authorize
+ *  ?response_type=token
+ *  &client_id=<client-id>
+ *  &redirect_uri=https://kaedenn.github.io/twitch-filtered-chat/index.html
+ *  &scope=<scopes>
+ *  &state=<secure random value>
+ *
+ * Optional:
+ *  force_verify: boolean (default false)
+ *  Enable to force verification every time
+ *
+ * Scopes: chat:edit+chat:read+channel:moderate
+ *  bits:read perhaps?
+ *
+ * Redirect will be to
+ *  https://kaedenn.github.io/twitch-filtered-chat/index.html
+ *    #access_token=<OAuth token>
+ *    &scope=<scopes>
+ *    &state=<state>
+ *    &token_type=bearer
+ *  Note that this uses the hash fragment: window.location.hash
+ *
+ * Concerns:
+ *  1) How do I verify &state? Should it be a secure hash of some
+ *    client-supplied value? Use localStorage?
+ *  2) How should the query string config values be replaced? Store them into
+ *    localStorage, redirect to oauth2/authorize, then confirm values?
+ *
+ * Idea:
+ *  1. Navigate to tfc/index.html?<options>
+ *  2. Generate state value
+ *  3. Store options with state into localStorage temporarily
+ *  4. Redirect user to oauth2/authorize
+ *  5. Obtain options and state from localStorage (and purge)
+ *  6. If state matches, use token, otherwise discard with error
+ */
+
 /* TODO (in approximate decreasing priority):
  * Implement selClearStyle for all(?) ways to clear chat
  *   !tfc nuke
@@ -337,7 +376,7 @@ function getConfigKey() {
   let qs = Util.ParseQueryString();
   let val = qs.config_key || qs.key || qs["config-key"];
   if (val) {
-    config_key = config_key + "-" + val.replace(/[^a-z]/g, "");
+    config_key = config_key + "-" + val.replace(/[^a-z0-9_-]/g, "");
   }
   return config_key;
 }
@@ -2245,7 +2284,7 @@ function doLoadClient() { /* exported doLoadClient */
   client.bind("twitch-otherusernotice", function _on_twitch_otherusernotice(e) {
     Util.StorageAppend(LOG_KEY, e);
     Util.Warn("Unknown USERNOTICE", e);
-    /* TODO: unraid, bitsbadgetier */
+    /* TODO: bitsbadgetier */
   });
 
   /* Streamer is hosting someone else */
