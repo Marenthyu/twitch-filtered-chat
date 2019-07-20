@@ -200,6 +200,48 @@ TEST_MESSAGES.PRIMEPAIDUPGRADE = BuildMessage({
   "system-msg": "HarleyDeWayne converted from a Twitch Prime sub to a Tier 1 sub!"
 }, "USERNOTICE");
 
+/* Permutations of mod, sub, turbo, and staff */
+(function() {
+  /* Thanks to cyrian for the staff flags */
+  function makeMessage(key, mod, sub, turbo, staff) {
+    let badges = [];
+    let flags = {};
+    if (mod) {
+      badges.push("moderator/1");
+      flags["mod"] = 1;
+    }
+    if (sub) {
+      badges.push("subscriber/12");
+      flags["badge-info"] = "subscriber/12";
+      flags["subscriber"] = 1;
+    }
+    if (turbo) {
+      badges.push("turbo/1");
+      flags["turbo"] = 1;
+    }
+    if (staff) {
+      badges.push("staff/1");
+      flags["staff"] = 1;
+    }
+    flags["badges"] = badges.join(",");
+    return BuildMessage(flags, "PRIVMSG", "Permutation: " + key);
+  }
+  for (let is_mod of [0, 1]) {
+    for (let is_sub of [0, 1]) {
+      for (let is_turbo of [0, 1]) {
+        for (let is_staff of [false, true]) {
+          let key = "P";
+          if (is_mod) key += "_MOD";
+          if (is_sub) key += "_SUB";
+          if (is_turbo) key += "_TURBO";
+          if (is_staff) key += "_STAFF";
+          TEST_MESSAGES[key] = makeMessage(key, is_mod, is_sub, is_turbo, is_staff);
+        }
+      }
+    }
+  }
+})();
+
 function inject_message(msg) { /* exported inject_message */
   if (Util.Defined("client")) {
     let e = new Event("message");
