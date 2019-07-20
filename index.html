@@ -10,7 +10,7 @@
     content="Twitch Filtered Chat - Twitch chat client with message filtering" />
   <meta
     property="og:description"
-    content="Connect to a Twitch channel to receive the messages you care about, ignoring the uninteresting noise! Embed into OBS to have chat appear on your stream!" />
+    content="Connect to a Twitch channel to receive the messages you care about while ignoring the uninteresting noise! Embed into OBS to have chat appear on your stream!" />
   <link href="assets/settings_white.png" rel="shortcut icon" type="image/png" />
   <link href="assets/main.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="assets/jquery-3.4.0.js"></script>
@@ -184,6 +184,7 @@ function onLoad() {
         <li><label for="cbTransparent">Transparent:</label><input type="checkbox" id="cbTransparent" class="middle" /></li>
         <li><label for="cbClips">Show Clips:</label><input type="checkbox" id="cbClips" class="middle" /></li>
         <li><label for="cbForce">Mod Antics:</label><input type="checkbox" id="cbForce" class="middle" /></li>
+        <li><label for="cbFanfare">Fanfare:</label><input type="checkbox" id="cbFanfare" class="middle" /></li>
         <li><label for="selDebug">Debugging:</label><select id="selDebug"><option value="0" selected>Disabled</option><option value="1">Debug</option><option value="2">Trace</option></select></li>
       </ul>
     </section>
@@ -203,6 +204,9 @@ function onLoad() {
         <li><label for="txtPluginCfg">Plugin Cfg:</label><input type="text" id="txtPluginCfg" /></li>
         -->
         <li><label for="txtTag">Tag:</label><input type="text" id="txtTag" disabled /></li>
+        <!-- TODO
+        <li><label for="selClearStyle">Clear Action:</label><select id="selClearStyle"><option value="remove" selected>Remove</option><option value="strike">Strikeout</option></select></li>
+        -->
       </ul>
     </section>
     <footer>

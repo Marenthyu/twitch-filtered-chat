@@ -7,9 +7,12 @@
  */
 
 /* TODO (in approximate decreasing priority):
+ * Implement selClearStyle for all(?) ways to clear chat
+ *   !tfc nuke
+ *   CLEARCHAT
+ *   CLEARMSG
  * Add to content to both of the settings help and builder links
  *   Change AssetPaths.BUILDER_WINDOW to use the new builder
- *   shayd3 is working on the builder
  * Authenticate using Twitch's implicit OAuth flow?
  *   Ensure this doesn't preclude query string configuration, or if it does,
  *   somehow work around it
@@ -1411,6 +1414,9 @@ function doLoadClient() { /* exported doLoadClient */
     $("#txtTag").val(config.tag);
   }
 
+  /* Sync fanfare with the enable checkbox */
+  $("#cbFanfare").check(config.Fanfare && config.Fanfare.enable);
+
   /* Construct the HTMLGenerator and Fanfare objects */
   client.set("HTMLGen", new HTMLGenerator(client, config));
   client.set("Fanfare", new Fanfare(client, config));
@@ -1461,6 +1467,7 @@ function doLoadClient() { /* exported doLoadClient */
   /* Close the main settings window */
   function closeSettings() {
     updateModuleConfig();
+    $("#advSettings").slideUp();
     $("#settings").fadeOut();
   }
 
@@ -1534,6 +1541,24 @@ function doLoadClient() { /* exported doLoadClient */
   /* Open the settings builder page */
   function openSettingsTab() {
     Util.Open(AssetPaths.BUILDER_WINDOW, "_blank", {});
+  }
+
+  /* Purge message(s) from chat */
+  function purgeMessages(rules) {
+    let uids = null; /* all users */
+    let cids = null; /* all channels */
+    let modules = null; /* all modules */
+    if (Util.IsArray(rules.user_ids)) {
+      uids = rules.user_ids;
+    } else if (rules.user_id) {
+      uids = [rules.user_id];
+    }
+    if (Util.IsArray(rules.channel_ids)) {
+      uids = rules.channel_ids;
+    } else if (rules.channel_id) {
+      uids = [rules.channel_id];
+    }
+    /* TODO */
   }
 
   /* Initialize chat auto-completion and history */
@@ -1668,7 +1693,7 @@ function doLoadClient() { /* exported doLoadClient */
   });
 
   /* Changing the "stream is transparent" checkbox */
-  $("#cbTransparent").change(function() {
+  $("#cbTransparent").change(function(e) {
     updateTransparency($(this).is(":checked"));
     updateHTMLGenConfig();
   });
@@ -1677,6 +1702,11 @@ function doLoadClient() { /* exported doLoadClient */
   $("#cbClips").change(function(e) {
     mergeConfigObject({"ShowClips": $(this).is(":checked")});
     updateHTMLGenConfig();
+  });
+
+  /* Changing the "Show Fanfare" checkbox */
+  $("#cbFanfare").change(function(e) {
+    client.get("Fanfare").enable = $(this).is(":checked");
   });
 
   /* Clicking on the "No Force" checkbox */
@@ -2224,14 +2254,17 @@ function doLoadClient() { /* exported doLoadClient */
     let target = Strings.Streamer(e.user);
     let $m = $(`<span class="host-message"></span>`);
     let $btn = $(`<span class="btn url">Click here to join!</span>`);
-    $m.html(`${channel} is hosting #${target}: `);
-    /* Leave the hosting channel and join the hosted channel */
-    $m.click(() => {
-      client.LeaveChannel(channel);
-      client.JoinChannel(e.user);
-    });
-    $m.append($btn);
-    Content.addNotice($m);
+    /* A user of "-" refers to an "unhost" */
+    if (e.user !== "-") {
+      $m.html(`${channel} is hosting #${target}: `);
+      /* Leave the hosting channel and join the hosted channel */
+      $m.click(() => {
+        client.LeaveChannel(channel);
+        client.JoinChannel(e.user);
+      });
+      $m.append($btn);
+      Content.addNotice($m);
+    }
   });
 
   /* Received a reconnect request from Twitch (handled automatically) */
