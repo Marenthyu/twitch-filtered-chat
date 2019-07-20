@@ -4,6 +4,9 @@
 
 /** Defining a new CSS style (see "Line format" and CSSCheerStyles below):
  *  <style_name>: {
+ *    rule: String: <style name> (used for advanced rule aggregation),
+ *    is_template: Boolean: (optional) rule is a template; disallow use,
+ *    aggregator: Function: (optional) function to combine multiple rules,
  *    _disabled: Boolean: (optional) mark the effect as disabled,
  *    cost: Number: number of bits the effect requires/consumes,
  *    class: String: span.message CSS class name(s),
@@ -14,12 +17,22 @@
  *    html_post: String: HTML to insert after div.chat-line
  *  }
  *
- ** Defining a new color (see ColorNames below):
- *  <color-name>: #<color-hex>
- *
  ** Color styles are configured via CSSCheerStyles.color
  *
  ** Background color styles are configured via CSSCheerStyles.bgcolor
+ *
+ ** Rule aggregation is configured via CSSCheerStyles.aggregation
+ *  Aggregation functions take an array of rules and must return a single rule.
+ *  For example:
+ *    function myAggregator(rules) {
+ *      return {
+ *        class: rules.map((r) => r.class).join(" "),
+ *        wclass: rules.map((r) => r.wclass).join(" ")
+ *      };
+ *    }
+ *
+ ** Defining a new color (see ColorNames below):
+ *  <color-name>: #<color-hex>
  *
  ** Plugins are able (and encouraged!) to define new cheer styles and colors by
  *  editing CSSCheerStyles or ColorNames directly.
@@ -99,118 +112,154 @@ const Strings = { /* exported Strings */
 };
 
 /* CSS cheer styles; not const to encourage modifications */
-var CSSCheerStyles = { /* exported CSSCheerStyles */
-  /* Template style rule for colors; can disable/configure here */
-  color: {
-    cost: 1,
-    is_template: true
-  },
-  /* Template style rule for background colors: can disable/configure here */
-  bgcolor: {
-    cost: 1,
-    is_template: true
-  },
-  slide: {
-    _disabled: true,
-    cost: 1,
-    class: "effect-marquee",
-    wclass: "effect-marquee-container"
-  },
-  scroll: {
-    _disabled: true,
-    cost: 1,
-    class: "effect-scroll",
-    wclass: "effect-marquee-container"
-  },
-  bounce: {
-    _disabled: true,
-    cost: 1,
-    class: "effect-bounce",
-    wclass: "effect-marquee-container"
-  },
-  marquee: {
-    cost: 1,
-    html_pre: "<marquee>",
-    html_post: "</marquee>"
-  },
-  bold: {
-    cost: 1,
-    class: "effect-bold"
-  },
-  italic: {
-    cost: 1,
-    class: "effect-italic"
-  },
-  underline: {
-    cost: 1,
-    class: "effect-underline"
-  },
-  upsidedown: {
-    cost: 1,
-    class: "effect-upsidedown"
-  },
-  inverted: {
-    cost: 1,
-    class: "effect-inverted"
-  },
-  strikethrough: {
-    cost: 1,
-    class: "effect-strikethrough"
-  },
-  subscript: {
-    cost: 1,
-    class: "effect-subscript"
-  },
-  superscript: {
-    cost: 1,
-    class: "effect-superscript"
-  },
-  big: {
-    cost: 1,
-    class: "effect-big"
-  },
-  small: {
-    cost: 1,
-    class: "effect-small"
-  },
-  rainbow: {
-    cost: 1,
-    class: "effect-rainbow"
-  },
-  disco: {
-    cost: 1,
-    class: "effect-disco"
+var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
+  let ruleset = {
+    /* Template style rule for colors; can disable/configure here */
+    color: {
+      cost: 1,
+      is_template: true,
+      aggregator: (rules) => {
+        let colors = [];
+        for (let rule of rules) {
+          colors.push(rule.style.split(": ")[1]);
+        }
+        let cssrules = [];
+        cssrules.push(`background-image: linear-gradient(to right, ${colors.join(", ")})`);
+        cssrules.push("background-clip: text");
+        cssrules.push("-webkit-background-clip: text");
+        cssrules.push("-webkit-text-fill-color: transparent");
+        cssrules.push("text-shadow: none");
+        return {
+          rule: "color",
+          style: cssrules.join("; ")
+        };
+      }
+    },
+    /* Template style rule for background colors: can disable/configure here */
+    bgcolor: {
+      cost: 1,
+      is_template: true,
+      aggregator: (rules) => {
+        let colors = [];
+        for (let rule of rules) {
+          colors.push(rule.wstyle.split(": ")[1]);
+        }
+        return {
+          rule: "bgcolor",
+          wstyle: `background: linear-gradient(to right, ${colors.join(", ")})`
+        };
+      }
+    },
+    /* Template style rule for rule aggregation: can disable/configure here */
+    aggregation: { is_template: true },
+    slide: {
+      _disabled: true,
+      cost: 1,
+      class: "effect-marquee",
+      wclass: "effect-marquee-container"
+    },
+    scroll: {
+      _disabled: true,
+      cost: 1,
+      class: "effect-scroll",
+      wclass: "effect-marquee-container"
+    },
+    bounce: {
+      _disabled: true,
+      cost: 1,
+      class: "effect-bounce",
+      wclass: "effect-marquee-container"
+    },
+    marquee: { cost: 1, html_pre: "<marquee>", html_post: "</marquee>" },
+    bold: { cost: 1, class: "effect-bold" },
+    italic: { cost: 1, class: "effect-italic" },
+    underline: { cost: 1, class: "effect-underline" },
+    upsidedown: { cost: 1, class: "effect-upsidedown" },
+    inverted: { cost: 1, class: "effect-inverted" },
+    strikethrough: { cost: 1, class: "effect-strikethrough" },
+    subscript: { cost: 1, class: "effect-subscript" },
+    superscript: { cost: 1, class: "effect-superscript" },
+    big: { cost: 1, class: "effect-big" },
+    small: { cost: 1, class: "effect-small" },
+    rainbow: { cost: 1, class: "effect-rainbow" },
+    disco: { cost: 1, class: "effect-disco" }
+  };
+  /* Store the rule name in the "rule" attribute */
+  for (let [k, v] of Object.entries(ruleset)) {
+    v.rule = k;
   }
-};
+  return ruleset;
+})();
+
+/* Look up the information for the given color */
+function GetCheerColorInfo(c) { /* exported GetCheerColorInfo */
+  let color = c;
+  let rule_name = "color";
+  let rule_key = "style";
+  let attr = "color";
+  if (c.startsWith("bg-")) {
+    color = c.substr(3);
+    rule_name = "bgcolor";
+    rule_key = "wstyle";
+    attr = "background-color";
+  }
+  if (ColorNames.hasOwnProperty(color)) {
+    return [rule_name, rule_key, attr, ColorNames[color]];
+  } else if (color.match(/^#[0-9a-f]{6}/i)) {
+    return [rule_name, rule_key, attr, color];
+  } else {
+    return [null, null, null, null];
+  }
+}
 
 /* Obtain a style definition for the given effect name */
 function GetCheerStyle(word) { /* exported GetCheerStyle */
   if (CSSCheerStyles.hasOwnProperty(word)) {
+    /* Forbid access to "template" rules */
     if (!CSSCheerStyles[word].is_template) {
-      return CSSCheerStyles[word];
+      return Util.JSONClone(CSSCheerStyles[word]);
     }
   } else {
-    let color = word;
-    let rule = Util.JSONClone(CSSCheerStyles.color);
-    let rule_key = "style";
-    let [key, val] = ["color", null];
-    if (word.startsWith("bg-")) {
-      rule = Util.JSONClone(CSSCheerStyles.bgcolor);
-      key = "background-color";
-      rule_key = "wstyle";
-      color = word.substr(3);
-    }
-    if (ColorNames.hasOwnProperty(color)) {
-      val = ColorNames[color];
-    } else if (color.match(/^#[0-9a-f]{6}/i)) {
-      val = color;
-    }
-    if (val) {
-      rule[rule_key] = `${key}: ${val}`;
+    /* Try parsing the style as a color */
+    let [rule_name, rule_key, attr, val] = GetCheerColorInfo(word);
+    if (CSSCheerStyles.hasOwnProperty(rule_name)) {
+      let rule = Util.JSONClone(CSSCheerStyles[rule_name]);
+      rule[rule_key] = `${attr}: ${val}`;
+      if (!rule.hasOwnProperty("cost")) {
+        rule.cost = 1;
+      }
       return rule;
     }
   }
   return null;
+}
+
+/* If possible, aggregate composite style definitions */
+function AggregateEffects(effects) { /* exported AggregateEffects */
+  let rule = CSSCheerStyles.aggregation;
+  if (!rule || rule._disabled) {
+    /* Aggregation disabled; do nothing */
+    return effects;
+  }
+  let result = [];
+  let colors = [];
+  let bgcolors = [];
+  for (let effect of effects) {
+    if (effect.rule === "color") {
+      colors.push(effect);
+    } else if (effect.rule === "bgcolor") {
+      bgcolors.push(effect);
+    } else {
+      result.push(effect);
+    }
+  }
+  if (colors.length > 0) {
+    result.push(CSSCheerStyles.color.aggregator(colors));
+  }
+  if (bgcolors.length > 0) {
+    result.push(CSSCheerStyles.bgcolor.aggregator(bgcolors));
+  }
+  return result;
 }
 
 /* Colors usable in cheer effects; not const to encourage modifications */
@@ -457,6 +506,7 @@ var ColorNames = { /* exported ColorNames */
   "turquoise": "#06c2ac",
   "violet": "#9a0eea",
   "grey": "#929591",
+  "gray": "#929591",
   "yellow": "#ffff14",
   "magenta": "#c20078",
   "orange": "#f97306",

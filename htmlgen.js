@@ -416,26 +416,28 @@ class HTMLGenerator { /* exported HTMLGenerator */
         start = end = pos;
         while (pos < result.length) {
           let word = "";
-          if (result[pos].match(/\s/)) {
+          /* Skip past whitespace */
+          while (result[pos].match(/\s/) && pos < result.length) {
             pos += 1;
+          }
+          /* Match until the next /\s/ or the end of the string */
+          if ((end = result.substr(pos).search(/\s/)) === -1) {
+            end = result.length;
           } else {
-            /* NOTE: This would be cleaner with some kind of "search starting
-             * from" function: result.matchFrom(/\s/, pos) */
-            end = result.substr(pos).search(/\s/);
-            end = end === -1 ? result.length : pos + end;
-            word = result.substring(pos, end);
-            let s = GetCheerStyle(word.toLowerCase());
-            if (s && !s._disabled && bits_left >= s.cost) {
-              /* Continue scanning for disabled effects and effects using more
-               * bits than are left */
-              $effects.push(s);
-              bits_left -= s.cost;
-            } else {
-              /* Stop scanning at the first non-effect word */
-              end = pos;
-              break;
-            }
+            end += pos;
+          }
+          word = result.substring(pos, end);
+          /* Cheer effects are case-insensitive */
+          let s = GetCheerStyle(word.toLowerCase());
+          /* Continue scanning after disabled effects and effects using more
+           * bits than are left. Stop scanning at the first non-effect word */
+          if (s && !s._disabled && bits_left >= s.cost) {
+            $effects.push(s);
+            bits_left -= s.cost;
             pos = end;
+          } else {
+            end = pos;
+            break;
           }
         }
         if (start !== end) {
@@ -443,6 +445,16 @@ class HTMLGenerator { /* exported HTMLGenerator */
           result = result.substr(0, start) + " " + result.substr(end);
           this._remap(map, start, end, 0);
         }
+      }
+      /* Try to aggregate the effects together */
+      let new_effects = AggregateEffects($effects);
+      /* Clear the old effects */
+      while ($effects.length > 0) {
+        $effects.pop();
+      }
+      /* Add the new effects */
+      for (let effect of new_effects) {
+        $effects.push(effect);
       }
     }
     return result;
@@ -1096,6 +1108,6 @@ class HTMLGenerator { /* exported HTMLGenerator */
   }
 }
 
-/* globals Strings GetCheerStyle */
+/* globals Strings GetCheerStyle AggregateEffects */
 
 /* vim: set ts=2 sts=2 sw=2 et: */
