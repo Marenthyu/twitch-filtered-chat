@@ -55,7 +55,7 @@ URL: `https://kaedenn.github.io/twitch-filtered-chat/index.html?<OPTIONS>`
 | `norec`       | If present, don't automatically reconnect if connection is lost |
 | `size`        | Overrides the body font size (in pt) (default: 18) |
 | `plugins`     | If present, enables use of plugins (see plugins directory) |
-| `disable`     | Disable specific cheer effects, separated by commas |
+| `disable`     | Disable specific cheer effects, separated by commas. Use `color` to disable cheer colors. Use `bgcolor` to disable cheer background colors. |
 | `enable`      | Enable specific cheer effects, separated by commas |
 | `max`         | Maximum number of chat messages to retain (default 100) |
 | `font`        | Override default font `'Segoe UI', Tahoma, Geneva, Verdana, sans-serif` |
@@ -151,6 +151,7 @@ The following cheer effects are available and cost one bit each.
 | `rainbow` | Message is rainbow (red -> yellow -> green -> cyan -> blue -> purple -> red) |
 | `disco` | Message cycles through the rainbow colors in order |
 | _color_ | Message will use the color specified, by name (won't work with `rainbow`). Almost every color you can think of should work (see `config.js` `ColorNames`) |
+| `bg-`_color_ | Message will use the color specified as the background color, by name |
 
 To use them, add them to the message after the cheer:
 
@@ -163,6 +164,16 @@ To use them, add them to the message after the cheer:
   `cheer3 big blue bold Greetings`: The message is big, bold, and blue.
 
   `cheer1 big bold blue Greetings`: The message is big but neither bold nor blue, as effects cost one bit each.
+
+  `cheer2 big bg-gold Greetings`: The message is big and has a gold background.
+
+The following effects are disabled by default and must be enabled via `&enable=` to use. These effects don't look quite right and are a work in progress.
+
+| Effect Name | Description |
+| ----------- | ----------- |
+| `slide` | Similar to `marquee`, the message scrolls in from the right |
+| `scroll` | Similar to `marquee`, the effect scrolls in from the left |
+| `bounce` | Similar to `marquee`, the effect bounces from left to right |
 
 ### Hotkeys
 

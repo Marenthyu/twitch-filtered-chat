@@ -744,18 +744,16 @@ function onCommandCheers(cmd, tokens, client) {
 /* //emotes: display known emotes */
 function onCommandEmotes(cmd, tokens, client) {
   let to_display = [];
-  const toImage = (name, url) => {
-    let n = name.escape();
-    let u = url.escape();
-    return `<img src="${u}" alt="${n}" title="${n}" />`;
+  const toImage = (source, name, url) => {
+    return client.get("HTMLGen").genEmote(source, name, url);
   };
 
   let s_emotes = {};
   for (let [eset, eids] of Object.entries(client.GetEmoteSets())) {
     let emotes = [];
     for (let eid of eids) {
-      let ename = client.GetEmoteName(eid);
-      let emote = toImage(`${eid} ${ename}`, client.GetEmote(eid));
+      let edesc = `${client.GetEmoteName(eid)}\nID: ${eid}`;
+      let emote = toImage("twitch", edesc, client.GetEmote(eid));
       if (emotes.indexOf(emote) === -1) {
         emotes.push(emote);
       }
@@ -765,7 +763,12 @@ function onCommandEmotes(cmd, tokens, client) {
     }
   }
   if (tokens.indexOf("global") > -1 || tokens.indexOf("all") > -1) {
-    to_display.push(`Global: ${s_emotes[0].join("")}`);
+    to_display.push(`Global: ${s_emotes[TwitchClient.ESET_GLOBAL].join("")}`);
+    to_display.push(`Twitch Prime: ${s_emotes[TwitchClient.ESET_PRIME].join("")}`);
+    to_display.push(`Turbo Set 1: ${s_emotes[TwitchClient.ESET_TURBO_1].join("")}`);
+    to_display.push(`Turbo Set 2: ${s_emotes[TwitchClient.ESET_TURBO_2].join("")}`);
+    to_display.push(`Turbo Set 3: ${s_emotes[TwitchClient.ESET_TURBO_3].join("")}`);
+    to_display.push(`Turbo Set 4: ${s_emotes[TwitchClient.ESET_TURBO_4].join("")}`);
   }
   if (tokens.indexOf("channel") > -1 || tokens.indexOf("all") > -1) {
     for (let [eset, emotes] of Object.entries(s_emotes)) {
@@ -785,7 +788,7 @@ function onCommandEmotes(cmd, tokens, client) {
         for (let [k, v] of Object.entries(emotes)) {
           if (Object.entries(v.urls).length > 0) {
             let url = Object.values(v.urls)[0];
-            ffz_imgs.push(toImage(k, url));
+            ffz_imgs.push(toImage("ffz", k, url));
           }
         }
         if (ffz_imgs.length > 0) {
@@ -801,7 +804,7 @@ function onCommandEmotes(cmd, tokens, client) {
       let bttv_emotes = client.GetGlobalBTTVEmotes();
       let bttv_imgs = [];
       for (let [k, v] of Object.entries(bttv_emotes)) {
-        bttv_imgs.push(toImage(k, v.url));
+        bttv_imgs.push(toImage("bttv", k, v.url));
       }
       if (bttv_imgs.length > 0) {
         to_display.push(`BTTV: ${bttv_imgs.join("")}`);
@@ -810,7 +813,7 @@ function onCommandEmotes(cmd, tokens, client) {
         bttv_imgs = [];
         for (let edef of Object.values(client.GetBTTVEmotes(ch))) {
           let desc = `${edef.code} (#${edef.channel})`;
-          bttv_imgs.push(toImage(desc, edef.url));
+          bttv_imgs.push(toImage("bttv", desc, edef.url));
         }
         if (bttv_imgs.length > 0) {
           to_display.push(`BTTV: ${ch}: ${bttv_imgs.join("")}`);
@@ -1009,15 +1012,37 @@ function onCommandHighlight(cmd, tokens, client) {
 
 /* //auth: authentication help */
 function onCommandAuth(cmd, tokens, client) {
-  let $url = $(`<a href="https://twitchapps.com/tmi/" target="_blank"></a>`);
-  $url.text($url.attr("href"));
-  /* Change the txtChat placeholder when this command is ran */
-  if ($("#txtChat") && $("#txtChat").attr("placeholder")) {
-    $("#txtChat").attr("placeholder", Strings.ANON_PLACEHOLDER);
-  }
-  if (client.IsAuthed()) {
+  let t0 = tokens.length > 0 ? tokens[0] : "";
+  if (t0 === "help") {
+    Content.addHelpText(`Help for command ${cmd}:`);
+    this.printHelp();
+    this.printUsage();
+  } else if (client.IsAuthed()) {
     Content.addHelpText(`You are authenticated as ${client.GetName()}`);
+    if (t0 === "reset") {
+      let btn = $(`<span class="btn help" style="color: lightblue; font-weight: bold">Click here to reset your OAuth token</span>`);
+      Content.addHelpText("Are you sure you want to reset your OAuth token? This cannot be undone!");
+      btn.click(function(e) {
+        let resp = prompt("Enter your username if you're ABSOLUTELY CERTAIN you want to reset your OAuth token\nThis cannot be undone.");
+        if (resp === client.GetName()) {
+          /* Reset the OAuth token by appending "&pass=" to the query string */
+          let qs = window.location.search;
+          if (qs.length > 0 && qs[0] === "?") {
+            qs += "&pass=";
+          } else {
+            qs += "?pass=";
+          }
+          window.location.search = qs;
+        } else {
+          Content.addError("The value you entered does not match; not resetting");
+        }
+      });
+      Content.addHTML(btn);
+    }
   } else {
+    let $url = $(`<a target="_blank"></a>`);
+    $url.attr("href", Strings.OAUTH_GEN_URL);
+    $url.text(Strings.OAUTH_GEN_URL);
     Content.addHelpText("Click the following link to generate an OAuth token:");
     Content.addHelp($url);
     Content.addHelpText("Then enter your Twitch username and that OAuth token in the settings panel. You can open the settings panel by clicking the gear icon in the upper-right corner of the page.");
@@ -1154,7 +1179,12 @@ function InitChatCommands() { /* exported InitChatCommands */
     },
     "auth": {
       func: onCommandAuth,
-      desc: "Display help on authenticating with Twitch Filtered Chat"
+      desc: "Display help on authenticating with Twitch Filtered Chat. If presently authenticated, then also present button to reset authentication",
+      alias: ["login"],
+      usage: [
+        [null, "Show authentication status and, if needed, authentication help"],
+        ["reset", "Reset OAuth token; this cannot be undone!"]
+      ]
     }
   };
 

@@ -120,6 +120,13 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return this._emote("twitch", this._client.GetEmote(id), opts);
   }
 
+  /* Returns string */
+  genEmote(source, name, url, opts=null) {
+    let o = opts ? Util.JSONClone(opts) : {};
+    o.name = name;
+    return this._emote(source, url, o);
+  }
+
   /* Ensure the wrapper message does not contain "undefined" */
   _checkUndefined(ev, $w) {
     if ($w[0].outerHTML.indexOf("undefined") > -1) {
@@ -634,17 +641,12 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return result;
   }
 
-  /* Returns msginfo object */
-  _genMsgInfo(event) {
-    let $msg = $(`<span class="message" data-message="1"></span>`);
-    let $effects = [];
-
-    /* Escape the message, keeping track of how characters move */
-    let [message, map] = Util.EscapeWithMap(event.message);
-    map.push(message.length); /* Prevent off-the-end mistakes */
-
-    /* Handle early mod-only antics */
-    if (this.enableAntics && event.ismod) {
+  /* Set event flags referring to the type of antics used */
+  _classifyAntics(event, message) {
+    let msg = message;
+    let canuse = event.ismod || event.iscaster || event.isstaff;
+    event.flags.force = false;
+    if (this.enableAntics && canuse) {
       let t0 = event.message.split(" ")[0];
       switch (t0.replace(/-/g, "")) {
         case "force":
@@ -701,13 +703,24 @@ class HTMLGenerator { /* exported HTMLGenerator */
         }
         /* Modify message and event.message, as they're both used below */
         event.values.message = msgprefix + event.message.substr(wordlen);
-        message = msgprefix + message.substr(wordlen);
+        msg = msgprefix + message.substr(wordlen);
         event.flags.bits = 1000;
       }
-    } else {
-      /* Prevent unauthorized access */
-      event.flags.force = false;
     }
+    return msg;
+  }
+
+  /* Returns msginfo object */
+  _genMsgInfo(event) {
+    let $msg = $(`<span class="message" data-message="1"></span>`);
+    let $effects = [];
+
+    /* Escape the message, keeping track of how characters move */
+    let [message, map] = Util.EscapeWithMap(event.message);
+    map.push(message.length); /* Prevent off-the-end mistakes */
+
+    /* Handle early mod-only antics */
+    message = this._classifyAntics(event, message);
 
     let logMessage = () => {};
     if (Util.DebugLevel === Util.LEVEL_TRACE) {
