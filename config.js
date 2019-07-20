@@ -17,6 +17,10 @@
  ** Defining a new color (see ColorNames below):
  *  <color-name>: #<color-hex>
  *
+ ** Color styles are configured via CSSCheerStyles.color
+ *
+ ** Background color styles are configured via CSSCheerStyles.bgcolor
+ *
  ** Plugins are able (and encouraged!) to define new cheer styles and colors by
  *  editing CSSCheerStyles or ColorNames directly.
  *
@@ -62,6 +66,9 @@ const AssetPaths = { /* exported AssetPaths */
 
 /* Strings constants and message-building functions */
 const Strings = { /* exported Strings */
+  /* URL to an app to generate an OAuth token */
+  OAUTH_GEN_URL: "https://twitchapps.com/tmi/",
+
   /* Chat input placeholder strings */
   ANON_PLACEHOLDER: "Authentication needed to send messages",
   AUTH_PLACEHOLDER: "type //auth for more information",
@@ -93,6 +100,16 @@ const Strings = { /* exported Strings */
 
 /* CSS cheer styles; not const to encourage modifications */
 var CSSCheerStyles = { /* exported CSSCheerStyles */
+  /* Template style rule for colors; can disable/configure here */
+  color: {
+    cost: 1,
+    is_template: true
+  },
+  /* Template style rule for background colors: can disable/configure here */
+  bgcolor: {
+    cost: 1,
+    is_template: true
+  },
   slide: {
     _disabled: true,
     cost: 1,
@@ -169,9 +186,29 @@ var CSSCheerStyles = { /* exported CSSCheerStyles */
 /* Obtain a style definition for the given effect name */
 function GetCheerStyle(word) { /* exported GetCheerStyle */
   if (CSSCheerStyles.hasOwnProperty(word)) {
-    return CSSCheerStyles[word];
-  } else if (ColorNames.hasOwnProperty(word)) {
-    return {cost: 1, style: `color: ${ColorNames[word]}`};
+    if (!CSSCheerStyles[word].is_template) {
+      return CSSCheerStyles[word];
+    }
+  } else {
+    let color = word;
+    let rule = Util.JSONClone(CSSCheerStyles.color);
+    let rule_key = "style";
+    let [key, val] = ["color", null];
+    if (word.startsWith("bg-")) {
+      rule = Util.JSONClone(CSSCheerStyles.bgcolor);
+      key = "background-color";
+      rule_key = "wstyle";
+      color = word.substr(3);
+    }
+    if (ColorNames.hasOwnProperty(color)) {
+      val = ColorNames[color];
+    } else if (color.match(/^#[0-9a-f]{6}/i)) {
+      val = color;
+    }
+    if (val) {
+      rule[rule_key] = `${key}: ${val}`;
+      return rule;
+    }
   }
   return null;
 }
