@@ -3,7 +3,7 @@
 SOURCES = $(wildcard *.js) $(wildcard plugins/*.js) $(wildcard fanfare/*.js)
 
 # Distributed sources not to be transpiled
-EXTRA_SOURCES = tests/inject.js
+EXTRA_SOURCES = tests/inject.js tests/effects.js
 
 # Transpile destination directory
 DIST = ./dist

@@ -1,0 +1,83 @@
+<!--
+Twitch Filtered Chat - Cheer Effects Demonstration
+
+Possibilities:
+  1) Instantiate TFC instance (without client), invoke .gen() on each effect.
+  2) Hard-code HTML (akin to reimplementing HTMLGen).
+  3) Instantiate a complete TFC instance with client and inject faux messages.
+-->
+<!DOCTYPE xhtml>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Twitch Filtered Chat - Available Effects</title>
+  <meta charset="utf-8" />
+  <link href="../assets/settings_white.png" rel="shortcut icon" type="image/png" />
+  <link href="../assets/main.css" rel="stylesheet" type="text/css" />
+  <style type="text/css">
+
+/* absolute doesn't work here */
+.module .header {
+  position: relative;
+}
+
+.module .content {
+  overflow-y: scroll;
+}
+
+input[type="checkbox"] {
+  vertical-align: text-bottom;
+}
+
+.effect {
+  display: grid;
+  grid-template-columns: 20% max-content auto;
+}
+
+.effect-upsidedown {
+  text-align: right;
+}
+
+  </style>
+  <script type="text/javascript" src="../assets/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="../../twitch-api/utility.js"></script>
+  <script type="text/javascript" src="../config.js"></script>
+  <script type="text/javascript" src="effects.js"></script>
+  <script type="text/javascript">
+"use strict";
+
+if (window.location.search.match(/debug=1/)) Util.DebugLevel = Util.LEVEL_DEBUG;
+
+function doOnLoad() {
+  doMain();
+}
+  </script>
+</head>
+<body onload="doOnLoad()">
+<div id="debug" class="debug" style="display: none"></div>
+<div id="wrapper">
+  <div id="column1" class="column left" style="width: 30%">
+    <div id="module1" class="module left nochat">
+      <div id="content1" class="content">
+        <div class="line line-wrapper">
+          <div class="message">Select the effects you want and click &quot;Show&quot;!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="column2" class="column right" style="width: 70%">
+    <div id="module2" class="module right nochat">
+      <div id="content2" class="content">
+        <!--
+        <div class="line line-wrapper">
+          <div class="chat-line" data-id="<uuid>" data-user="<user>" data-user-id="<userid>" data-channel="<channel>" data-channel-id="<channelid>" data-channel-full="<channel>" data-sent-ts="<timestamp>" data-recv-ts="<timestamp>">
+            <span class="badges" data-badges="1" style=""></span>
+            <span class="username" data-username="1" style="color: <color>; text-shadow: <shadow>">username</span>:&nbsp;<span class="message" data-message="1">message</span>
+          </div>
+        </div>
+        -->
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

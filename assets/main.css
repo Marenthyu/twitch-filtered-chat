@@ -266,7 +266,7 @@ body.light .loading {
   font-size: 0.9em;
 }
 
-.module .header .clear-chat {
+.module .header .btnClearWrapper {
   position: relative;
   display: inline-block;
   vertical-align: top;
@@ -276,13 +276,13 @@ body.light .loading {
   top: -1pt;
 }
 
-.module .header .clear-chat .clear-link {
+.module .header .btnClearWrapper .btnClear {
   text-decoration: none;
   background: transparent;
   color: white;
 }
 
-.module .header .clear-chat .clear-icon {
+.module .header .btnClearWrapper .btnClearIcon {
   padding-top: 0.5em;
   width: 1.1em;
   height: 1.6em;
@@ -1059,9 +1059,9 @@ body.slim #btnSettings {
  * div.header
  *  div.menu
  *   div{3}
- *  span.clear-chat
- *   a.clear-link
- *    img.clear-icon
+ *  span.btnClearWrapper
+ *   a.btnClear
+ *    img.btnClearIcon
  *  div.settings
  *   fieldset
  *    legend

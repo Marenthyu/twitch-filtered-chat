@@ -116,6 +116,7 @@ var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
   let ruleset = {
     /* Template style rule for colors; can disable/configure here */
     color: {
+      name: "Text Color",
       cost: 1,
       is_template: true,
       aggregator: (rules) => {
@@ -137,6 +138,7 @@ var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
     },
     /* Template style rule for background colors: can disable/configure here */
     bgcolor: {
+      name: "Background Color",
       cost: 1,
       is_template: true,
       aggregator: (rules) => {
@@ -187,6 +189,9 @@ var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
   /* Store the rule name in the "rule" attribute */
   for (let [k, v] of Object.entries(ruleset)) {
     v.rule = k;
+    if (!v.name) {
+      v.name = k.toTitleCase();
+    }
   }
   return ruleset;
 })();
@@ -241,6 +246,7 @@ function AggregateEffects(effects) { /* exported AggregateEffects */
     /* Aggregation disabled; do nothing */
     return effects;
   }
+  /* TODO: Generalize to all aggregations; not just color and bgcolor */
   let result = [];
   let colors = [];
   let bgcolors = [];
@@ -253,11 +259,17 @@ function AggregateEffects(effects) { /* exported AggregateEffects */
       result.push(effect);
     }
   }
-  if (colors.length > 0) {
+  if (colors.length > 1) {
+    Util.Debug("Aggregating", colors);
     result.push(CSSCheerStyles.color.aggregator(colors));
+  } else if (colors.length > 0) {
+    result.push(colors[0]);
   }
-  if (bgcolors.length > 0) {
+  if (bgcolors.length > 1) {
+    Util.Debug("Aggregating", bgcolors);
     result.push(CSSCheerStyles.bgcolor.aggregator(bgcolors));
+  } else if (bgcolors.length > 0) {
+    result.push(bgcolors[0]);
   }
   return result;
 }

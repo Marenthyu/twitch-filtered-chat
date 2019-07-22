@@ -52,16 +52,12 @@
  *   CLEARMSG
  * Add to content to both of the settings help and builder links
  *   Change AssetPaths.BUILDER_WINDOW to use the new builder
- * Authenticate using Twitch's implicit OAuth flow?
- *   Ensure this doesn't preclude query string configuration, or if it does,
- *   somehow work around it
  * Create a README.md file for the plugins directory. Include documentation on:
  *   Commands
  *   Filtering
  *   Plugin creation and loading
  *   Plugin configuration (?plugincfg)
  * Auto-complete command arguments
- * Remove F1 hotkey binding
  */
 
 /* IDEAS:
@@ -1824,7 +1820,7 @@ function doLoadClient() { /* exported doLoadClient */
   });
 
   /* Clicking on a "Clear" link */
-  $(".module .header .clear-link").click(function(e) {
+  $(".module .header .btnClear").click(function(e) {
     $(this).parentsUntil(".column").find(".line-wrapper").remove();
   });
 
@@ -1876,9 +1872,6 @@ function doLoadClient() { /* exported doLoadClient */
           closeModuleSettings($(m));
         }
       }
-    } else if (e.key === "F1") {
-      /* F1: open configuration help window */
-      openSettingsTab();
     }
   });
 
@@ -1984,6 +1977,10 @@ function doLoadClient() { /* exported doLoadClient */
   /* Document lost focus: track it */
   $(document).blur(function(e) {
     client.get("HTMLGen").setValue("focus", false);
+  });
+
+  $(document).on("unhandledrejection", function(e) {
+    Util.Error("A promise was rejected without an exception handler:", e);
   });
 
   /* WebSocket opened */
@@ -2297,7 +2294,7 @@ function doLoadClient() { /* exported doLoadClient */
     if (e.user !== "-") {
       $m.html(`${channel} is hosting #${target}: `);
       /* Leave the hosting channel and join the hosted channel */
-      $m.click(() => {
+      $btn.click(() => {
         client.LeaveChannel(channel);
         client.JoinChannel(e.user);
       });
