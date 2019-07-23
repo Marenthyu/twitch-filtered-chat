@@ -184,7 +184,8 @@ var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
     big: { cost: 1, class: "effect-big" },
     small: { cost: 1, class: "effect-small" },
     rainbow: { cost: 1, class: "effect-rainbow" },
-    disco: { cost: 1, class: "effect-disco" }
+    disco: { cost: 1, class: "effect-disco" },
+    party: { cost: 1, wclass: "effect-party" }
   };
   /* Store the rule name in the "rule" attribute */
   for (let [k, v] of Object.entries(ruleset)) {

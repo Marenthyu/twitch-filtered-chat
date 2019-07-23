@@ -38,6 +38,10 @@
  *  5. Obtain options and state from localStorage (and purge)
  *  6. If state matches, use token, otherwise discard with error
  *//* TODO (in approximate decreasing priority):
+ * Improve tests/effects.html
+ *   Generate sample text for the selected effects
+ *   Allow users to input text and select effects
+ *   Display minimum number of bits required
  * Implement selClearStyle for all(?) ways to clear chat
  *   !tfc nuke
  *   CLEARCHAT
