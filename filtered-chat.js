@@ -1166,6 +1166,9 @@ function doLoadClient() { /* exported doLoadClient */
   let client = null;
   let config = {};
 
+  /* Add custom colors to the color parser */
+  Util.ColorParser.addColors(...Object.entries(ColorNames));
+
   /* Hook Logger messages to display in chat */
   Util.Logger.addHook(function(sev, dispStack, ...args) {
     if (Util.DebugLevel >= Util.LEVEL_DEBUG) {
@@ -1582,24 +1585,6 @@ function doLoadClient() { /* exported doLoadClient */
     Util.Open(AssetPaths.BUILDER_WINDOW, "_blank", {});
   }
 
-  /* Purge message(s) from chat */
-  function purgeMessages(rules) {
-    let uids = null; /* all users */
-    let cids = null; /* all channels */
-    let modules = null; /* all modules */
-    if (Util.IsArray(rules.user_ids)) {
-      uids = rules.user_ids;
-    } else if (rules.user_id) {
-      uids = [rules.user_id];
-    }
-    if (Util.IsArray(rules.channel_ids)) {
-      uids = rules.channel_ids;
-    } else if (rules.channel_id) {
-      uids = [rules.channel_id];
-    }
-    /* TODO */
-  }
-
   /* Initialize chat auto-completion and history */
   resetChatComplete();
   resetChatHistory();
@@ -1983,10 +1968,6 @@ function doLoadClient() { /* exported doLoadClient */
     client.get("HTMLGen").setValue("focus", false);
   });
 
-  $(document).on("unhandledrejection", function(e) {
-    Util.Error("A promise was rejected without an exception handler:", e);
-  });
-
   /* WebSocket opened */
   client.bind("twitch-open", function _on_twitch_open(e) {
     $(".loading").remove();
@@ -2336,7 +2317,8 @@ function doLoadClient() { /* exported doLoadClient */
   client.Connect();
 }
 
-/* globals AssetPaths Strings CSSCheerStyles GIT_URL CUR_URL LOG_KEY CFG_KEY */
-/* globals HTMLGenerator GetLayout ParseLayout FormatLayout Fanfare */
+/* globals AssetPaths Strings CSSCheerStyles ColorNames GIT_URL CUR_URL */
+/* globals LOG_KEY CFG_KEY HTMLGenerator GetLayout ParseLayout FormatLayout */
+/* globals Fanfare */
 
 /* vim: set ts=2 sts=2 sw=2 et: */
