@@ -1352,7 +1352,7 @@ function doLoadClient() { /* exported doLoadClient */
   (function _configure_construct_client() {
     let cfg = getConfigObject(true);
     client = new TwitchClient(cfg);
-    Util.DebugLevel = cfg.Debug;
+    Util.DebugLevel = cfg.Debug ? Util.LEVEL_DEBUG : Util.LEVEL_INFO;
 
     /* Change the document title to show our authentication state */
     if (cfg.Pass && cfg.Pass.length > 0) {
@@ -2287,6 +2287,9 @@ function doLoadClient() { /* exported doLoadClient */
       Content.addNotice($m);
     }
   });
+
+  /* Received notice of assets loaded */
+  client.bind("twitch-assetloaded", function _on_twitch_assetsloaded(e) {});
 
   /* Received a reconnect request from Twitch (handled automatically) */
   client.bind("twitch-reconnect", function _on_twitch_reconnect(e) {});

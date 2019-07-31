@@ -164,6 +164,14 @@ function AddAsset(src, tree=null, loadcb=null, errcb=null) {
 function Main(global) { /* exported Main */
   /* Populate templates and load the client */
   function indexMain() {
+    /* Determine the logging level */
+    if (typeof window !== "undefined"
+        && window.location
+        && window.location.search
+        && window.location.search.match(/[&?]debug=[^&]/)) {
+      Util.DebugLevel = Util.LEVEL_DEBUG;
+    }
+
     Util.LogOnly("Assets loaded; initializing page...");
 
     /* Remove the top-level "Loading" message */
@@ -276,12 +284,10 @@ function Main(global) { /* exported Main */
   })(jQuery);
 
   /* Load the TWAPI assets, trying each path until success */
-  Promise.all([
-    AddAsset("utility.js", PATH_TWAPIS[0], null, null),
-    AddAsset("client.js", PATH_TWAPIS[0], null, null)])
-  .catch(() => Promise.all([
-    AddAsset("utility.js", PATH_TWAPIS[1], null, null),
-    AddAsset("client.js", PATH_TWAPIS[1], null, null)]))
+  AddAsset("utility.js", PATH_TWAPIS[0], null, null)
+  .then(() => AddAsset("client.js", PATH_TWAPIS[0], null, null))
+  .catch(() => AddAsset("utility.js", PATH_TWAPIS[1], null, null)
+    .then(() => AddAsset("client.js", PATH_TWAPIS[1], null, null)))
   /* Then load the config script */
   .then(() => AddAsset("config.js", PATH_TFC, null, null))
   /* Then load TFC */
