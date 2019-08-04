@@ -7,87 +7,92 @@
   <script type="text/javascript" src="../../twitch-api/utility.js"></script>
   <link href="../assets/main.css" rel="stylesheet" type="text/css" />
   <style type="text/css">
+:root {
+  --shadow-light: #d1d1d1;
+  --shadow-mid: #0a0a0a;
+  --shadow-dark: #1d1d1d;
+}
 .line {
   border: 1px solid lightgray;
 }
-.username {
-  text-shadow:
-    -1px 0px 0px #1d1d1d,
-    1px 0px 0px #1d1d1d,
-    0px -1px 0px #1d1d1d,
-    0px 1px 0px #1d1d1d,
-    -2px -2px 1px #d1d1d1,
-    -2px 2px 1px #d1d1d1,
-    2px -2px 1px #d1d1d1,
-    2px 2px 1px #d1d1d1
-    ;
+.line.line-wrapper.even * {
+  background-color: var(--module-color);
 }
-.username.low-contrast {
-  text-shadow: inherit
-    ;
+.line.line-wrapper.odd * {
+  background-color: var(--odd-line-color);
 }
-
 .username.light {
   text-shadow:
-    -1px 0px 0px #d1d1d1,
-    1px 0px 0px #d1d1d1,
-    0px -1px 0px #d1d1d1,
-    0px 1px 0px #d1d1d1,
-    -2px 0px 1px #d1d1d1,
-    2px 0px 1px #d1d1d1,
-    0px -2px 1px #d1d1d1,
-    0px 2px 1px #d1d1d1;
+    -1px 0px 0px var(--shadow-light),
+    1px 0px 0px var(--shadow-light),
+    0px -1px 0px var(--shadow-light),
+    0px 1px 0px var(--shadow-light),
+    -2px 0px 1px var(--shadow-light),
+    2px 0px 1px var(--shadow-light),
+    0px -2px 1px var(--shadow-light),
+    0px 2px 1px var(--shadow-light);
 }
-
 .username.mid {
   text-shadow:
-    -1px 0px 0px #0a0a0a,
-    1px 0px 0px #0a0a0a,
-    0px -1px 0px #0a0a0a,
-    0px 1px 0px #0a0a0a,
-    -2px 0px 1px #0a0a0a,
-    2px 0px 1px #0a0a0a,
-    0px -2px 1px #0a0a0a,
-    0px 2px 1px #0a0a0a;
+    -1px 0px 0px var(--shadow-mid),
+    1px 0px 0px var(--shadow-mid),
+    0px -1px 0px var(--shadow-mid),
+    0px 1px 0px var(--shadow-mid),
+    -2px 0px 1px var(--shadow-mid),
+    2px 0px 1px var(--shadow-mid),
+    0px -2px 1px var(--shadow-mid),
+    0px 2px 1px var(--shadow-mid);
 }
-
 .username.dark {
   text-shadow:
-    -1px 0px 0px #1d1d1d,
-    1px 0px 0px #1d1d1d,
-    0px -1px 0px #1d1d1d,
-    0px 1px 0px #1d1d1d,
-    -2px 0px 1px #1d1d1d,
-    2px 0px 1px #1d1d1d,
-    0px -2px 1px #1d1d1d,
-    0px 2px 1px #1d1d1d;
+    -1px 0px 0px var(--shadow-dark),
+    1px 0px 0px var(--shadow-dark),
+    0px -1px 0px var(--shadow-dark),
+    0px 1px 0px var(--shadow-dark),
+    -2px 0px 1px var(--shadow-dark),
+    2px 0px 1px var(--shadow-dark),
+    0px -2px 1px var(--shadow-dark),
+    0px 2px 1px var(--shadow-dark);
 }
+
+/*div.content {
+  display: grid;
+  grid-template-columns:
+    12.5% 12.5% 12.5% 12.5%
+    12.5% 12.5% 12.5% 12.5%;
+}*/
 
   </style>
   <script type="text/javascript">
-COLORS = ["lightgray", "#0f0f0f", "lightseagreen", "forestgreen",
-          "goldenrod", "dodgerblue", "darkorchid", "crimson"];
+const COLORS = [
+  "lightgray", "#0f0f0f", "lightseagreen", "forestgreen",
+  "goldenrod", "dodgerblue", "darkorchid", "crimson"];
 
 function test_colors(text, args) {
-  let i = 0;
-  let lstyle = `width: ${100/COLORS.length}%; display: inline-block`;
-  let cstyle = ``;
-  let ustyle = ``;
-  if (args.ls) { lstyle = args.ls.trimEnd(';') + ";" + lstyle; }
-  if (args.cs) { cstyle = args.cs; }
-  if (args.us) { ustyle = args.us; }
-  for (i = 0; i < COLORS.length; ++i) {
-    let color = COLORS[i];
+  /* args object:
+   * ls, cs, us: line, chat-line, username style
+   * lc, cc, uc: line, chat-line, username classes
+   */
+  let lstyle = args.ls || "";
+  let cstyle = args.cs || "";
+  let ustyle = args.us || "";
+  for (let color of COLORS) {
     let $l = $(`<div class="line line-wrapper"></div>`).attr("style", lstyle);
     let $c = $(`<div class="chat-line"></div>`).attr("style", cstyle);
-    let $u = $(`<span class="username">${color}</span>`).attr("style", ustyle);
-    if (text) $u.text($u.text() + " " + text);
+    let $u = $(`<span class="username"></span>`).attr("style", ustyle);
+    $l.css("width", `${100/COLORS.length}%`);
+    $l.css("display", "inline-block");
+    $u.text(color + " " + text);
     $u.css("color", color);
-    $u.attr("data-yiq", (new Util.Color(color)).yiq[0]);
-    $u.addClass(calculateColorBackground(color));
-    if (args.lc) for (let c of args.lc.split(' ')) $l.addClass(c);
-    if (args.cc) for (let c of args.cc.split(' ')) $c.addClass(c);
-    if (args.uc) for (let c of args.uc.split(' ')) $u.addClass(c);
+    for (let c of (args.lc || "").split(' ')) {
+      $l.addClass(c);
+    }
+    for (let c of (args.cc || "").split(' ')) {
+      $c.addClass(c);
+    }
+    for (let c of (args.uc || "").split(' ')) {
+      $u.addClass(c);
+    }
     $c.append($u);
     $l.append($c);
     $(".content").append($l);
@@ -95,21 +100,16 @@ function test_colors(text, args) {
   }
 }
 
-function calculateColorBackground(color) {
-  let y = (new Util.Color(color)).yiq[0];
-  if (y >= 128) {
-    return "dark";
-  } else if (y >= 120) {
-    return "mid";
-  } else {
-    return "light";
-  }
-}
-
 function test_all_colors() {
-  test_colors("nc", {});
-  $(".content").append(`<div class="line line-wrapper"></div>`);
-  test_colors("lc", {uc: "low-contrast"});
+  /*
+  $(".content").append($(`<div class="line line-wrapper"><div class="chat-line"><span class="username">&nbsp;</span><span class="message">Default contrast adjustment</span></div></div>`));
+  */
+  test_colors("light even", {lc: "even", uc: "light"});
+  test_colors("light odd", {lc: "odd", uc: "light"});
+  test_colors("mid even", {lc: "even", uc: "mid"});
+  test_colors("mid odd", {lc: "odd", uc: "mid"});
+  test_colors("dark even", {lc: "even", uc: "dark"});
+  test_colors("dark odd", {lc: "odd", uc: "dark"});
 }
 $(document).ready(test_all_colors);
   </script>
