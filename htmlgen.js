@@ -11,15 +11,15 @@ class HTMLGenerator { /* exported HTMLGenerator */
   constructor(client, config=null) {
     this._client = client;
     this._config = config || {};
-    this._default_colors = [
+    this._defaultColors = [
       "lightseagreen",
       "forestgreen",
       "goldenrod",
       "dodgerblue",
       "darkorchid",
       "crimson"];
-    this._user_colors = {};
-    this._shadow_colors = ["#1d1d1d", "#0a0a0a", "#d1d1d1"];
+    this._userColors = {};
+    this._shadowColors = ["#0a0a0a", "#d1d1d1"];
     this._highlights = [];
 
     /* Ensure config has certain values */
@@ -75,22 +75,22 @@ class HTMLGenerator { /* exported HTMLGenerator */
       let arg_msg = `${typeof(username)}, ${JSON.stringify(username)}`;
       Util.Error(`Expected string, got ${arg_msg}`);
     }
-    if (!this._user_colors.hasOwnProperty(name)) {
+    if (!this._userColors.hasOwnProperty(name)) {
       /* Taken from Twitch vendor javascript */
       let r = 0;
       for (let i = 0; i < name.length; ++i) {
         r = (r << 5) - r + name.charCodeAt(i);
       }
-      r = r % this._default_colors.length;
-      if (r < 0) r += this._default_colors.length;
-      this._user_colors[name] = this._default_colors[r];
+      r = r % this._defaultColors.length;
+      if (r < 0) r += this._defaultColors.length;
+      this._userColors[name] = this._defaultColors[r];
     }
-    return this._user_colors[name];
+    return this._userColors[name];
   }
 
   /* Returns array of [css attr, css value] */
   genBorderCSS(color) {
-    let border = Util.GetMaxContrast(color, this._shadow_colors);
+    let border = Util.GetMaxContrast(color, this._shadowColors);
     return [
       "text-shadow",
       `-0.8px -0.8px 0 ${border},` +
