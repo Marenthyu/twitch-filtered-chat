@@ -34,11 +34,10 @@ var ChatCommands = null; /* exported ChatCommands */
 
 class ChatCommandManager {
   constructor() {
-    this._command_list = [];
     this._commands = {};
     this._aliases = {};
     this._completions = {};
-    this._help_text = [];
+    this._helpText = [];
     this.add("help", this.onCommandHelp.bind(this), "Show help information");
     this.addUsage("help", null, "Show help for all commands");
     this.addUsage("help", "command", "Show usage information for <command>");
@@ -62,7 +61,7 @@ class ChatCommandManager {
       let msg = t.substr(t.indexOf(":")+1);
       t = this.helpLine(cmd, msg);
     }
-    this._help_text.push(t);
+    this._helpText.push(t);
   }
 
   /* Add a new command */
@@ -83,7 +82,6 @@ class ChatCommandManager {
       c.aliases = [];
       c.extra_help = [];
       c.dflt_args = args.length > 0 ? args : null;
-      this._command_list.push(command);
       this._commands[command] = c;
     }
   }
@@ -357,11 +355,11 @@ class ChatCommandManager {
   onCommandHelp(cmd, tokens, client) {
     if (tokens.length === 0) {
       Content.addHelpText("Commands:");
-      for (let c of this._command_list) {
+      for (let c of Object.keys(this._commands)) {
         this.printHelp(this._commands[c]);
       }
       Content.addHelp(this.formatArgs("Enter //help <command> for help on <command>"));
-      for (let line of this._help_text) {
+      for (let line of this._helpText) {
         Content.addHelp(line);
       }
     } else if (this.hasCommand(tokens[0])) {

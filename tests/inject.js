@@ -256,7 +256,7 @@ if (Util.Defined("client")) {
   let clientObj = (new Function("return client"))();
   TEST_MESSAGES.COLORS = {};
   TEST_MESSAGES.COLORS_ME = {};
-  for (let color of clientObj.get("HTMLGen")._default_colors) {
+  for (let color of clientObj.get("HTMLGen")._defaultColors) {
     let key = color.toUpperCase();
     let msg1 = BuildMessage({"color": color}, "PRIVMSG", color);
     let msg2 = BuildMessage({"color": color}, "PRIVMSG", `\x01ACTION ${color}\x01`);

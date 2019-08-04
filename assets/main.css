@@ -9,7 +9,7 @@
 
 :root {
   /* Default colors (used by ?trans=1 because "-color-default") */
-  --body-color-default: #0E0E0E;
+  --body-color-default: #0e0e0e;
   --header-color-default: #191919;
   --menudiv-color-default: #f0f0f0;
   --module-color-default: #0e0e0e;
@@ -18,7 +18,7 @@
   --chat-color-default: #0e0e0e;
   --textarea-color-default: #1a1a1a;
 
-  --body-color-light-default: #0E0E0E;
+  --body-color-light-default: #0e0e0e;
   --header-color-light-default: #191919;
   --menudiv-color-light-default: #f0f0f0;
   --module-color-light-default: #0e0e0e;
