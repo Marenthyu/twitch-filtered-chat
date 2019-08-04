@@ -625,7 +625,6 @@ function mergeConfigObject(to_merge=null) {
 /* Generate a URL from the given config object */
 function genConfigURL(config, options=null) {
   let opts = options || {};
-  let base = opts.git ? GIT_URL : CUR_URL;
   let qs = [];
   const qsAdd = (k, v) => qs.push(`${k}=${encodeURIComponent(v)}`);
 
@@ -720,6 +719,7 @@ function genConfigURL(config, options=null) {
     qsAdd("tag", config.tag);
   }
 
+  const base = opts.git ? GIT_URL : CUR_URL;
   if (opts.base64) {
     return base + "?base64=" + encodeURIComponent(btoa(qs.join("&")));
   } else {
@@ -1009,7 +1009,9 @@ function showUserContextWindow(client, cw, line) {
     $i.text(text);
     return $i;
   }
-  const $Em = (s) => $(`<span class="em pad"></span>`).html(s);
+  function $Em(s) {
+    return $(`<span class="em pad"></span>`).html(s);
+  }
 
   /* Add user's display name */
   let $username = $l.find(".username");
@@ -1086,8 +1088,6 @@ function showUserContextWindow(client, cw, line) {
     if (!mod) $cw.append($Line($Link("cw-make-mod", "Make Mod")));
     if (!vip) $cw.append($Line($Link("cw-make-vip", "Make VIP")));
   }
-
-  Util.Trace(`Showing ucw for`, $l);
 
   let lo = $l.offset();
   let t = Math.round(lo.top) + $l.outerHeight() + 2;
@@ -2087,41 +2087,23 @@ function doLoadClient() { /* exported doLoadClient */
     if (e instanceof TwitchChatEvent) {
       let m = typeof(e.message) === "string" ? e.message : "";
       /* Handle !tfc commands */
-      if (e.flags && e.flags.mod && m.indexOf(" ") > -1) {
+      if (e.flags && e.flags.mod && m.startsWith("!tfc ")) {
         let tokens = m.split(" ");
-        if (tokens[0] === "!tfc") {
-          if (tokens[1] === "reload") {
-            location.reload();
-          } else if (tokens[1] === "force-reload") {
-            location.reload(true);
-          } else if (tokens[1] === "clear") {
+        if (tokens[1] === "reload") {
+          location.reload();
+        } else if (tokens[1] === "force-reload") {
+          location.reload(true);
+        } else if (tokens[1] === "clear") {
+          $(".content").children().remove();
+        } else if (tokens[1] === "nuke") {
+          if (tokens[2] && tokens[2].length > 1) {
+            let name = CSS.escape(tokens[2].toLowerCase());
+            $(`[data-user="${name}"]`).parent().remove();
+          } else {
             $(".content").children().remove();
-          } else if (tokens[1] === "nuke") {
-            if (tokens[2] && tokens[2].length > 1) {
-              let name = CSS.escape(tokens[2].toLowerCase());
-              $(`[data-user="${name}"]`).parent().remove();
-            } else {
-              $(".content").children().remove();
-            }
-          } else if (tokens[1] === "ffdemo") {
-            let ff = client.get("Fanfare");
-            ff._onChatEvent(client, {bits: 1000}, true);
-            ff._onSubEvent(client, {
-              kind: TwitchSubEvent.KIND_SUB,
-              plan: TwitchSubEvent.PLAN_TIER1
-            }, true);
-          } else if (tokens[1] === "ffcheerdemo") {
-            let ff = client.get("Fanfare");
-            ff._onChatEvent(client, {bits: 1000}, true);
-          } else if (tokens[1] === "ffsubdemo") {
-            let ff = client.get("Fanfare");
-            ff._onSubEvent(client, {
-              kind: TwitchSubEvent.KIND_SUB,
-              plan: TwitchSubEvent.PLAN_TIER1
-            }, true);
           }
-          return;
         }
+        return;
       }
     }
     $(".module").each(function() {
@@ -2133,15 +2115,14 @@ function doLoadClient() { /* exported doLoadClient */
         /* If a clip is present, display that too */
         let $clip = $e.find(".message[data-clip]");
         if ($clip.length > 0) {
+          /* For multiple clips, only display the first clip */
           let slug = $clip.attr("data-clip");
           /* Nested because the second then() needs both clip and game data */
-          client.GetClip(slug)
-            .then((clip_data) => {
-              client.GetGame(clip_data.game_id)
-                .then((game_data) => {
-                  Content.addHTML(H.genClip(slug, clip_data, game_data), $c);
-                });
+          client.GetClip(slug).then((clip_data) => {
+            client.GetGame(clip_data.game_id).then((game_data) => {
+              Content.addHTML(H.genClip(slug, clip_data, game_data), $c);
             });
+          });
         }
         /* If .at-self or .highlight is given, set the notification icon */
         if (!H.getValue("focus")) {
@@ -2324,4 +2305,5 @@ function doLoadClient() { /* exported doLoadClient */
 /* globals LOG_KEY CFG_KEY HTMLGenerator GetLayout ParseLayout FormatLayout */
 /* globals Fanfare */
 
+/* vim-fold-set: ^  [^ ].*function.*{$: */
 /* vim: set ts=2 sts=2 sw=2 et: */

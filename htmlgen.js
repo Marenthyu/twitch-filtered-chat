@@ -103,10 +103,9 @@ class HTMLGenerator { /* exported HTMLGenerator */
   /* Returns jquery node */
   genName(name, color) {
     let $e = $(`<span class="username" data-username="1"></span>`);
-    $e.css("color", color || this.getColorFor(name) || "#ffffff");
-    /* Determine the best border color to use */
-    let [attr, val] = this.genBorderCSS($e.css("color"));
-    $e.css(attr, val);
+    let c = color || this.getColorFor(name) || "#ffffff";
+    $e.css("color", c);
+    $e.css(...this.genBorderCSS(color));
     $e.text(name);
     return $e;
   }
@@ -190,8 +189,8 @@ class HTMLGenerator { /* exported HTMLGenerator */
   /* Returns string */
   _getCheerImage(cheerdef, scale) {
     let scheme = $("body").hasClass("light") ? "light" : "dark";
-    let imagesets = cheerdef.images[scheme] || cheerdef.images.dark;
-    let images = this._config.NoAnim ? imagesets.static : imagesets.animated;
+    let imageset = cheerdef.images[scheme] || cheerdef.images.dark;
+    let images = this._config.NoAnim ? imageset.static : imageset.animated;
     return images[scale];
   }
 
@@ -396,7 +395,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     }
   }
 
-  /* Format cheermotes */
+  /* Format cheers */
   _msgCheersTransform(event, message, map, $msg, $effects) {
     let result = message;
     if (event.flags.bits && event.flags.bits > 0) {
@@ -825,6 +824,9 @@ class HTMLGenerator { /* exported HTMLGenerator */
     if (event.iscaster) {
       $e.attr("data-caster", "1");
     }
+    if (event.isstaff) {
+      $e.attr("data-staff", "1");
+    }
     $e.attr("data-sent-ts", event.flags["tmi-sent-ts"]);
     $e.attr("data-recv-ts", Date.now());
   }
@@ -859,6 +861,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
     $e.append(this._genBadges(event));
     $e.append(this._genName(event));
     let msg_def = this._genMsgInfo(event);
+    /* Handle /me */
     if (!event.flags.action) {
       $e.html($e.html() + ":");
     } else {
