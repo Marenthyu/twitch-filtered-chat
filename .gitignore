@@ -2,12 +2,10 @@
 # Ignore files not meant for distribution
 plugins/dwangoAC.js
 dist/plugins/dwangoAC.js
+assets/3rdparty/
 make-readme.sh
 
-# Ignore assets not included in project
-assets/3rdparty/
-
-# Ignore Node.js files
+# Ignore installed packages
 node_modules/
 package-lock.json
 
@@ -16,10 +14,7 @@ notes/
 notes.txt
 
 # Ignore swap/temporary/compiled files
-*.pyc
-*.pyo
-.*.swp
-.*.swo
-.swp
-.swo
+*.py[co]
+.sw[po]
+.*.sw[po]
 README.html
