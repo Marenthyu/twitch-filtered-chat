@@ -631,10 +631,10 @@ class HTMLGenerator { /* exported HTMLGenerator */
     let locations = [];
     let arr = null;
     while ((arr = Util.URL_REGEX.exec(event.message)) !== null) {
-      /* arr = [wholeMatch, matchPart] */
-      let start = arr.index + arr[0].indexOf(arr[1]);
-      let end = start + arr[1].length;
-      locations.push({whole: arr[0], part: arr[1], start: start, end: end});
+      let trimmed = arr[0].trimLeft();
+      let start = arr.index + (arr[0].length - trimmed.length);
+      let end = start + trimmed.length;
+      locations.push({whole: trimmed, start: start, end: end});
     }
     /* Ensure the locations array is indeed sorted */
     locations.sort((a, b) => a.start - b.start);
@@ -642,7 +642,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       let location = locations.pop();
       let url = null;
       try {
-        url = new URL(Util.URL(location.part));
+        url = new URL(Util.URL(location.whole));
       }
       catch (e) {
         Util.Error("Invalid URL", location, e);
@@ -651,7 +651,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       if (this._config.ShowClips && url.hostname === "clips.twitch.tv") {
         $msg.attr("data-clip", url.pathname.strip("/"));
       }
-      let new_node = Util.CreateNode(url);
+      let new_node = Util.CreateNode(url, location.whole);
       let msg_start = result.substr(0, map[location.start]);
       let msg_part = new_node.outerHTML;
       let msg_end = result.substr(map[location.end]);
