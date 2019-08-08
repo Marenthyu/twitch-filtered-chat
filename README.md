@@ -66,6 +66,7 @@ URL: `https://kaedenn.github.io/twitch-filtered-chat/index.html?<OPTIONS>`
 | `enableforce` | Enable mod antics (see below) |
 | `fanfare`     | Fanfare configuration: either `1` or `true` to enable, or a JSON-encoded string to set specific options |
 | `highlight`   | Comma-separated patterns (either regexes of the form `/pat/[flags]` or strings) to highlight |
+| `urls`        | Set to a falsy value to disable URL formatting. Default is to format URLs |
 | `tag`         | Set a specific name for the chat, for debugging and antics usage (highly recommended!) |
 
 The default configuration key is `tfc-config`. If `config_key` is present, then `tfc-config-${config_key}` is used instead.

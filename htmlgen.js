@@ -53,6 +53,15 @@ class HTMLGenerator { /* exported HTMLGenerator */
     }
   }
 
+  /* Enable or disable URL matching */
+  get enableURLs() {
+    return this.getValue("EnableURLs");
+  }
+
+  set enableURLs(val) {
+    this.setValue("EnableURLs", val);
+  }
+
   /* Add one highlight match pattern */
   addHighlightMatch(pat) {
     this._highlights.push(pat);
@@ -748,8 +757,10 @@ class HTMLGenerator { /* exported HTMLGenerator */
     logMessage();
     message = this._msgBTTVEmotesTransform(event, message, map, $msg, $effects);
     logMessage();
-    message = this._msgURLTransform(event, message, map, $msg, $effects);
-    logMessage();
+    if (this.enableURLs) {
+      message = this._msgURLTransform(event, message, map, $msg, $effects);
+      logMessage();
+    }
     message = this._msgAtUserTransform(event, message, map, $msg, $effects);
     logMessage();
     message = this._msgHighlightTransform(event, message, map, $msg, $effects);

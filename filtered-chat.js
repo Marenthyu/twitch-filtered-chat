@@ -361,6 +361,9 @@ function parseQueryString(config, qs=null) {
     } else if (k === "highlight") {
       key = "Highlight";
       val = `${v}`.split(",").map((s) => Util.StringToRegExp(s, "g"));
+    } else if (k === "urls") {
+      key = "EnableURLs";
+      val = Boolean(v);
     }
     /* Skip items with a falsy key */
     if (key) {
@@ -581,6 +584,11 @@ function getConfigObject(inclSensitive=false) {
     config.HistorySize = TwitchClient.DEFAULT_HISTORY_SIZE;
   }
 
+  /* Whether or not to format URLs */
+  if (!config.hasOwnProperty("EnableURLs")) {
+    config.EnableURLs = true;
+  }
+
   /* Default ClientID */
   if (inclSensitive) {
     if (!config.ClientID) {
@@ -712,6 +720,9 @@ function genConfigURL(config, options=null) {
   }
   if (config.Highlight) {
     qsAdd("highlight", config.Highlight.map((s) => `${s}`).join(","));
+  }
+  if (config.EnableURLs) {
+    qsAdd("urls", "1");
   }
   if (opts.tag) {
     qsAdd("tag", opts.tag);
