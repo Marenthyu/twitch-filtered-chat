@@ -8,6 +8,9 @@
  */
 
 class HTMLGenerator { /* exported HTMLGenerator */
+  /* Hard-coded badge width */
+  static get BADGE_WIDTH() { return 18; }
+
   constructor(client, config=null) {
     this._client = client;
     this._config = config || {};
@@ -282,21 +285,24 @@ class HTMLGenerator { /* exported HTMLGenerator */
   /* Returns jquery node */
   _genBadges(event) {
     let $bc = $(`<span class="badges" data-badges="1"></span>`);
-    let total_width = 0;
+    /* Calculate width to prevent layout flickering */
+    let total_badges = 0;
     if (event.flags["badges"]) {
-      total_width += 18 * event.flags["badges"].length;
+      total_badges += event.flags["badges"].length;
     }
     if (event.flags["ffz-badges"]) {
-      total_width += 18 * event.flags["ffz-badges"].length;
+      total_badges += event.flags["ffz-badges"].length;
     }
     if (event.flags["bttv-badges"]) {
-      total_width += 18 * event.flags["bttv-badges"].length;
+      total_badges += event.flags["bttv-badges"].length;
     }
     $bc.css("overflow", "hidden");
-    $bc.css("width", `${total_width}px`);
-    $bc.css("max-width", `${total_width}px`);
+    $bc.css("width", `${HTMLGenerator.BADGE_WIDTH * total_badges}px`);
+    $bc.css("max-width", `${HTMLGenerator.BADGE_WIDTH * total_badges}px`);
     function makeBadge(classes) {
-      return $(`<img class="badge" width="18px" height="18px" />`)
+      return $(`<img class="badge" />`)
+        .attr("width", HTMLGenerator.BADGE_WIDTH)
+        .attr("height", HTMLGenerator.BADGE_WIDTH) /* Badges are square */
         .addClass(classes);
     }
     /* Add Twitch-native badges */
@@ -326,8 +332,12 @@ class HTMLGenerator { /* exported HTMLGenerator */
           $b.attr("data-badge-scope", "global");
           $b.attr("data-badge", JSON.stringify(badge_info));
         } else {
-          /* Twitch native badges are either channel or global */
-          Util.Warn("Unknown badge", bname, bnum, "for", event);
+          /* Typically caused by receiving messages before badges are loaded */
+          if (bname === "subscriber") {
+            Util.WarnOnly(`Unknown subscriber badge ${bnum}; skipping`);
+          } else {
+            Util.Warn(`Unknown badge "${bname}/${bnum} for`, event);
+          }
           continue;
         }
         /* Store the precise number of months subscribed */
@@ -742,29 +752,31 @@ class HTMLGenerator { /* exported HTMLGenerator */
     /* Handle early mod-only antics */
     message = this._classifyAntics(event, message);
 
+    /* Logging function to track the message transformation */
     let logMessage = () => {};
     if (Util.DebugLevel === Util.LEVEL_TRACE) {
       let idx = 1;
       logMessage = (...args) => { Util.LogOnly(idx++, message, ...args); };
     }
-    /* Apply message transformations */
     logMessage(event);
-    message = this._msgEmotesTransform(event, message, map, $msg, $effects);
-    logMessage();
-    message = this._msgCheersTransform(event, message, map, $msg, $effects);
-    logMessage();
-    message = this._msgFFZEmotesTransform(event, message, map, $msg, $effects);
-    logMessage();
-    message = this._msgBTTVEmotesTransform(event, message, map, $msg, $effects);
-    logMessage();
+
+    /* Transformations to apply, in the order to apply them */
+    let transformations = [];
+    transformations.push(this._msgEmotesTransform.bind(this));
+    transformations.push(this._msgCheersTransform.bind(this));
+    transformations.push(this._msgFFZEmotesTransform.bind(this));
+    transformations.push(this._msgBTTVEmotesTransform.bind(this));
     if (this.enableURLs) {
-      message = this._msgURLTransform(event, message, map, $msg, $effects);
+      transformations.push(this._msgURLTransform.bind(this));
+    }
+    transformations.push(this._msgAtUserTransform.bind(this));
+    transformations.push(this._msgHighlightTransform.bind(this));
+
+    /* Apply the transformations */
+    for (let func of transformations) {
+      message = func(event, message, map, $msg, $effects);
       logMessage();
     }
-    message = this._msgAtUserTransform(event, message, map, $msg, $effects);
-    logMessage();
-    message = this._msgHighlightTransform(event, message, map, $msg, $effects);
-    logMessage();
 
     /* Handle mod-only antics */
     if (event.ismod && this.enableAntics && event.flags.force) {

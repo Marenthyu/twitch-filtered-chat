@@ -298,7 +298,8 @@ class ChatCommandManager {
       usages.push(this.helpLine(`//${cmd.name}`, this.formatArgs(cmd.desc)));
     }
     for (let a of cmd.aliases) {
-      usages.push(this.helpLine(`//${a}`, `Alias for command //${cmd.name}`, true));
+      usages.push(this.helpLine(`//${a}`, `Alias for command //${cmd.name}`,
+                                true));
     }
     return usages;
   }
@@ -358,7 +359,8 @@ class ChatCommandManager {
       for (let c of Object.keys(this._commands)) {
         this.printHelp(this._commands[c]);
       }
-      Content.addHelp(this.formatArgs("Enter //help <command> for help on <command>"));
+      Content.addHelp(this.formatArgs(_T("Enter //help <command> for help on",
+                                         "<command>")));
       for (let line of this._helpText) {
         Content.addHelp(line);
       }
@@ -381,8 +383,9 @@ class ChatCommandManager {
 function onCommandLog(cmd, tokens, client) {
   let t0 = tokens.length > 0 ? tokens[0] : "";
   let logs = Util.GetWebStorage(LOG_KEY) || [];
+  const logCount = logs.length;
   const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
-  Content.addHelpText(`Debug message log length: ${logs.length}`);
+  Content.addHelpText(`Debug message log length: ${logCount}`);
   /* JSON-encode an object, inserting spaces around items */
   function toJSONString(obj) {
     return JSON.stringify(obj, null, 1)
@@ -410,6 +413,23 @@ function onCommandLog(cmd, tokens, client) {
     }
     return escape ? result.escape() : result;
   }
+  /* Find matching and non-matching items */
+  function filterLogs(s, invert=false) {
+    let matched = [];
+    let unmatched = [];
+    for (let l of logs) {
+      if (toJSONString(l).includes(s)) {
+        matched.push(l);
+      } else {
+        unmatched.push(l);
+      }
+    }
+    if (invert) {
+      return [unmatched, matched];
+    } else {
+      return [matched, unmatched];
+    }
+  }
   if (tokens.length > 0) {
     if (t0 === "help") {
       this.printHelp();
@@ -436,25 +456,15 @@ function onCommandLog(cmd, tokens, client) {
       let lnum = 0;
       for (let lidx = 0; lidx < lines.length; ++lidx) {
         let l = lines[lidx];
-        Content.addHelp(`${lnum}-${lnum+l.length-1}: ${formatLogEntry(l, false)}`);
+        let s = l.join(" ");
+        Content.addHelpText(`${lnum}-${lnum+l.length-1}: ${s}`);
         lnum += l.length;
       }
     } else if (["search", "filter", "filter-out"].indexOf(t0) > -1) {
       if (tokens.length > 1) {
         let needle = tokens.slice(1).join(" ");
-        let unmatched = [];
-        let matched = [];
-        for (let [i, l] of Object.entries(logs)) {
-          let cond = toJSONString(l).includes(needle);
-          if (t0 === "filter-out") {
-            cond = !cond;
-          }
-          if (cond) {
-            matched.push([i, l]);
-          } else {
-            unmatched.push([i, l]);
-          }
-        }
+        let invert = t0 === "filter-out";
+        let [matched, unmatched] = filterLogs(needle, invert);
         let pl = plural(matched.length, "item");
         Content.addHelpText(`Found ${pl} containing "${needle}"`);
         if (t0 === "search") {
@@ -463,7 +473,8 @@ function onCommandLog(cmd, tokens, client) {
             Content.addHelpText(`${i}: ${desc}`);
           }
         } else {
-          Content.addHelpText(`Removing ${unmatched.length}/${logs.length} items`);
+          Content.addHelpText(_T(`Removing ${unmatched.length}/${logCount}`,
+                                 `items`));
           Content.addHelpText(`New logs length: ${matched.length}`);
           Util.SetWebStorage(LOG_KEY, matched.map((i) => i[1]));
         }
@@ -472,12 +483,13 @@ function onCommandLog(cmd, tokens, client) {
       }
     } else if (t0 === "remove") {
       let n = tokens.slice(1)
-        .map((e) => Util.ParseNumber(e))
-        .filter((e) => !Number.isNaN(e));
+        .filter((e) => Util.IsNumber(e))
+        .map((e) => Util.ParseNumber(e));
       if (n.length > 0) {
         Content.addHelpText(`Removing ${plural(n.length, "item")}`);
         let result = [];
-        for (let i = 0; i < logs.length; ++i) {
+        /* All items other than those listed in n */
+        for (let i = 0; i < logCount; ++i) {
           if (n.indexOf(i) === -1) {
             result.push(logs[i]);
           }
@@ -492,20 +504,20 @@ function onCommandLog(cmd, tokens, client) {
       if (tokens.length > 1 && Util.IsNumber(tokens[1])) {
         num = Util.ParseNumber(tokens[1]);
       }
-      for (let i = 0; i < num && logs.length > 0; ++i) {
+      for (let i = 0; i < num && logCount > 0; ++i) {
         logs.shift();
       }
-      Content.addHelpText(`New logs length: ${logs.length}`);
+      Content.addHelpText(`New logs length: ${logCount}`);
       Util.SetWebStorage(LOG_KEY, logs);
     } else if (t0 === "pop") {
       let num = 1;
       if (tokens.length > 1 && Util.IsNumber(tokens[1])) {
         num = Util.ParseNumber(tokens[1]);
       }
-      for (let i = 0; i < num && logs.length > 0; ++i) {
+      for (let i = 0; i < num && logCount > 0; ++i) {
         logs.pop();
       }
-      Content.addHelpText(`New logs length: ${logs.length}`);
+      Content.addHelpText(`New logs length: ${logCount}`);
       Util.SetWebStorage(LOG_KEY, logs);
     } else if (t0 === "size") {
       let b = toJSONString(logs).length;
@@ -513,35 +525,45 @@ function onCommandLog(cmd, tokens, client) {
     } else if (t0 === "clear") {
       Util.SetWebStorage(LOG_KEY, []);
       Content.addHelpText("Log cleared");
-    } else if (t0 === "replay") {
-      if (tokens.length > 1) {
-        let replay = [];
-        let idx = Util.ParseNumber(tokens[1]);
-        if (tokens[1] === "all") {
+    } else if (t0 === "replay" || t0 === "replay-match") {
+      let replay = [];
+      /* eslint-disable-next-line no-inner-declarations */
+      function addEntry(l) {
+        if (l && l._cmd && l._raw) {
+          replay.push(l._raw);
+        }
+      }
+      if (tokens.length === 0) {
+        Content.addHelpText(`Usage: //log replay all`);
+        Content.addHelpText(`Usage: //log replay <number>`);
+        Content.addHelpText(`Usage: //log replay-match <string>`);
+      } else {
+        let t1 = tokens[1];
+        let idx = Util.ParseNumber(t1);
+        if (t0 === "replay-match") {
+          /* Replay items matching expression */
+          let needle = tokens.slice(1).join(" ");
+          for (let m of filterLogs(needle)[0]) {
+            addEntry(m);
+          }
+        } else if (t1 === "all") {
+          /* Replay everything */
           for (let line of logs) {
-            if (line && line._cmd && line._raw) {
-              replay.push(line._raw);
-            }
+            addEntry(line);
           }
-        } else if (idx >= 0 && idx < logs.length) {
-          let line = logs[idx];
-          if (line && line._cmd && line._raw) {
-            replay.push(line._raw);
-          } else {
-            let l = `${line}`;
-            Content.addErrorText(`Item ${l} doesn't seem to be a chat message`);
-          }
+        } else if (idx >= 0 && idx < logCount) {
+          /* Replay one item */
+          addEntry(logs[idx]);
         } else {
-          Content.addErrorText(`Index ${idx} not between 0 and ${logs.length}`);
+          Content.addErrorText(`Index ${idx} not between 0 and ${logCount}`);
         }
         for (let line of replay) {
           Content.addHelpText(`Replaying ${line}`);
           client._onWebsocketMessage({data: line});
         }
-      } else {
-        Content.addHelpText(`Usage: //log ${t0} <number>`);
       }
     } else if (Util.IsNumber(t0)) {
+      /* Show item by index */
       let idx = Util.ParseNumber(t0);
       Content.addHelp(formatLogEntry(logs[idx]));
     } else {
@@ -672,8 +694,8 @@ function onCommandBadges(cmd, tokens, client) {
       for (let [months, bdef] of Object.entries(b)) {
         let url = bdef.image_url_4x || bdef.image_url_2x || bdef.image_url_1x;
         let size = "width=\"36\" height=\"36\"";
-        let text = `${bn} ${months} ${bdef.description} ${bdef.title}`;
-        badges.push(`<img src="${url}" ${size} title="${text}" alt="${text}" />`);
+        let t = `${bn} ${months} ${bdef.description} ${bdef.title}`;
+        badges.push(`<img src="${url}" ${size} title="${t}" alt="${t}" />`);
       }
     }
     /* Print channel badges */
@@ -761,12 +783,18 @@ function onCommandEmotes(cmd, tokens, client) {
     }
   }
   if (tokens.indexOf("global") > -1 || tokens.indexOf("all") > -1) {
-    to_display.push(`Global: ${s_emotes[TwitchClient.ESET_GLOBAL].join("")}`);
-    to_display.push(`Twitch Prime: ${s_emotes[TwitchClient.ESET_PRIME].join("")}`);
-    to_display.push(`Turbo Set 1: ${s_emotes[TwitchClient.ESET_TURBO_1].join("")}`);
-    to_display.push(`Turbo Set 2: ${s_emotes[TwitchClient.ESET_TURBO_2].join("")}`);
-    to_display.push(`Turbo Set 3: ${s_emotes[TwitchClient.ESET_TURBO_3].join("")}`);
-    to_display.push(`Turbo Set 4: ${s_emotes[TwitchClient.ESET_TURBO_4].join("")}`);
+    to_display.push(_T(`Global:`,
+                       `${s_emotes[TwitchClient.ESET_GLOBAL].join("")}`));
+    to_display.push(_T(`Twitch Prime:`,
+                       `${s_emotes[TwitchClient.ESET_PRIME].join("")}`));
+    to_display.push(_T(`Turbo Set 1:`,
+                       `${s_emotes[TwitchClient.ESET_TURBO_1].join("")}`));
+    to_display.push(_T(`Turbo Set 2:`,
+                       `${s_emotes[TwitchClient.ESET_TURBO_2].join("")}`));
+    to_display.push(_T(`Turbo Set 3:`,
+                       `${s_emotes[TwitchClient.ESET_TURBO_3].join("")}`));
+    to_display.push(_T(`Turbo Set 4:`,
+                       `${s_emotes[TwitchClient.ESET_TURBO_4].join("")}`));
   }
   if (tokens.indexOf("channel") > -1 || tokens.indexOf("all") > -1) {
     for (let [eset, emotes] of Object.entries(s_emotes)) {
@@ -859,7 +887,8 @@ function onCommandPlugins(cmd, tokens, client) {
           try {
             cfg = JSON.parse(cfgStr);
           } catch (err) {
-            Content.addErrorText(`Malformed JSON string "${cfgStr}"; ignoring`);
+            Content.addErrorText(_T(`Malformed JSON string "${cfgStr}";`,
+                                    "ignoring"));
           }
         }
         Plugins.load(cls, client, {PluginConfig: cfg}).then(() => {
@@ -893,7 +922,8 @@ function onCommandClient(cmd, tokens, client) {
   Content.addHelpText("Client information:");
   Content.addHelpLine("Socket:", cstatus.open ? "Open" : "Closed");
   Content.addHelpLine("Endpoint:", cstatus.endpoint, true);
-  Content.addHelpLine("Status:", cstatus.connected ? "Connected" : "Not connected");
+  Content.addHelpLine("Status:",
+                      cstatus.connected ? "Connected" : "Not connected");
   Content.addHelpLine("Identified:", cstatus.identified ? "Yes" : "No");
   Content.addHelpLine("Authenticated:", cstatus.authed ? "Yes" : "No");
   Content.addHelpLine("Name:", client.GetName(), true);
@@ -995,9 +1025,11 @@ function onCommandHighlight(cmd, tokens, client) {
           let after = matches.slice(idx);
           H.highlightMatches = before.concat(after);
         }
-        Content.addHelpText(`Now storing ${H.highlightMatches.length} patterns`);
+        Content.addHelpText(_T(`Now storing ${H.highlightMatches.length}`,
+                               `patterns`));
       } else {
-        Content.addErrorText(`Invalid index ${idx}; must be between 1 and ${max}`);
+        Content.addErrorText(_T(`Invalid index ${idx}; must be between 1 and`,
+                                `${max}`));
       }
     } else {
       Content.addErrorText(`"//highlight remove" requires argument`);
@@ -1018,10 +1050,15 @@ function onCommandAuth(cmd, tokens, client) {
   } else if (client.IsAuthed()) {
     Content.addHelpText(`You are authenticated as ${client.GetName()}`);
     if (t0 === "reset") {
-      let btn = $(`<span class="btn help" style="color: lightblue; font-weight: bold">Click here to reset your OAuth token</span>`);
-      Content.addHelpText("Are you sure you want to reset your OAuth token? This cannot be undone!");
+      let btn = $(_T(`<span class="btn help" style="color: lightblue;`,
+                     `font-weight: bold">Click here to reset your OAuth`,
+                     `token</span>`));
+      Content.addHelpText(_T("Are you sure you want to reset your OAuth",
+                             "token? This cannot be undone!"));
       btn.click(function(e) {
-        let resp = prompt("Enter your username if you're ABSOLUTELY CERTAIN you want to reset your OAuth token\nThis cannot be undone.");
+        let resp = prompt(_T("Enter your username if you're ABSOLUTELY",
+                             "CERTAIN you want to reset your OAuth",
+                             "token\nThis cannot be undone."));
         if (resp === client.GetName()) {
           /* Reset the OAuth token by appending "&pass=" to the query string */
           let qs = window.location.search;
@@ -1032,7 +1069,8 @@ function onCommandAuth(cmd, tokens, client) {
           }
           window.location.search = qs;
         } else {
-          Content.addError("The value you entered does not match; not resetting");
+          Content.addError(_T("The value you entered does not match; not",
+                              "resetting"));
         }
       });
       Content.addHTML(btn);
@@ -1041,9 +1079,13 @@ function onCommandAuth(cmd, tokens, client) {
     let $url = $(`<a target="_blank"></a>`);
     $url.attr("href", Strings.OAUTH_GEN_URL);
     $url.text(Strings.OAUTH_GEN_URL);
-    Content.addHelpText("Click the following link to generate an OAuth token:");
+    Content.addHelpText(_T("Click the following link to generate an OAuth",
+                           "token:"));
     Content.addHelp($url);
-    Content.addHelpText("Then enter your Twitch username and that OAuth token in the settings panel. You can open the settings panel by clicking the gear icon in the upper-right corner of the page.");
+    Content.addHelpText(_T("Then enter your Twitch username and that OAuth",
+                           "token in the settings panel. You can open the",
+                           "settings panel by clicking the gear icon in the",
+                           "upper-right corner of the page."));
   }
 }
 
@@ -1080,7 +1122,9 @@ function InitChatCommands() { /* exported InitChatCommands */
         ["export", "Open a new window with all the logged items"],
         ["size", "Display the number of bytes used by the log"],
         ["clear", "Clears the entire log (cannot be undone!)"],
-        ["replay <index>", "Re-inject logged message <index>"]
+        ["replay <index>", "Re-inject logged message <index>"],
+        ["replay-match <string>",
+         "Re-inject logged messages containing <string>"]
       ]
     },
     "clear": {
@@ -1120,10 +1164,12 @@ function InitChatCommands() { /* exported InitChatCommands */
       func: onCommandEmotes,
       desc: "Display the requested emotes",
       usage: [
-        ["[<kinds>]", "Display emotes; <kinds> can be one or more of: global, channel, ffz, bttv, or all"]
+        ["[<kinds>]", _T("Display emotes; <kinds> can be one or more of:",
+                         "global, channel, ffz, bttv, or all")]
       ],
       extra: [
-        "Emotes are organized by set, one set per channel. Set 0 is for global emotes."
+        _T("Emotes are organized by set, one set per channel. Set 0 is for",
+           "global emotes.")
       ]
     },
     "plugins": {
@@ -1133,7 +1179,9 @@ function InitChatCommands() { /* exported InitChatCommands */
       usage: [
         [null, "Show loaded plugins and their status"],
         ["help", "Show loaded plugins and command help"],
-        ["add <class> <file> [<config>]", "Add a plugin by class name and filename, optionally with a config object"],
+        ["add <class> <file> [<config>]",
+         _T("Add a plugin by class name and filename, optionally with a",
+            "config object")],
         ["load <class> <file> [<config>]", "Alias to `//plugin add`"]
         /* TODO: //plugins addremote */
       ]
@@ -1146,7 +1194,8 @@ function InitChatCommands() { /* exported InitChatCommands */
       func: onCommandRaw,
       desc: "Send a raw message to Twitch (for advanced users only!)",
       usage: [
-        ["<message>", "Send <message> to Twitch servers (for advanced users only!)"]
+        ["<message>",
+         "Send <message> to Twitch servers (for advanced users only!)"]
       ]
     },
     "channels": {
@@ -1170,17 +1219,23 @@ function InitChatCommands() { /* exported InitChatCommands */
         ["remove <index>", "Remove the pattern numbered <index>"]
       ],
       extra: [
-        "Patterns can be either regexes (such as /foo/) or text (such as \"foo\")",
-        "Regexes may contain flag characters: /foo/i will match \"foo\", \"Foo\", \"FOO\", etc.",
-        "By default, patterns are case-sensitive; highlighting \"foo\" will not highlight \"Foo\""
+        _T("Patterns can be either regexes (such as /foo/) or text (such as",
+           "\"foo\")"),
+        _T("Regexes may contain flag characters: /foo/i will match \"foo\",",
+           "\"Foo\", \"FOO\", etc."),
+        _T("By default, patterns are case-sensitive; highlighting \"foo\"",
+           "will not highlight \"Foo\"")
       ]
     },
     "auth": {
       func: onCommandAuth,
-      desc: "Display help on authenticating with Twitch Filtered Chat. If presently authenticated, then also present button to reset authentication",
+      desc: _T("Display help on authenticating with Twitch Filtered Chat. If",
+               "presently authenticated, then also present button to reset",
+               "authentication"),
       alias: ["login"],
       usage: [
-        [null, "Show authentication status and, if needed, authentication help"],
+        [null,
+         "Show authentication status and, if needed, authentication help"],
         ["reset", "Reset OAuth token; this cannot be undone!"]
       ]
     }

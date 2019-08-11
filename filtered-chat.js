@@ -861,10 +861,11 @@ function parseModuleConfig(value) {
 /* Format the module configuration object into a query string component */
 function formatModuleConfig(cfg) {
   const Encode = (vals) => vals.map((v) => encodeURIComponent(v));
-  let bits = [cfg.Pleb, cfg.Sub, cfg.VIP, cfg.Mod, cfg.Event, cfg.Bits, cfg.Me];
+  let flags = [cfg.Pleb, cfg.Sub, cfg.VIP, cfg.Mod, cfg.Event, cfg.Bits,
+               cfg.Me];
   let values = [
     cfg.Name,
-    Util.EncodeFlags(bits, false),
+    Util.EncodeFlags(flags, false),
     Encode(cfg.IncludeKeyword).join(","),
     Encode(cfg.IncludeUser).join(","),
     Encode(cfg.ExcludeUser).join(","),
@@ -1254,19 +1255,25 @@ function doLoadClient() { /* exported doLoadClient */
     } else if (t0 === "help") {
       Content.addHelpLine("//config", "Show and manipulate configuration");
       Content.addHelpText("//config parameters:");
-      Content.addHelpLine("export", "Export *all* of localStorage to a new tab (contains passwords!)");
+      Content.addHelpLine("export",
+                          _T("Export *all* of localStorage to a new tab",
+                             "(contains passwords!)"));
       Content.addHelpLine("purge", "Clear localStorage (cannot be undone!)");
       Content.addHelpLine("clientid", "Display ClientID");
       Content.addHelpLine("pass", "Dislay OAuth token (if one is present)");
-      Content.addHelpLine("url", "Generate a URL from the current configuration");
-      Content.addHelpText("//config url parameters (can be used in any order):");
+      Content.addHelpLine("url",
+                          "Generate a URL from the current configuration");
+      Content.addHelpText(_T("//config url parameters (can be used in any",
+                             "order):"));
       Content.addHelpLine("git", "Force URL to target github.io");
       Content.addHelpLine("text", "Force URL to be un-encoded");
       Content.addHelpLine("auth", "Include passwords in URL");
       Content.addHelpLine("tag=<value>", "Set the tag to <value>", true);
       Content.addHelpLine("key=<value>", "Use config key to <value>", true);
-      Content.addHelpText("//config set <key> <value>: Directly change <key> to <value> (dangerous!)");
-      Content.addHelpText("//config setobj <key> <value>: Directly change <key> to JSON-encoded <value> (dangerous!)");
+      Content.addHelpText(_T("//config set <key> <value>: Directly change",
+                             "<key> to <value> (dangerous!)"));
+      Content.addHelpText(_T("//config setobj <key> <value>: Directly change",
+                             "<key> to JSON-encoded <value> (dangerous!)"));
       Content.addHelpText("//config unset <key>: Remove <key> (dangerous!)");
     } else if (t0 === "export") {
       Util.Open(AssetPaths.CONFIG_EXPORT_WINDOW, "_blank", {});
@@ -1357,7 +1364,8 @@ function doLoadClient() { /* exported doLoadClient */
       let tok = `"${t0}"`;
       Content.addErrorText(`Unknown config command or key ${tok}`, true);
     }
-  }, "Obtain and modify configuration information; use //config help for details");
+  }, _T("Obtain and modify configuration information; use //config help for",
+        "details"));
 
   /* Obtain configuration, construct client */
   (function _configure_construct_client() {
@@ -1372,7 +1380,8 @@ function doLoadClient() { /* exported doLoadClient */
       document.title += " - Read-Only";
       /* Change the chat placeholder and border to reflect read-only */
       if (cfg.Layout.Chat) {
-        let message = Strings.ANON_PLACEHOLDER + ": " + Strings.AUTH_PLACEHOLDER;
+        let message = _T(Strings.ANON_PLACEHOLDER + ":",
+                         Strings.AUTH_PLACEHOLDER);
         $("#txtChat").attr("placeholder", message);
         Util.CSS.SetProperty("--chat-border", "#cd143c");
       }
@@ -1504,7 +1513,7 @@ function doLoadClient() { /* exported doLoadClient */
   ChatCommands.addHelpText("Moderator commands:", {literal: true});
   ChatCommands.addHelpText("!tfc reload: Reload the page",
                            {literal: true, command: true});
-  ChatCommands.addHelpText("!tfc force-reload: Reload the page, discarding cache",
+  ChatCommands.addHelpText("!tfc force-reload: Force reload the page",
                            {literal: true, command: true});
   ChatCommands.addHelpText("!tfc nuke: Completely clear the chat",
                            {literal: true, command: true});
@@ -1512,9 +1521,9 @@ function doLoadClient() { /* exported doLoadClient */
                            {args: true, command: true});
   ChatCommands.addHelpText("!tfc ffdemo: Demonstrate fanfares",
                            {literal: true, command: true});
-  ChatCommands.addHelpText("!tfc ffcheerdemo: Demonstrate default cheer fanfare",
+  ChatCommands.addHelpText("!tfc ffcheerdemo: Default cheer fanfare demo",
                            {literal: true, command: true});
-  ChatCommands.addHelpText("!tfc ffsubdemo: Demonstrate default sub fanfare",
+  ChatCommands.addHelpText("!tfc ffsubdemo: Default sub fanfare demo",
                            {literal: true, command: true});
 
   /* Close the main settings window */
@@ -1795,7 +1804,8 @@ function doLoadClient() { /* exported doLoadClient */
     let v = $(this).val();
     if (v) {
       if (v === "default") {
-        Util.CSS.SetProperty("--body-font-size", "var(--body-font-size-default)");
+        Util.CSS.SetProperty("--body-font-size",
+                             "var(--body-font-size-default)");
       } else {
         Util.CSS.SetProperty("--body-font-size", v);
       }
@@ -1991,7 +2001,8 @@ function doLoadClient() { /* exported doLoadClient */
       }
     }
     if (getConfigValue("Channels").length === 0) {
-      Content.addInfoText("No channels configured; type //join <channel> to join one!");
+      Content.addInfoText(_T("No channels configured; type //join <channel>",
+                             "to join one!"));
     }
   });
 
@@ -2006,7 +2017,8 @@ function doLoadClient() { /* exported doLoadClient */
     if (getConfigValue("NoAutoReconnect")) {
       Content.addErrorText(`Connection closed ${msg} ${Strings.RECONNECT}`);
     } else {
-      Content.addErrorText(`Connection closed ${msg}; reconnecting in 5 seconds...`);
+      Content.addErrorText(_T(`Connection closed ${msg}; reconnecting in 5`,
+                              `seconds...`));
       if (!client.connecting) {
         window.setTimeout(() => { client.Connect(); }, 5000);
       }
@@ -2281,26 +2293,26 @@ function doLoadClient() { /* exported doLoadClient */
   });
 
   /* Received notice of assets loaded */
-  client.bind("twitch-assetloaded", function _on_twitch_assetsloaded(e) {});
+  client.bind("twitch-assetloaded", function(e) {});
 
   /* Received a reconnect request from Twitch (handled automatically) */
-  client.bind("twitch-reconnect", function _on_twitch_reconnect(e) {});
+  client.bind("twitch-reconnect", function(e) {});
 
   /* Bind to the rest of the events */
-  client.bind("twitch-join", function _on_twitch_join(e) {});
-  client.bind("twitch-part", function _on_twitch_part(e) {});
-  client.bind("twitch-userstate", function _on_twitch_userstate(e) {});
-  client.bind("twitch-roomstate", function _on_twitch_roomstate(e) {});
-  client.bind("twitch-globaluserstate", function _on_twitch_globaluserstate(e) {});
-  client.bind("twitch-usernotice", function _on_twitch_usernotice(e) {});
-  client.bind("twitch-ack", function _on_twitch_ack(e) {});
-  client.bind("twitch-ping", function _on_twitch_ping(e) {});
-  client.bind("twitch-names", function _on_twitch_names(e) {});
-  client.bind("twitch-topic", function _on_twitch_topic(e) {});
-  client.bind("twitch-privmsg", function _on_twitch_privmsg(e) {});
-  client.bind("twitch-whisper", function _on_twitch_whisper(e) {});
-  client.bind("twitch-mode", function _on_twitch_mode(e) {});
-  client.bind("twitch-other", function _on_twitch_other(e) {});
+  client.bind("twitch-join", function(e) {});
+  client.bind("twitch-part", function(e) {});
+  client.bind("twitch-userstate", function(e) {});
+  client.bind("twitch-roomstate", function(e) {});
+  client.bind("twitch-globaluserstate", function(e) {});
+  client.bind("twitch-usernotice", function(e) {});
+  client.bind("twitch-ack", function(e) {});
+  client.bind("twitch-ping", function(e) {});
+  client.bind("twitch-names", function(e) {});
+  client.bind("twitch-topic", function(e) {});
+  client.bind("twitch-privmsg", function(e) {});
+  client.bind("twitch-whisper", function(e) {});
+  client.bind("twitch-mode", function(e) {});
+  client.bind("twitch-other", function(e) {});
 
   /* Warn about unbound events */
   client.bindDefault(function _on_default(e) {

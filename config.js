@@ -61,6 +61,11 @@
  *  ${text_shadow}: Username shadow CSS, calculated and populated by HTMLGen
  */
 
+/* Alias for Util.T: split text across multiple lines */
+function _T(...args) { /* exported _T */
+  return Util.T(...args);
+}
+
 /* Configuration keys */
 const CFG_KEY = "tfc-config"; /* exported CFG_KEY */
 const LOG_KEY = "debug-msg-log"; /* exported LOG_KEY */
@@ -93,21 +98,34 @@ const Strings = { /* exported Strings */
   NAME_AUTOGEN: "Auto-Generated",
   PASS_CACHED: "Cached",
 
+  /* Stream URL */
+  Stream: (name) => `https://twitch.tv/${name.replace(/[^\w]/g, "")}`,
+
   /* Streamer URL with optional text */
-  Streamer: (name, text=null) => `<a href="https://twitch.tv/${name.replace(/[^\w]/g, "")}" target="_blank">${text || name}</a>`,
+  Streamer: (name, text=null) =>
+    `<a href="${Strings.Stream(name)}" target="_blank">${text || name}</a>`,
 
   /* Streamer is online/offline messages */
   StreamOnline: (ch) => `${Strings.Streamer(ch)} is streaming`,
-  StreamInfo: (name, game, viewers) => `${Strings.Streamer(name)} is streaming ${Strings.Streamer(name, game)} for ${viewers} viewer${viewers === 1 ? "" : "s"}`,
+  StreamInfo: (name, game, viewers) =>
+    _T(`${Strings.Streamer(name)} is streaming`,
+       `${Strings.Streamer(name, game)} for ${viewers}`,
+       `viewer${viewers === 1 ? "" : "s"}`),
   StreamOffline: (ch) => `${Strings.Streamer(ch)} is not currently streaming`,
 
   /* Default messages for various USERNOTICE types */
   Sub: (plan) => `just subscribed with a ${plan} subscription!`,
-  ResubStreak: (months, plan, streak) => `resubscribed for ${months} months with a ${plan} subscription! They're on a streak of ${streak} months!`,
-  Resub: (months, plan) => `resubscribed for ${months} months with a ${plan} subscription!`,
-  GiftSub: (gifter, plan, user) => `${gifter} gifted a ${plan} subscription to ${user}!`,
-  AnonGiftSub: (plan, user) => `An anonymous user gifted a ${plan} subscription to ${user}!`,
-  Raid: (raider, count) => `${raider} is raiding with a total of ${count} viewers!`,
+  ResubStreak: (months, plan, streak) =>
+    _T(`resubscribed for ${months} months with a ${plan} subscription!`,
+       `They're on a streak of ${streak} months!`),
+  Resub: (months, plan) =>
+    `resubscribed for ${months} months with a ${plan} subscription!`,
+  GiftSub: (gifter, plan, user) =>
+    `${gifter} gifted a ${plan} subscription to ${user}!`,
+  AnonGiftSub: (plan, user) =>
+    `An anonymous user gifted a ${plan} subscription to ${user}!`,
+  Raid: (raider, count) =>
+    `${raider} is raiding with a total of ${count} viewers!`,
   NewUser: (user) => `${user} is new here! Say hello!`
 };
 
@@ -125,7 +143,8 @@ var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
           colors.push(rule.style.split(": ")[1]);
         }
         let cssrules = [];
-        cssrules.push(`background-image: linear-gradient(to right, ${colors.join(", ")})`);
+        cssrules.push(_T(`background-image:`,
+                         `linear-gradient(to right, ${colors.join(", ")})`));
         cssrules.push("background-clip: text");
         cssrules.push("-webkit-background-clip: text");
         cssrules.push("-webkit-text-fill-color: transparent");

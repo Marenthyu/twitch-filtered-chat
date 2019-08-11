@@ -14,7 +14,8 @@ module.exports = {
         "TwitchSubEvent": "readonly",
         "Plugins": "readonly",
         "Content": "readonly",
-        "ChatCommands": "readwrite"
+        "ChatCommands": "readwrite",
+        "_T": "readonly"
     },
     "parserOptions": {
         "ecmaVersion": 2018
