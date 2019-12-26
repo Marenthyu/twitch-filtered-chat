@@ -14,7 +14,7 @@ const BASE_URI = URI.substr(0, URI.indexOf(MOD_TFC)).replace(/\/$/, "");
 const SELF_URI = URI.replace(/\/index.html(\?.*)?$/, "");
 const GIT_URL = "https://kaedenn.github.io/twitch-filtered-chat/index.html";
 const CUR_URL = (() => {
-  let l = window.location;
+  const l = window.location;
   return `${l.protocol}//${l.hostname}${l.pathname}`;
 })();
 
@@ -28,8 +28,8 @@ const PATH_TWAPI_INTERNAL = addDistPath(SELF_URI + "/" + MOD_TWAPI);
 
 /* Determine the order of the twapi modules */
 const PATH_TWAPIS = (() => {
-  let externalFirst = [PATH_TWAPI_EXTERNAL, PATH_TWAPI_INTERNAL];
-  let internalFirst = [PATH_TWAPI_INTERNAL, PATH_TWAPI_EXTERNAL];
+  const externalFirst = [PATH_TWAPI_EXTERNAL, PATH_TWAPI_INTERNAL];
+  const internalFirst = [PATH_TWAPI_INTERNAL, PATH_TWAPI_EXTERNAL];
   if (window.location.search.indexOf("twapi=") > -1) {
     if (window.location.search.indexOf("twapi=e") > -1) {
       return externalFirst;
@@ -56,10 +56,10 @@ function GetLayout() { /* exported GetLayout */
 
 /* Parse layout= query string value */
 function ParseLayout(str) { /* exported ParseLayout */
-  let layout = {Cols: null, Chat: true, Slim: false};
+  const layout = {Cols: null, Chat: true, Slim: false};
   if (str.indexOf(":") > -1) {
-    let v1 = str.substr(0, str.indexOf(":"));
-    let v2 = str.substr(str.indexOf(":")+1);
+    const v1 = str.substr(0, str.indexOf(":"));
+    const v2 = str.substr(str.indexOf(":")+1);
     if (v1 === "single") {
       layout.Cols = "single";
     } else if (v1 === "double") {
@@ -118,8 +118,8 @@ function FormatLayout(layout) { /* exported FormatLayout */
 /* Add an asset to be loaded; returns a Promise */
 function AddAsset(src, tree=null, loadcb=null, errcb=null) {
   /* Callback defaults */
-  let loadFunc = loadcb || (() => null);
-  let errorFunc = errcb || (() => null);
+  const loadFunc = loadcb || (() => null);
+  const errorFunc = errcb || (() => null);
   /* Determine the final path to the asset */
   let path = (tree ? tree + "/" : "") + src;
   if (src.startsWith("//")) {
@@ -133,7 +133,7 @@ function AddAsset(src, tree=null, loadcb=null, errcb=null) {
   }
 
   /* Construct and load the asset */
-  let asset = ASSETS[path] = {};
+  const asset = ASSETS[path] = {};
   return new Promise(function(resolve, reject) {
     console.info("About to load asset", path);
     asset.file = src;
@@ -178,18 +178,18 @@ function Main(global) { /* exported Main */
     $("#wrapper #wrapper-loading").remove();
 
     /* Obtain a layout to use */
-    let layout = GetLayout();
+    const layout = GetLayout();
 
     /* Create the chat input elements */
-    let $ChatBox = $(`<textarea id="txtChat"></textarea>`)
+    const $ChatBox = $(`<textarea id="txtChat"></textarea>`)
       .attr("placeholder", "Send a message");
-    let $Chat = $(`<div id="chat"></div>`).append($ChatBox);
+    const $Chat = $(`<div id="chat"></div>`).append($ChatBox);
 
     /* Apply default settings and formatting */
-    let $Columns = $(".column");
-    let $Modules = $(".module");
-    let [$Column1, $Column2] = [$("#column1"), $("#column2")];
-    let [$Module1, $Module2] = [$("#module1"), $("#module2")];
+    const $Columns = $(".column");
+    const $Modules = $(".module");
+    const [$Column1, $Column2] = [$("#column1"), $("#column2")];
+    const [$Module1, $Module2] = [$("#module1"), $("#module2")];
     /* Default: all checkboxes are checked */
     $Modules.find(".header .settings input[type=\"checkbox\"]")
             .attr("checked", "checked");
@@ -209,7 +209,7 @@ function Main(global) { /* exported Main */
 
     /* Add the chat box */
     if (layout.Chat) {
-      let $ChatModule = layout.Cols === "single" ? $Module1 : $Module2;
+      const $ChatModule = layout.Cols === "single" ? $Module1 : $Module2;
       $ChatModule.removeClass("no-chat");
       $ChatModule.addClass("has-chat");
       $ChatModule.append($Chat);
@@ -237,7 +237,7 @@ function Main(global) { /* exported Main */
     /* Once rerendering is complete, start up the client */
     requestAnimationFrame(() => {
       /* Focus on the chat texarea */
-      let c = document.getElementById("txtChat");
+      const c = document.getElementById("txtChat");
       if (c && c.focus) c.focus();
       /* Call doLoadClient to construct the filtered chat */
       Util.LogOnly("Document rendered; setting up TFC...");
@@ -246,7 +246,7 @@ function Main(global) { /* exported Main */
       } catch(e) {
         console.error(e);
         if (e.name === "ReferenceError") {
-          let m = e.message || "";
+          const m = e.message || "";
           if (m.match(/\bdoLoadClient\b.*(?:not |un)defined\b/)) {
             alert("FATAL: filtered-chat.js failed to load");
           }
@@ -266,7 +266,7 @@ function Main(global) { /* exported Main */
   (function($jQuery) {
     /* Check or uncheck a checkbox (e.check(), e.check(false)) */
     $jQuery.fn.check = function(...args) {
-      let cond = args.length > 0 ? Boolean(args[0]) : true;
+      const cond = args.length > 0 ? Boolean(args[0]) : true;
       this.each((i, n) => {
         n.checked = cond;
         n.setAttribute("checked", "checked");
@@ -306,8 +306,8 @@ function Main(global) { /* exported Main */
   .then(indexMain)
   .catch((e) => {
     console.error(e);
+    const t = e.target || e.srcElement || e.originalTarget || e;
     let msg = "TWAPI/TFC Failure ";
-    let t = e.target || e.srcElement || e.originalTarget || e;
     if (!t) {
       msg += "while loading unknown target";
     } else if (t.attributes && t.attributes.src && t.attributes.src.value) {

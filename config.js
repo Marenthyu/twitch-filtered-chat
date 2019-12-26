@@ -138,11 +138,11 @@ var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
       cost: 1,
       is_template: true,
       aggregator: (rules) => {
-        let colors = [];
-        for (let rule of rules) {
+        const colors = [];
+        for (const rule of rules) {
           colors.push(rule.style.split(": ")[1]);
         }
-        let cssrules = [];
+        const cssrules = [];
         cssrules.push(_T(`background-image:`,
                          `linear-gradient(to right, ${colors.join(", ")})`));
         cssrules.push("background-clip: text");
@@ -161,8 +161,8 @@ var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
       cost: 1,
       is_template: true,
       aggregator: (rules) => {
-        let colors = [];
-        for (let rule of rules) {
+        const colors = [];
+        for (const rule of rules) {
           colors.push(rule.wstyle.split(": ")[1]);
         }
         return {
@@ -207,7 +207,7 @@ var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
     party: { cost: 1, wclass: "effect-party" }
   };
   /* Store the rule name in the "rule" attribute */
-  for (let [k, v] of Object.entries(ruleset)) {
+  for (const [k, v] of Object.entries(ruleset)) {
     v.rule = k;
     if (!v.name) {
       v.name = k.toTitleCase();
@@ -246,9 +246,9 @@ function GetCheerStyle(word) { /* exported GetCheerStyle */
     }
   } else {
     /* Try parsing the style as a color */
-    let [rule_name, rule_key, attr, val] = GetCheerColorInfo(word);
+    const [rule_name, rule_key, attr, val] = GetCheerColorInfo(word);
     if (CSSCheerStyles.hasOwnProperty(rule_name)) {
-      let rule = Util.JSONClone(CSSCheerStyles[rule_name]);
+      const rule = Util.JSONClone(CSSCheerStyles[rule_name]);
       rule[rule_key] = `${attr}: ${val}`;
       if (!rule.hasOwnProperty("cost")) {
         rule.cost = 1;
@@ -261,16 +261,16 @@ function GetCheerStyle(word) { /* exported GetCheerStyle */
 
 /* If possible, aggregate composite style definitions */
 function AggregateEffects(effects) { /* exported AggregateEffects */
-  let rule = CSSCheerStyles.aggregation;
+  const rule = CSSCheerStyles.aggregation;
   if (!rule || rule._disabled) {
     /* Aggregation disabled; do nothing */
     return effects;
   }
   /* TODO: Generalize to all aggregations; not just color and bgcolor */
-  let result = [];
-  let colors = [];
-  let bgcolors = [];
-  for (let effect of effects) {
+  const result = [];
+  const colors = [];
+  const bgcolors = [];
+  for (const effect of effects) {
     if (effect.rule === "color") {
       colors.push(effect);
     } else if (effect.rule === "bgcolor") {

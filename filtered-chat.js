@@ -78,10 +78,10 @@ function onChange(elem, func) {
   function wrapper(event) {
     return func.bind(this)(event);
   }
-  for (let e of $(elem)) {
-    let $e = $(e);
+  for (const e of $(elem)) {
+    const $e = $(e);
     if ($e.is("input")) {
-      let type = $e.attr("type");
+      const type = $e.attr("type");
       if (type === "text") {
         /* input type=text: Enter keyup and blur */
         $e.keyup(function(event) {
@@ -113,8 +113,8 @@ class Content { /* exported Content */
 
   /* Add HTML: does not escape */
   static addHTML(content, container=null) {
-    let $container = container ? $(container) : $(".module .content");
-    let $line = $(`<div class="line line-wrapper"></div>`);
+    const $container = container ? $(container) : $(".module .content");
+    const $line = $(`<div class="line line-wrapper"></div>`);
     if (typeof(content) === "string") {
       $line.html(content);
     } else if (content instanceof Node) {
@@ -140,42 +140,42 @@ class Content { /* exported Content */
 
   /* Add info content: does not escape */
   static addInfo(content, pre=false) {
-    let e = $(`<div class="info"></div>`).html(content);
+    const e = $(`<div class="info"></div>`).html(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
   /* Add info text: escapes */
   static addInfoText(content, pre=false) {
-    let e = $(`<div class="info"></div>`).text(content);
+    const e = $(`<div class="info"></div>`).text(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
   /* Add notice (warning) content: does not escape */
   static addNotice(content, pre=false) {
-    let e = $(`<div class="notice"></div>`).html(content);
+    const e = $(`<div class="notice"></div>`).html(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
   /* Add notice (warning) text: escapes */
   static addNoticeText(content, pre=false) {
-    let e = $(`<div class="notice"></div>`).text(content);
+    const e = $(`<div class="notice"></div>`).text(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
   /* Add error content: does not escape */
   static addError(content, pre=false) {
-    let e = $(`<div class="error"></div>`).html(content);
+    const e = $(`<div class="error"></div>`).html(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
 
   /* Add error text: escapes */
   static addErrorText(content, pre=false) {
-    let e = $(`<div class="error"></div>`).text(content);
+    const e = $(`<div class="error"></div>`).text(content);
     if (pre) e.addClass("pre");
     Content.addHTML(e);
   }
@@ -208,8 +208,8 @@ class Content { /* exported Content */
 /* Merge the query string into the config object given and return removals */
 function parseQueryString(config, qs=null) {
   let qs_data = {}; /* Generated configuration */
-  let qs_remove = []; /* List of keys to remove from window.location */
-  let qs_obj = qs || window.location.search;
+  const qs_remove = []; /* List of keys to remove from window.location */
+  const qs_obj = qs || window.location.search;
 
   /* Figure out what was passed */
   if (typeof(qs_obj) === "string") {
@@ -221,7 +221,7 @@ function parseQueryString(config, qs=null) {
     /* Fall-through will generate a sane default configuration */
   }
 
-  for (let [k, v] of Object.entries(qs_data)) {
+  for (const [k, v] of Object.entries(qs_data)) {
     let key = k; /* config key */
     let val = v; /* config val */
     if (k === "clientid") {
@@ -342,7 +342,7 @@ function parseQueryString(config, qs=null) {
       key = "Fanfare";
       val = {enable: false};
       try {
-        let valobj = JSON.parse(v);
+        const valobj = JSON.parse(v);
         if (typeof(valobj) === "number") {
           val.enable = (valobj !== 0);
         } else if (typeof(valobj) === "boolean") {
@@ -375,9 +375,9 @@ function parseQueryString(config, qs=null) {
 
 /* Obtain configuration key */
 function getConfigKey() {
+  const qs = Util.ParseQueryString();
+  const val = qs.config_key || qs.key || qs["config-key"];
   let config_key = CFG_KEY;
-  let qs = Util.ParseQueryString();
-  let val = qs.config_key || qs.key || qs["config-key"];
   if (val) {
     config_key = config_key + "-" + val.replace(/[^a-z0-9_-]/g, "");
   }
@@ -398,7 +398,7 @@ function getConfigObject(inclSensitive=false) {
   let config = null;
 
   /* Query String object, parsed */
-  let qs = Util.ParseQueryString();
+  const qs = Util.ParseQueryString();
 
   /* Obtain configuration from local storage */
   if (qs.nols) {
@@ -419,7 +419,7 @@ function getConfigObject(inclSensitive=false) {
     /* Purge obsolete configuration items */
     const obsolete_props = ["AutoReconnect", "NoForce"];
     let should_store = false;
-    for (let prop of obsolete_props) {
+    for (const prop of obsolete_props) {
       if (config.hasOwnProperty(prop)) {
         should_store = true;
         delete config[prop];
@@ -435,14 +435,14 @@ function getConfigObject(inclSensitive=false) {
     "NoAssets", "Debug", "NoAutoReconnect", "Layout", "Transparent", "Plugins",
     "EnableEffects", "DisableEffects", "PluginConfig", "ColorScheme", "nols",
     "EnableForce"];
-  for (let prop of purge_props) {
+  for (const prop of purge_props) {
     if (config.hasOwnProperty(prop)) {
       delete config[prop];
     }
   }
 
   /* Parse the query string, storing items to remove */
-  let query_remove = parseQueryString(config, qs);
+  const query_remove = parseQueryString(config, qs);
 
   /* Ensure config.Channels is present for #settings configuration below */
   if (!Util.IsArray(config.Channels)) {
@@ -450,12 +450,12 @@ function getConfigObject(inclSensitive=false) {
   }
 
   /* Obtain global settings config */
-  let txtChannel = $("input#txtChannel");
-  let txtNick = $("input#txtNick");
-  let txtPass = $("input#txtPass");
+  const txtChannel = $("input#txtChannel");
+  const txtNick = $("input#txtNick");
+  const txtPass = $("input#txtPass");
   if (txtChannel.val()) {
-    for (let ch of txtChannel.val().split(",")) {
-      let channel = Twitch.FormatChannel(ch.toLowerCase());
+    for (const ch of txtChannel.val().split(",")) {
+      const channel = Twitch.FormatChannel(ch.toLowerCase());
       if (config.Channels.indexOf(channel) === -1) {
         config.Channels.push(channel);
       }
@@ -486,14 +486,14 @@ function getConfigObject(inclSensitive=false) {
 
   /* Populate configs from each module */
   $(".module").each(function _config_get_module_settings() {
-    let id = $(this).attr("id");
+    const id = $(this).attr("id");
     const toArray = (val) => Util.IsArray(val) ? val : [];
     if (!config[id]) {
       config[id] = getModuleSettings($(this));
     }
     /* Populate module configuration from liveStorage (if present) */
     if (window.liveStorage && window.liveStorage[id]) {
-      for (let [k, v] of Object.entries(window.liveStorage[id])) {
+      for (const [k, v] of Object.entries(window.liveStorage[id])) {
         config[id][k] = v;
       }
     }
@@ -524,7 +524,7 @@ function getConfigObject(inclSensitive=false) {
       old_query = Util.ParseQueryString(atob(old_query.base64));
     }
     /* Remove the sensitive items */
-    for (let e of query_remove) {
+    for (const e of query_remove) {
       delete old_query[e];
     }
     /* Create and apply a new query string */
@@ -538,7 +538,7 @@ function getConfigObject(inclSensitive=false) {
 
   /* Merge in top-level liveStorage items */
   if (window.liveStorage) {
-    for (let key of Object.keys(window.liveStorage)) {
+    for (const key of Object.keys(window.liveStorage)) {
       if (!key.match(/^module[0-9]*$/)) {
         if (config[key] !== window.liveStorage[key]) {
           config[key] = window.liveStorage[key];
@@ -615,14 +615,14 @@ function getConfigValue(key) {
 
 /* Store configuration */
 function mergeConfigObject(to_merge=null) {
-  let merge = to_merge || {};
-  let config = getConfigObject(true);
+  const merge = to_merge || {};
+  const config = getConfigObject(true);
   if (Util.IsArray(merge)) {
-    for (let [k, v] of merge) {
+    for (const [k, v] of merge) {
       config[k] = v;
     }
   } else {
-    for (let [k,v] of Object.entries(merge)) {
+    for (const [k,v] of Object.entries(merge)) {
       config[k] = v;
     }
   }
@@ -632,8 +632,8 @@ function mergeConfigObject(to_merge=null) {
 
 /* Generate a URL from the given config object */
 function genConfigURL(config, options=null) {
-  let opts = options || {};
-  let qs = [];
+  const qs = [];
+  const opts = options || {};
   const qsAdd = (k, v) => qs.push(`${k}=${encodeURIComponent(v)}`);
 
   if (opts.key) {
@@ -660,7 +660,7 @@ function genConfigURL(config, options=null) {
   if (config.HistorySize) {
     qsAdd("hmax", config.HistorySize);
   }
-  for (let module of Object.keys(getModules())) {
+  for (const module of Object.keys(getModules())) {
     if (config[module]) {
       qsAdd(module, formatModuleConfig(config[module]));
     }
@@ -674,8 +674,8 @@ function genConfigURL(config, options=null) {
   if (config.NoAutoReconnect) {
     qsAdd("norec", "1");
   }
-  let font_curr = Util.CSS.GetProperty("--body-font-size");
-  let font_dflt = Util.CSS.GetProperty("--body-font-size-default");
+  const font_curr = Util.CSS.GetProperty("--body-font-size");
+  const font_dflt = Util.CSS.GetProperty("--body-font-size-default");
   if (font_curr !== font_dflt) {
     qsAdd("size", font_curr.replace(/[^0-9]/g, ""));
   }
@@ -742,8 +742,8 @@ function genConfigURL(config, options=null) {
 
 /* Enumerate the active modules */
 function getModules() { /* exported getModules */
-  let m = {};
-  for (let elem of $(".module")) {
+  const m = {};
+  for (const elem of $(".module")) {
     m[$(elem).attr("id")] = elem;
   }
   return m;
@@ -751,7 +751,7 @@ function getModules() { /* exported getModules */
 
 /* Apply configuration to the module's settings HTML */
 function setModuleSettings(module, config) {
-  let $module = $(module);
+  const $module = $(module);
   if (config.Name) {
     $module.find("label.name").html(config.Name);
     $module.find("input.name").val(config.Name);
@@ -765,22 +765,22 @@ function setModuleSettings(module, config) {
   $module.find("input.me").check(config.Me);
   function addInput(cls, values) {
     /* Add checkbox for the given values */
-    let clse = CSS.escape(cls);
-    let $setting = $module.find(`li.${clse}`);
-    let label = $setting.find(`label`).last().html() + " ";
-    for (let val of values) {
-      let vale = CSS.escape(val);
+    const clse = CSS.escape(cls);
+    const $setting = $module.find(`li.${clse}`);
+    const label = $setting.find(`label`).last().html() + " ";
+    for (const val of values) {
+      const vale = CSS.escape(val);
       /* Add checkbox if value isn't already present */
       if ($module.find(`input.${clse}[value="${vale}"]`).length === 0) {
-        let $cb = $(`<input type="checkbox" checked />`)
+        const $cb = $(`<input type="checkbox" checked />`)
           .addClass(cls)
           .attr("value", val)
           .click(updateModuleConfig);
-        let $la = $(`<label></label>`)
+        const $la = $(`<label></label>`)
           .val(label)
           .append($cb);
         $la.html($la.html() + label + val.escape());
-        let $li = $(`<li></li>`)
+        const $li = $(`<li></li>`)
           .append($la);
         $setting.before($li);
       }
@@ -795,8 +795,8 @@ function setModuleSettings(module, config) {
 
 /* Obtain the settings from the module's settings HTML */
 function getModuleSettings(module) {
-  let $module = $(module);
-  let settings = {
+  const $module = $(module);
+  const settings = {
     Name: $module.find("input.name").val(),
     Pleb: $module.find("input.pleb").is(":checked"),
     Sub: $module.find("input.sub").is(":checked"),
@@ -834,14 +834,14 @@ function getModuleSettings(module) {
 /* Parse a module configuration object from a query string component */
 function parseModuleConfig(value) {
   const Decode = (vals) => vals.map((v) => decodeURIComponent(v));
-  let parts = Decode(value.split(/,/g));
+  const parts = Decode(value.split(/,/g));
   while (parts.length < 7) parts.push("");
   /* Upgrade configuration from 6x to 7x */
   if (parts[1] === "111111") {
     parts[1] = "1111111";
   }
-  let bits = Util.DecodeFlags(parts[1], 7);
-  let config = {};
+  const bits = Util.DecodeFlags(parts[1], 7);
+  const config = {};
   config.Name = parts[0];
   config.Pleb = bits[0];
   config.Sub = bits[1];
@@ -861,9 +861,9 @@ function parseModuleConfig(value) {
 /* Format the module configuration object into a query string component */
 function formatModuleConfig(cfg) {
   const Encode = (vals) => vals.map((v) => encodeURIComponent(v));
-  let flags = [cfg.Pleb, cfg.Sub, cfg.VIP, cfg.Mod, cfg.Event, cfg.Bits,
-               cfg.Me];
-  let values = [
+  const flags = [cfg.Pleb, cfg.Sub, cfg.VIP, cfg.Mod, cfg.Event,
+                 cfg.Bits, cfg.Me];
+  const values = [
     cfg.Name,
     Util.EncodeFlags(flags, false),
     Encode(cfg.IncludeKeyword).join(","),
@@ -877,9 +877,9 @@ function formatModuleConfig(cfg) {
 
 /* Store the modules' settings in both localStorage and liveStorage */
 function updateModuleConfig() {
-  let config = {};
+  const config = {};
   $(".module").each(function _update_module() {
-    let id = $(this).attr("id");
+    const id = $(this).attr("id");
     config[id] = getModuleSettings($(this));
     if (!window.liveStorage) {
       window.liveStorage = {};
@@ -894,17 +894,17 @@ function updateModuleConfig() {
 /* Set the joined channels to the list given */
 function setChannels(client, channels) {
   const fmt_ch = (ch) => Twitch.FormatChannel(Twitch.ParseChannel(ch));
-  let new_chs = channels.map(fmt_ch);
-  let old_chs = client.GetJoinedChannels().map(fmt_ch);
-  let to_join = new_chs.filter((c) => old_chs.indexOf(c) === -1);
-  let to_part = old_chs.filter((c) => new_chs.indexOf(c) === -1);
+  const new_chs = channels.map(fmt_ch);
+  const old_chs = client.GetJoinedChannels().map(fmt_ch);
+  const to_join = new_chs.filter((c) => old_chs.indexOf(c) === -1);
+  const to_part = old_chs.filter((c) => new_chs.indexOf(c) === -1);
   /* Join all the channels added */
-  for (let ch of to_join) {
+  for (const ch of to_join) {
     client.JoinChannel(ch);
     Content.addNoticeText(`Joining ${ch}`);
   }
   /* Leave all the channels removed */
-  for (let ch of to_part) {
+  for (const ch of to_part) {
     client.LeaveChannel(ch);
     Content.addNoticeText(`Leaving ${ch}`);
   }
@@ -914,10 +914,10 @@ function setChannels(client, channels) {
 
 /* Return whether or not the event should be filtered */
 function shouldFilter(module, event) {
-  let rules = getModuleSettings(module);
+  const rules = getModuleSettings(module);
   if (event instanceof TwitchChatEvent) {
-    let user = event.user || "";
-    let message = event.message ? event.message.toLowerCase() : "";
+    const user = event.user || "";
+    const message = event.message ? event.message.toLowerCase() : "";
     /* NOTE: pleb < sub < vip < mod < caster */
     let role = "pleb";
     if (event.issub) role = "sub";
@@ -942,7 +942,7 @@ function shouldFilter(module, event) {
     if (rules.ExcludeStartsWith.any((m) => message.startsWith(m))) return true;
     /* Filtering to permitted channels (default: permit all) */
     if (rules.FromChannel.length > 0) {
-      for (let s of rules.FromChannel) {
+      for (const s of rules.FromChannel) {
         if (event.channelString.equalsLowerCase(s)) {
           return false;
         }
@@ -958,9 +958,9 @@ function shouldFilter(module, event) {
     }
   }
   if (window.Plugins && !window.PluginsAreDisabled) {
-    let plugin_results = Plugins.invoke("shouldFilter", module, event);
+    const plugin_results = Plugins.invoke("shouldFilter", module, event);
     if (plugin_results && plugin_results.length > 0) {
-      for (let i of plugin_results) {
+      for (const i of plugin_results) {
         if (i === true || i === false) {
           return i;
         }
@@ -973,22 +973,22 @@ function shouldFilter(module, event) {
 
 /* Populate and show the username context window */
 function showUserContextWindow(client, cw, line) {
-  let $cw = $(cw);
-  let $l = $(line);
+  const $cw = $(cw);
+  const $l = $(line);
 
   /* Attributes of the host line */
-  let id = $l.attr("data-id");
-  let user = $l.attr("data-user");
-  let name = $l.find(".username").text();
-  let userid = $l.attr("data-user-id");
-  let channel = `#${$l.attr("data-channel")}`;
-  let chid = $l.attr("data-channelid");
-  let sub = $l.attr("data-subscriber") === "1";
-  let mod = $l.attr("data-mod") === "1";
-  let vip = $l.attr("data-vip") === "1";
-  let caster = $l.attr("data-caster") === "1";
-  let timestamp = Number.parseInt($l.attr("data-sent-ts"));
-  let time = new Date(timestamp);
+  const id = $l.attr("data-id");
+  const user = $l.attr("data-user");
+  const name = $l.find(".username").text();
+  const userid = $l.attr("data-user-id");
+  const channel = `#${$l.attr("data-channel")}`;
+  const chid = $l.attr("data-channelid");
+  const sub = $l.attr("data-subscriber") === "1";
+  const mod = $l.attr("data-mod") === "1";
+  const vip = $l.attr("data-vip") === "1";
+  const caster = $l.attr("data-caster") === "1";
+  const timestamp = Number.parseInt($l.attr("data-sent-ts"));
+  const time = new Date(timestamp);
 
   /* Clear everything from last time */
   $cw.html("");
@@ -1007,7 +1007,7 @@ function showUserContextWindow(client, cw, line) {
 
   /* Define functions for building elements */
   function $Line(s) {
-    let $i = $(`<div class="item"></div>`);
+    const $i = $(`<div class="item"></div>`);
     if (typeof(s) === "string") {
       $i.html(s);
     } else {
@@ -1016,7 +1016,7 @@ function showUserContextWindow(client, cw, line) {
     return $i;
   }
   function $Link(link_id, text) {
-    let $i = $(`<a class="cw-link"></a>`);
+    const $i = $(`<a class="cw-link"></a>`);
     $i.attr("id", link_id);
     $i.text(text);
     return $i;
@@ -1026,25 +1026,25 @@ function showUserContextWindow(client, cw, line) {
   }
 
   /* Add user's display name */
-  let $username = $l.find(".username");
-  let classes = $username.attr("class").escape();
-  let css = $username.attr("style").escape();
-  let e_name = `<span class="${classes}" style="${css}">${name}</span>`;
+  const $username = $l.find(".username");
+  const classes = $username.attr("class").escape();
+  const css = $username.attr("style").escape();
+  const e_name = `<span class="${classes}" style="${css}">${name}</span>`;
   $cw.append($Line(`${e_name} in <span class="em">${channel}</span>`));
 
   /* Add link to timeout user */
   if (client.IsMod(channel)) {
-    let $tl = $(`<div class="cw-timeout">Timeout:</div>`);
-    for (let dur of "1s 10s 60s 10m 30m 1h 12h 24h".split(" ")) {
-      let $ta = $Link(`cw-timeout-${user}-${dur}`, dur);
+    const $tl = $(`<div class="cw-timeout">Timeout:</div>`);
+    for (const dur of "1s 10s 60s 10m 30m 1h 12h 24h".split(" ")) {
+      const $ta = $Link(`cw-timeout-${user}-${dur}`, dur);
       $ta.addClass("cw-timeout-dur");
       $ta.attr("data-channel", channel);
       $ta.attr("data-user", user);
       $ta.attr("data-duration", dur);
       $ta.click(function _ucw_timeout_click() {
-        let ch = $(this).attr("data-channel");
-        let u = $(this).attr("data-user");
-        let d = $(this).attr("data-duration");
+        const ch = $(this).attr("data-channel");
+        const u = $(this).attr("data-user");
+        const d = $(this).attr("data-duration");
         client.Timeout(ch, u, d);
         Util.Log(`Timed out user ${u} from ${ch} for ${d}`);
         $(cw).fadeOut();
@@ -1056,7 +1056,7 @@ function showUserContextWindow(client, cw, line) {
 
   /* Add link which places "/ban <user>" into the chat textbox */
   if (client.IsMod(channel)) {
-    let $ba = $Link(`cw-ban-${user}`, "Ban");
+    const $ba = $Link(`cw-ban-${user}`, "Ban");
     $ba.addClass("cw-ban-user");
     $ba.attr("data-channel", channel);
     $ba.attr("data-user", user);
@@ -1067,23 +1067,23 @@ function showUserContextWindow(client, cw, line) {
   }
 
   /* Add other information */
-  let sent_ts = Util.FormatDate(time);
-  let ago_ts = Util.FormatInterval((Date.now() - timestamp) / 1000);
+  const sent_ts = Util.FormatDate(time);
+  const ago_ts = Util.FormatInterval((Date.now() - timestamp) / 1000);
   $cw.append($Line(`Sent: ${sent_ts} (${ago_ts} ago)`));
   $cw.append($Line(`UserID: ${userid}`));
   $cw.append($Line(`MsgUID: ${id}`));
 
   /* Add roles (and ability to remove roles, for the caster) */
   if (mod || vip || sub || caster) {
-    let $roles = $Line(`User Role: `);
-    let roles = [];
+    const $roles = $Line(`User Role: `);
+    const roles = [];
     if (mod) roles.push($Em("Mod"));
     if (vip) roles.push($Em("VIP"));
     if (sub) roles.push($Em("Sub"));
     if (caster) roles.push($Em("Host"));
     if (roles.length > 0) {
       $roles.append(roles[0]);
-      for (let role of roles.slice(1)) {
+      for (const role of roles.slice(1)) {
         $roles.append(", ");
         $roles.append(role);
       }
@@ -1101,12 +1101,12 @@ function showUserContextWindow(client, cw, line) {
     if (!vip) $cw.append($Line($Link("cw-make-vip", "Make VIP")));
   }
 
-  let lo = $l.offset();
-  let t = Math.round(lo.top) + $l.outerHeight() + 2;
-  let l = Math.round(lo.left);
-  let w = $cw.outerWidth();
-  let h = $cw.outerHeight();
-  let offset = {top: t, left: l, width: w, height: h};
+  const lo = $l.offset();
+  const t = Math.round(lo.top) + $l.outerHeight() + 2;
+  const l = Math.round(lo.left);
+  const w = $cw.outerWidth();
+  const h = $cw.outerHeight();
+  const offset = {top: t, left: l, width: w, height: h};
   Util.ClampToScreen(offset);
   delete offset["width"];
   delete offset["height"];
@@ -1117,10 +1117,10 @@ function showUserContextWindow(client, cw, line) {
 function updateTransparency(transparent) { /* exported updateTransparency */
   let props = [];
   try {
-    let ss = Util.CSS.GetSheet("main.css");
-    let rule = Util.CSS.GetRule(ss, ":root");
+    const ss = Util.CSS.GetSheet("main.css");
+    const rule = Util.CSS.GetRule(ss, ":root");
     /* Find the prop="--<name>-color" rules */
-    for (let prop of Util.CSS.GetPropertyNames(rule)) {
+    for (const prop of Util.CSS.GetPropertyNames(rule)) {
       if (prop.match(/^--[a-z-]+-color$/)) {
         props.push(prop);
       }
@@ -1140,7 +1140,7 @@ function updateTransparency(transparent) { /* exported updateTransparency */
       "--textarea-color",
     ];
   }
-  for (let prop of props) {
+  for (const prop of props) {
     if (transparent) {
       /* Set them all to transparent */
       Util.CSS.SetProperty(prop, "transparent");
@@ -1169,7 +1169,7 @@ function setLightScheme() { /* exported setLightScheme */
 
 /* Set or clear window notification badge */
 function setNotify(notify=true) { /* exported setNotify */
-  let asset = notify ? AssetPaths.FAVICON_ALERT : AssetPaths.FAVICON;
+  const asset = notify ? AssetPaths.FAVICON_ALERT : AssetPaths.FAVICON;
   $(`link[rel="shortcut icon"]`).attr("href", asset);
 }
 
@@ -1221,12 +1221,12 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Add the //config command */
   ChatCommands.add("config", function(cmd, tokens, client_) {
-    let cfg = getConfigObject(true);
-    let t0 = tokens.length > 0 ? tokens[0] : "";
+    const cfg = getConfigObject(true);
+    const t0 = tokens.length > 0 ? tokens[0] : "";
     if (tokens.length === 0) {
-      let mcfgs = [];
+      const mcfgs = [];
       Content.addHelp(`<em>Global Configuration Values:</em>`);
-      for (let [k, v] of Object.entries(cfg)) {
+      for (const [k, v] of Object.entries(cfg)) {
         let key = k;
         let val = (typeof(v) === "object" ? JSON.stringify(v) : `${v}`);
         if (k === "Layout") {
@@ -1244,9 +1244,9 @@ function doLoadClient() { /* exported doLoadClient */
         }
       }
       Content.addHelp(`<em>Window Configuration Values:</em>`);
-      for (let [k, v] of mcfgs) {
+      for (const [k, v] of mcfgs) {
         Content.addHelpText(`Module ${k}: ${v.Name}`);
-        for (let [ck, cv] of Object.entries(v)) {
+        for (const [ck, cv] of Object.entries(v)) {
           if (ck !== "Name") {
             Content.addHelpLine(`${ck}`, `${cv}`, true);
           }
@@ -1288,25 +1288,25 @@ function doLoadClient() { /* exported doLoadClient */
     } else if (t0 === "url") {
       /* Generate a URL with the current configuration, omitting items
        * left at default values */
-      let opts = {
+      const opts = {
         git: 0,
         auth: 0,
         base64: 1,
         tag: config.tag || ""
       };
-      for (let t of tokens) {
+      for (const t of tokens) {
         if (t === "git") opts.git = 1;
         if (t === "auth") opts.auth = 1;
         if (t === "text") opts.base64 = 0;
         if (t.startsWith("tag=")) opts.tag = t.substr(4);
         if (t.startsWith("key=")) opts.key = t.substr(4);
       }
-      let url = genConfigURL(cfg, opts);
+      const url = genConfigURL(cfg, opts);
       Content.addHelp($(`<a></a>`).attr("href", url).text(url));
     } else if ((t0 === "set" || t0 === "setobj") && tokens.length > 2) {
       /* Allow changing configuration by command (dangerous) */
-      let key = tokens[1];
-      let val = tokens.slice(2).join(" ");
+      const key = tokens[1];
+      const val = tokens.slice(2).join(" ");
       let newval = null;
       if (t0 === "setobj") {
         newval = JSON.parse(val);
@@ -1327,10 +1327,10 @@ function doLoadClient() { /* exported doLoadClient */
       } else {
         newval = val;
       }
-      let newstr = JSON.stringify(newval);
+      const newstr = JSON.stringify(newval);
       if (Util.ObjectHas(cfg, key)) {
-        let oldval = Util.ObjectGet(cfg, key);
-        let oldstr = JSON.stringify(oldval);
+        const oldval = Util.ObjectGet(cfg, key);
+        const oldstr = JSON.stringify(oldval);
         Content.addHelpText(`Changing ${key} from "${oldstr}" to "${newstr}"`);
         Content.addHelpLine(key, oldstr, true);
         Content.addHelpLine(key, newstr, true);
@@ -1343,7 +1343,7 @@ function doLoadClient() { /* exported doLoadClient */
         mergeConfigObject(cfg);
       }
     } else if (t0 === "unset" && tokens.length > 1) {
-      let t1 = tokens[1];
+      const t1 = tokens[1];
       if (Util.ObjectRemove(cfg, t1)) {
         Content.addHelpText(`Removed key ${t1} from localStorage`);
         Util.SetWebStorage(cfg);
@@ -1361,7 +1361,7 @@ function doLoadClient() { /* exported doLoadClient */
       Content.addHelpText("Configuration:");
       Content.addHelpLine(t0, JSON.stringify(Util.ObjectGet(cfg, t0)), true);
     } else {
-      let tok = `"${t0}"`;
+      const tok = `"${t0}"`;
       Content.addErrorText(`Unknown config command or key ${tok}`, true);
     }
   }, _T("Obtain and modify configuration information; use //config help for",
@@ -1369,7 +1369,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Obtain configuration, construct client */
   (function _configure_construct_client() {
-    let cfg = getConfigObject(true);
+    const cfg = getConfigObject(true);
     client = new TwitchClient(cfg);
     Util.DebugLevel = cfg.Debug ? Util.LEVEL_DEBUG : Util.LEVEL_INFO;
 
@@ -1380,8 +1380,8 @@ function doLoadClient() { /* exported doLoadClient */
       document.title += " - Read-Only";
       /* Change the chat placeholder and border to reflect read-only */
       if (cfg.Layout.Chat) {
-        let message = _T(Strings.ANON_PLACEHOLDER + ":",
-                         Strings.AUTH_PLACEHOLDER);
+        const message = _T(Strings.ANON_PLACEHOLDER + ":",
+                           Strings.AUTH_PLACEHOLDER);
         $("#txtChat").attr("placeholder", message);
         Util.CSS.SetProperty("--chat-border", "#cd143c");
       }
@@ -1402,14 +1402,14 @@ function doLoadClient() { /* exported doLoadClient */
   });
 
   /* Disable configured events */
-  for (let effect of config.EnableEffects || []) {
+  for (const effect of config.EnableEffects || []) {
     if (CSSCheerStyles[effect]) {
       CSSCheerStyles[effect]._disabled = true;
     }
   }
 
   /* Enable configured effects */
-  for (let effect of config.EnableEffects || []) {
+  for (const effect of config.EnableEffects || []) {
     if (CSSCheerStyles[effect]) {
       CSSCheerStyles[effect]._disabled = false;
     }
@@ -1485,14 +1485,14 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Function for syncing configuration with HTMLGen */
   function updateHTMLGenConfig() {
-    for (let [k, v] of Object.entries(getConfigObject())) {
+    for (const [k, v] of Object.entries(getConfigObject())) {
       client.get("HTMLGen").setValue(k, v);
     }
   }
 
   /* Add highlight patterns */
   if (config.Highlight) {
-    for (let pat of config.Highlight) {
+    for (const pat of config.Highlight) {
       client.get("HTMLGen").addHighlightMatch(pat);
     }
   }
@@ -1535,7 +1535,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Open the main settings window */
   function openSettings() {
-    let cfg = getConfigObject(true);
+    const cfg = getConfigObject(true);
     $("#txtChannel").val(cfg.Channels.join(","));
     $("#txtNick").val(cfg.Name || Strings.NAME_AUTOGEN);
     if (cfg.Pass && cfg.Pass.length > 0) {
@@ -1559,9 +1559,9 @@ function doLoadClient() { /* exported doLoadClient */
   function closeModuleSettings(module) {
     /* Update module configurations on close */
     updateModuleConfig();
-    let $ms = $(module).find(".settings");
-    let $in = $ms.siblings("input.name");
-    let $ln = $ms.siblings("label.name");
+    const $ms = $(module).find(".settings");
+    const $in = $ms.siblings("input.name");
+    const $ln = $ms.siblings("label.name");
     $in.hide();
     $ln.html($in.val()).show();
     $ms.fadeOut();
@@ -1569,9 +1569,9 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Open a module's settings window */
   function openModuleSettings(module) {
-    let $ms = $(module).find(".settings");
-    let $in = $ms.siblings("input.name");
-    let $ln = $ms.siblings("label.name");
+    const $ms = $(module).find(".settings");
+    const $in = $ms.siblings("input.name");
+    const $ln = $ms.siblings("label.name");
     $ln.hide();
     $in.val($ln.html()).show();
     $ms.fadeIn();
@@ -1579,7 +1579,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Toggle a module's settings window */
   function toggleModuleSettings(module) {
-    let $ms = $(module).find(".settings");
+    const $ms = $(module).find(".settings");
     if ($ms.is(":visible")) {
       closeModuleSettings(module);
     } else {
@@ -1589,7 +1589,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Reset chat auto-completion variables */
   function resetChatComplete() {
-    let $c = $("#txtChat");
+    const $c = $("#txtChat");
     $c.attr("data-complete-text", "");
     $c.attr("data-complete-pos", "-1");
     $c.attr("data-complete-index", "0");
@@ -1616,16 +1616,16 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Pressing a key on the chat box */
   $("#txtChat").keydown(function _txtChat_keydown(e) {
-    let t = event.target;
-    let $t = $(t);
+    const t = event.target;
+    const $t = $(t);
     if (e.shiftKey) {
       /* Holding shift bypasses the handling below */
       resetChatComplete();
       resetChatHistory();
     } else if (e.key === "Enter") {
       /* Send a message */
-      let text = t.value;
-      let t0 = text.indexOf(" ") > -1 ? text.split(" ")[0] : "";
+      const text = t.value;
+      const t0 = text.indexOf(" ") > -1 ? text.split(" ")[0] : "";
       if (text.trim().length > 0) {
         if (ChatCommands.isCommandStr(text)) {
           /* Execute chat command */
@@ -1649,7 +1649,7 @@ function doLoadClient() { /* exported doLoadClient */
       /* Not sure why this gets fired, but ignore it */
     } else if (e.key === "Tab") {
       /* Tab completion */
-      let oText = $t.attr("data-complete-text") || t.value;
+      const oText = $t.attr("data-complete-text") || t.value;
       let oPos = Util.ParseNumber($t.attr("data-complete-pos"));
       let complIndex = Util.ParseNumber($t.attr("data-complete-index"));
       if (Number.isNaN(oPos) || oPos === -1) {
@@ -1679,11 +1679,11 @@ function doLoadClient() { /* exported doLoadClient */
       return false;
     } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       /* Handle traversing message history */
-      let l = client.GetHistoryLength();
-      let d = ({ArrowUp: 1, ArrowDown: -1})[e.key];
-      let i = d + Util.ParseNumber($t.attr("data-hist-index"));
+      const l = client.GetHistoryLength();
+      const d = ({ArrowUp: 1, ArrowDown: -1})[e.key];
+      const i = d + Util.ParseNumber($t.attr("data-hist-index"));
       /* Restrict i to [-1, length-1] */
-      let val = client.GetHistoryItem(Math.clamp(i, -1, l - 1));
+      const val = client.GetHistoryItem(Math.clamp(i, -1, l - 1));
       /* Update the text if the value is present (non-null) */
       if (val !== null) {
         t.value = val.trim();
@@ -1731,7 +1731,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Changing the "Scrollbars" checkbox */
   $("#cbScroll").change(function(e) {
-    let scroll = $(this).is(":checked");
+    const scroll = $(this).is(":checked");
     mergeConfigObject({"Scroll": scroll});
     $(".module .content").css("overflow-y", scroll ? "scroll" : "hidden");
   });
@@ -1761,7 +1761,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Changing the debug level */
   $("#selDebug").change(function(e) {
-    let v = Util.ParseNumber($(this).val());
+    const v = Util.ParseNumber($(this).val());
     Util.Log(`Changing debug level from ${Util.DebugLevel} to ${v}`);
     Util.DebugLevel = v;
   });
@@ -1789,7 +1789,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Changing the font text box */
   onChange($("#txtFont"), function(e) {
-    let v = $(this).val();
+    const v = $(this).val();
     if (v) {
       if (v === "default") {
         Util.CSS.SetProperty("--body-font", "var(--body-font-default)");
@@ -1801,7 +1801,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Changing the font size text box */
   onChange($("#txtFontSize"), function(e) {
-    let v = $(this).val();
+    const v = $(this).val();
     if (v) {
       if (v === "default") {
         Util.CSS.SetProperty("--body-font-size",
@@ -1819,7 +1819,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Pressing enter or escape on the module's name text box */
   $(".module .header input.name").keyup(function(e) {
-    let $m = $(this).parentsUntil(".column").last();
+    const $m = $(this).parentsUntil(".column").last();
     if (e.key === "Enter") {
       closeModuleSettings($m);
     } else if (e.key === "Escape") {
@@ -1838,13 +1838,13 @@ function doLoadClient() { /* exported doLoadClient */
   $(`.module .settings input[type="text"]`).keyup(function(e) {
     if (e.key === "Enter") {
       /* Enter: add a new entry */
-      let v = $(this).val();
+      const v = $(this).val();
       if (v.length > 0) {
-        let $cli = $(this).closest("li");
-        let cls = $cli.attr("class").replace("textbox", "").trim();
-        let cb = client.get("HTMLGen").checkbox(v, null, cls, true);
-        let val = $cli.find("label").html();
-        let $li = $(`<li><label>${cb}${val} ${v}</label></li>`);
+        const $cli = $(this).closest("li");
+        const cls = $cli.attr("class").replace("textbox", "").trim();
+        const cb = client.get("HTMLGen").checkbox(v, null, cls, true);
+        const val = $cli.find("label").html();
+        const $li = $(`<li><label>${cb}${val} ${v}</label></li>`);
         $cli.before($li);
         $(this).val("");
         updateModuleConfig();
@@ -1859,8 +1859,8 @@ function doLoadClient() { /* exported doLoadClient */
   $(document).keyup(function(e) {
     if (e.key === "ScrollLock") {
       /* ScrollLock: pause or resume auto-scroll */
-      let $c = $(".module .content");
-      let val = $c.attr("data-no-scroll");
+      const $c = $(".module .content");
+      const val = $c.attr("data-no-scroll");
       if (val) {
         /* Enable scrolling */
         $c.removeAttr("data-no-scroll");
@@ -1877,7 +1877,7 @@ function doLoadClient() { /* exported doLoadClient */
       if ($("#settings").is(":visible")) {
         $("#settings").fadeOut();
       }
-      for (let m of Object.values(getModules())) {
+      for (const m of Object.values(getModules())) {
         if ($(m).find(".settings").is(":visible")) {
           closeModuleSettings($(m));
         }
@@ -1887,16 +1887,16 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Clicking elsewhere on the document: reconnect, username context window */
   $(document).click(function(e) {
-    let $t = $(e.target);
-    let cx = e.clientX;
-    let cy = e.clientY;
+    const $t = $(e.target);
+    const cx = e.clientX;
+    const cy = e.clientY;
 
     /* Clicking on or off of the module settings button or box */
-    for (let module of Object.values(getModules())) {
-      let $m = $(module);
-      let $mm = $m.find(".menu");
-      let $mh = $m.find(".header");
-      let $ms = $m.find(".settings");
+    for (const module of Object.values(getModules())) {
+      const $m = $(module);
+      const $mm = $m.find(".menu");
+      const $mh = $m.find(".header");
+      const $ms = $m.find(".settings");
       if (Util.PointIsOn(cx, cy, $mm)) {
         /* Clicked on the menu button */
         toggleModuleSettings($m);
@@ -1912,7 +1912,7 @@ function doLoadClient() { /* exported doLoadClient */
     }
 
     /* Clicking off the main settings window */
-    let $sw = $("#settings");
+    const $sw = $("#settings");
     if ($sw.is(":visible")) {
       let close = true;
       if ($sw.has(e.target || e.currentTarget).length > 0) {
@@ -1928,11 +1928,11 @@ function doLoadClient() { /* exported doLoadClient */
     }
 
     /* Clicking on the username context window */
-    let $cw = $("#userContext");
+    const $cw = $("#userContext");
     if (Util.PointIsOn(cx, cy, $cw)) {
-      let ch = $cw.attr("data-channel");
-      let user = $cw.attr("data-user");
-      let userid = $cw.attr("data-user-id");
+      const ch = $cw.attr("data-channel");
+      const user = $cw.attr("data-user");
+      const userid = $cw.attr("data-user-id");
       if (!client.IsUIDSelf(userid)) {
         if ($t.attr("id") === "cw-unmod") {
           /* Clicked on the "unmod" link */
@@ -1954,7 +1954,7 @@ function doLoadClient() { /* exported doLoadClient */
       }
     } else if ($t.attr("data-username") === "1") {
       /* Clicked on a username; show context window */
-      let $l = $t.parent();
+      const $l = $t.parent();
       if ($cw.is(":visible")) {
         if ($cw.attr("data-user-id") === $l.attr("data-user-id")) {
           /* Clicked on the same name: fade out */
@@ -2008,8 +2008,8 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* WebSocket closed */
   client.bind("twitch-close", function _on_twitch_close(e) {
-    let code = e.values.event.code;
-    let reason = e.values.event.reason;
+    const code = e.values.event.code;
+    const reason = e.values.event.reason;
     let msg = `(code ${code} ${Util.WSStatus[code]})`;
     if (reason) {
       msg = `(code ${code} ${Util.WSStatus[code]}: ${reason})`;
@@ -2027,7 +2027,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Client joined a channel */
   client.bind("twitch-joined", function _on_twitch_joined(e) {
-    let layout = getConfigValue("Layout");
+    const layout = getConfigValue("Layout");
     if (!layout.Slim) {
       Content.addInfoText(`Joined ${Twitch.FormatChannel(e.channel)}`);
     }
@@ -2035,7 +2035,7 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Client left a channel */
   client.bind("twitch-parted", function _on_twitch_parted(e) {
-    let layout = getConfigValue("Layout");
+    const layout = getConfigValue("Layout");
     if (!layout.Slim) {
       Content.addInfoText(`Left ${Twitch.FormatChannel(e.channel)}`);
     }
@@ -2043,8 +2043,8 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Notice (or warning) from Twitch */
   client.bind("twitch-notice", function _on_twitch_notice(e) {
-    let channel = Twitch.FormatChannel(e.channel);
-    let message = e.message;
+    const channel = Twitch.FormatChannel(e.channel);
+    const message = e.message;
     if (e.noticeMsgId === "host_on") {
       /* This is handled in twitch-hosttarget */
     } else if (e.noticeMsgId === "cmds_available") {
@@ -2058,9 +2058,9 @@ function doLoadClient() { /* exported doLoadClient */
   /* Error from Twitch or Twitch Client API */
   client.bind("twitch-error", function _on_twitch_error(e) {
     Util.Error(e);
-    let user = e.user;
-    let command = e.values.command;
-    let message = e.message;
+    const user = e.user;
+    const command = e.values.command;
+    const message = e.message;
     Content.addErrorText(`Error for ${user}: ${command}: ${message}`);
   });
 
@@ -2077,8 +2077,8 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Received streamer info */
   client.bind("twitch-streaminfo", function _on_twitch_streaminfo(e) {
-    let layout = getConfigValue("Layout");
-    let cinfo = client.GetChannelInfo(e.channelString) || {};
+    const layout = getConfigValue("Layout");
+    const cinfo = client.GetChannelInfo(e.channelString) || {};
     if (layout && !layout.Slim) {
       if (cinfo.online) {
         try {
@@ -2086,9 +2086,9 @@ function doLoadClient() { /* exported doLoadClient */
            * name = cinfo.stream.user_name
            * game = cinfo.stream.game_id (translate to game name)
            * viewers = cinfo.stream.viewer_count */
-          let name = cinfo.stream.channel.display_name;
-          let game = cinfo.stream.game;
-          let viewers = cinfo.stream.viewers;
+          const name = cinfo.stream.channel.display_name;
+          const game = cinfo.stream.game;
+          const viewers = cinfo.stream.viewers;
           Content.addNotice(Strings.StreamInfo(name, game, viewers));
           if (cinfo.stream.channel.status) {
             Content.addNoticeText(cinfo.stream.channel.status);
@@ -2108,10 +2108,10 @@ function doLoadClient() { /* exported doLoadClient */
   /* Received chat message */
   client.bind("twitch-chat", function _on_twitch_chat(e) {
     if (e instanceof TwitchChatEvent) {
-      let m = typeof(e.message) === "string" ? e.message : "";
+      const m = typeof(e.message) === "string" ? e.message : "";
       /* Handle !tfc commands */
       if (e.flags && e.flags.mod && m.startsWith("!tfc ")) {
-        let tokens = m.split(" ");
+        const tokens = m.split(" ");
         if (tokens[1] === "reload") {
           location.reload();
         } else if (tokens[1] === "force-reload") {
@@ -2120,7 +2120,7 @@ function doLoadClient() { /* exported doLoadClient */
           $(".content").children().remove();
         } else if (tokens[1] === "nuke") {
           if (tokens[2] && tokens[2].length > 1) {
-            let name = CSS.escape(tokens[2].toLowerCase());
+            const name = CSS.escape(tokens[2].toLowerCase());
             $(`[data-user="${name}"]`).parent().remove();
           } else {
             $(".content").children().remove();
@@ -2130,16 +2130,16 @@ function doLoadClient() { /* exported doLoadClient */
       }
     }
     $(".module").each(function() {
-      let H = client.get("HTMLGen");
+      const H = client.get("HTMLGen");
       if (!shouldFilter($(this), e)) {
         /* Not filtering; format and display the event */
-        let $c = $(this).find(".content");
-        let $e = H.gen(e);
+        const $c = $(this).find(".content");
+        const $e = H.gen(e);
         /* If a clip is present, display that too */
-        let $clip = $e.find(".message[data-clip]");
+        const $clip = $e.find(".message[data-clip]");
         if ($clip.length > 0) {
           /* For multiple clips, only display the first clip */
-          let slug = $clip.attr("data-clip");
+          const slug = $clip.attr("data-clip");
           /* Nested because the second then() needs both clip and game data */
           client.GetClip(slug).then((clip_data) => {
             client.GetGame(clip_data.game_id).then((game_data) => {
@@ -2160,8 +2160,8 @@ function doLoadClient() { /* exported doLoadClient */
       }
     });
     /* Avoid flooding the DOM with stale chat messages */
-    let max = getConfigValue("MaxMessages");
-    for (let c of $(".content")) {
+    const max = getConfigValue("MaxMessages");
+    for (const c of $(".content")) {
       while ($(c).find(".line-wrapper").length > max) {
         $(c).find(".line-wrapper").first().remove();
       }
@@ -2172,9 +2172,9 @@ function doLoadClient() { /* exported doLoadClient */
   client.bind("twitch-clearchat", function _on_twitch_clearchat(e) {
     if (e.flags["target-user-id"]) {
       /* Moderator timed out a user */
-      let r = CSS.escape(e.flags["room-id"]);
-      let u = CSS.escape(e.flags["target-user-id"]);
-      let l = $(`.chat-line[data-channel-id="${r}"][data-user-id="${u}"]`);
+      const r = CSS.escape(e.flags["room-id"]);
+      const u = CSS.escape(e.flags["target-user-id"]);
+      const l = $(`.chat-line[data-channel-id="${r}"][data-user-id="${u}"]`);
       l.parent().remove();
     } else {
       /* Moderator cleared the chat */
@@ -2200,7 +2200,7 @@ function doLoadClient() { /* exported doLoadClient */
     Content.addHTML(client.get("HTMLGen").resub(e));
     /* Display the resub message, if one is present */
     if (e.message) {
-      let $msg = client.get("HTMLGen").gen(e);
+      const $msg = client.get("HTMLGen").gen(e);
       $msg.addClass("message");
       $msg.addClass("sub-message");
       $msg.addClass("sub-user-message");
@@ -2229,8 +2229,8 @@ function doLoadClient() { /* exported doLoadClient */
   /* New user's greeting message */
   client.bind("twitch-newuser", function _on_twitch_newuser(e) {
     Util.StorageAppend(LOG_KEY, e);
-    let H = client.get("HTMLGen");
-    let $msg = H.newUser(e);
+    const H = client.get("HTMLGen");
+    const $msg = H.newUser(e);
     $msg.find(".message").addClass("effect-rainbow").addClass("effect-disco");
     Content.addHTML($msg);
     Content.addHTML(H.gen(e));
@@ -2275,10 +2275,10 @@ function doLoadClient() { /* exported doLoadClient */
 
   /* Streamer is hosting someone else */
   client.bind("twitch-hosttarget", function _on_twitch_hosttarget(e) {
-    let channel = e.channelString.escape();
-    let target = Strings.Streamer(e.user);
-    let $m = $(`<span class="host-message"></span>`);
-    let $btn = $(`<span class="btn url">Click here to join!</span>`);
+    const channel = e.channelString.escape();
+    const target = Strings.Streamer(e.user);
+    const $m = $(`<span class="host-message"></span>`);
+    const $btn = $(`<span class="btn url">Click here to join!</span>`);
     /* A user of "-" refers to an "unhost" */
     if (e.user !== "-") {
       $m.html(`${channel} is hosting #${target}: `);
