@@ -364,6 +364,8 @@ function parseQueryString(config, qs=null) {
     } else if (k === "urls") {
       key = "EnableURLs";
       val = Boolean(v);
+    } else if (k === "wsuri") {
+      key = "WSURI";
     }
     /* Skip items with a falsy key */
     if (key) {
