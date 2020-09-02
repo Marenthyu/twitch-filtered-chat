@@ -1,13 +1,20 @@
 
+PLUGINS_PATH := plugins
+FANFARE_PATH := fanfare
+
 # Distributed sources to be transpiled
-SOURCES = $(wildcard *.js) $(wildcard plugins/*.js) $(wildcard fanfare/*.js)
+PLUGINS := $(wildcard $(PLUGINS_PATH)/*.js)
+FANFARE := $(wildcard $(FANFARE_PATH)/*.js)
+SOURCES := $(wildcard *.js) $(wildcard $(PLUGINS_PATH)/*.js) $(wildcard $(FANFARE_PATH)/*.js)
 
 # Distributed sources not to be transpiled
-EXTRA_SOURCES = tests/inject.js extras/effects.js
+EXTRA_SOURCES := tests/inject.js extras/effects.js
 
 # Transpile destination directory
-DIST = ./dist
-DISTS = $(patsubst %,$(DIST)/%,$(SOURCES))
+DIST := ./dist
+DIST_PLUGINS := $(patsubst %,$(DIST)/%,$(PLUGINS))
+DIST_FANFARE := $(patsubst %,$(DIST)/%,$(FANFARE))
+DISTS := $(patsubst %,$(DIST)/%,$(SOURCES))
 
 .PHONY: all twitch-api lint babel
 
@@ -25,17 +32,25 @@ babel: $(DIST) $(DISTS)
 
 $(DIST)/%.js: %.js
 	test -d $(DIST) || mkdir $(DIST)
-	npx babel --presets babel-preset-env $< -d $(DIST)/
+	npx babel --presets babel-preset-env $< -o "$@"
 
-$(DIST)/plugins/%.js: plugins/%.js
-	test -d $(DIST)/plugins || mkdir -p $(DIST)/plugins
-	npx babel --presets babel-preset-env $< -d $(DIST)/plugins/
+.PHONY: plugins
+plugins: $(DIST_PLUGINS)
 
-$(DIST)/fanfare/%.js: fanfare/%.js
-	test -d $(DIST)/fanfare || mkdir -p $(DIST)/fanfare
-	npx babel --presets babel-preset-env $< -d $(DIST)/fanfare/
+$(DIST)/$(PLUGINS_PATH)/%.js: $(PLUGINS_PATH)/%.js
+	test -d $(DIST)/$(PLUGINS_PATH) || mkdir -p $(DIST)/$(PLUGINS_PATH)
+	npx babel --presets babel-preset-env $< -o "$@"
+
+.PHONY: fanfare
+fanfare: $(DIST_FANFARE)
+
+$(DIST)/$(FANFARE_PATH)/%.js: $(FANFARE_PATH)/%.js
+	test -d $(DIST)/$(FANFARE_PATH) || mkdir -p $(DIST)/$(FANFARE_PATH)
+	npx babel --presets babel-preset-env $< -o "$@"
 
 $(DIST)/polyfill.js: node_modules/babel-polyfill/dist/polyfill.js
 	test -f "$<" && echo cp "$<" "$@"
+
+print-% : ; $(info $* is a $(flavor $*) variable set to [$($*)]) @true
 
 # vim: sw=4 ts=4 sts=4 noet

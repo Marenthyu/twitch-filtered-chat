@@ -11,7 +11,7 @@ const URI = `${window.location}`;
 const IS_TESLA = Boolean(navigator.userAgent.match(/\bTesla\b/));
 const USE_DIST = IS_TESLA || Boolean(window.location.search.match(/\busedist\b/));
 const BASE_URI = URI.substr(0, URI.indexOf(MOD_TFC)).replace(/\/$/, "");
-const SELF_URI = URI.replace(/\/index.html(\?.*)?$/, "");
+const SELF_URI = URI.indexOf("index.html") >= 0 ? URI.replace(/\/index.html(\?.*)?$/, "") : URI;
 const GIT_URL = "https://kaedenn.github.io/twitch-filtered-chat/index.html";
 const CUR_URL = (() => {
   const l = window.location;
