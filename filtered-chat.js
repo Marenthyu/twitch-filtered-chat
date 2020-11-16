@@ -1435,6 +1435,12 @@ function doLoadClient() { /* exported doLoadClient */
     Util.CSS.SetProperty("--body-font", config.Font);
   }
 
+  /* Set the "cbScroll" config input with its current value */
+  if (config.MaxMessages !== null && !Number.isNaN(config.MaxMessages)) {
+    Util.Log(`config.MaxMessages: ${config.MaxMessages}`);
+    $("#txtHistSize").val(`${config.MaxMessages}`);
+  }
+
   /* If scrollbars are configured, enable them */
   if (config.Scroll) {
     $(".module .content").css("overflow-y", "scroll");
@@ -1729,6 +1735,17 @@ function doLoadClient() { /* exported doLoadClient */
   onChange($("#txtChannel"), function(e) {
     setChannels(client, $(this).val().split(","));
     mergeConfigObject({"Channels": client.GetJoinedChannels()});
+  });
+
+  /* Changing the "Max Messages" text box */
+  $("#txtHistSize").change(function(e) {
+    const val = Util.ParseNumber($(this).val());
+    if (val === null || Number.isNaN(val)) {
+      Util.Log(`Refusing to update max message count; '${val}' not a number`);
+    } else {
+      mergeConfigObject({"MaxMessages": val});
+      Util.Log(`Updated max message count to ${val}`);
+    }
   });
 
   /* Changing the "Scrollbars" checkbox */
