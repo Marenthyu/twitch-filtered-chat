@@ -553,6 +553,7 @@ body.light .module .content .line .message {
   position: absolute;
   padding: 4px;
   bottom: 24px;
+  width: 200px;
   left: 0;
   border: 1px #aaaaaa solid;
   border-radius: 10px;
@@ -579,6 +580,8 @@ body.light .module .content .line .message {
   padding: 4px;
   bottom: 24px;
   left: 0;
+  min-width: 80px;
+  max-width: 100px;
   border: 1px #aaaaaa solid;
   border-radius: 10px;
   color: #c3c3c3;
