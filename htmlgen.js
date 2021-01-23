@@ -727,7 +727,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
       }
       if (event.flags.force_kind === "bits") {
         let wordlen = t0.length;
-        let msgprefix = "cheer1000";
+        let msgprefix = "Cheer1000";
         while (msgprefix.length < t0.length) {
           msgprefix += " ";
         }
