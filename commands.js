@@ -364,6 +364,14 @@ class ChatCommandManager {
       for (let line of this._helpText) {
         Content.addHelp(line);
       }
+
+      const htmlgen = client.get("HTMLGen");
+      if (htmlgen.enableAntics) {
+        Content.addHelpText("Mod antics are enabled:");
+        for (const [cmds, d] of htmlgen.anticsCommands) {
+          Content.addHelpLine(cmds.join(", "), d);
+        }
+      }
     } else if (this.hasCommand(tokens[0])) {
       Content.addHelpText("Commands:");
       let obj = this.getCommand(tokens[0]);

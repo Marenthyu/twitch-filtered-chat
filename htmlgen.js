@@ -671,6 +671,24 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return result;
   }
 
+  /* Enumerate the available antics commands */
+  get anticsCommands() {
+    return [
+      [["force", "!tfcforce"],
+        "Display a message without escaping or processing"],
+      [["forceeval", "!tfceval", "!tfcforceeval"],
+        "Display the result of a JavaScript expression"],
+      [["forcejs", "!tfcjs", "!tfcforcejs"],
+        "Embed the message in a JavaScript <script> tag"],
+      [["forceevalonly", "!tfcevalonly", "!tfcforceevalonly"],
+        "Like eval, but only on the matching tag sessions"],
+      [["forcejsonly", "!tfcjsonly", "!tfcforcejsonly"],
+        "Like js, but only on the matching tag sessions"],
+      [["forcebits", "forcecheer"],
+        "Prepend Cheer1000 to the initial message"]
+    ];
+  }
+
   /* Set event flags referring to the type of antics used */
   _classifyAntics(event, message) {
     let msg = message;

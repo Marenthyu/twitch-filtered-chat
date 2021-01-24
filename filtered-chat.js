@@ -1277,6 +1277,12 @@ function doLoadClient() { /* exported doLoadClient */
       Content.addHelpText(_T("//config setobj <key> <value>: Directly change",
                              "<key> to JSON-encoded <value> (dangerous!)"));
       Content.addHelpText("//config unset <key>: Remove <key> (dangerous!)");
+
+      if (client_.get("HTMLGen").enableAntics) {
+        Content.addHelpText("Mod antics are enabled:");
+      } else {
+        Content.addHelpText("Mod antics are disabled");
+      }
     } else if (t0 === "export") {
       Util.Open(AssetPaths.CONFIG_EXPORT_WINDOW, "_blank", {});
     } else if (t0 === "purge") {
