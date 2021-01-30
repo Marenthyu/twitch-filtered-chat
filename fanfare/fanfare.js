@@ -91,6 +91,7 @@ class Fanfare { /* exported Fanfare */
 
     /* Create chat commands */
     ChatCommands.add("fanfare", this._onCmd, "Enable or disable fanfare", this);
+    ChatCommands.configureCommand("fanfare", {disableClone: true});
     ChatCommands.addUsage("fanfare", null, "Show fanfare status and help");
     ChatCommands.addUsage("fanfare", "help", "Show fanfare help");
     ChatCommands.addUsage("fanfare", "on", "Enable fanfare");
@@ -309,6 +310,7 @@ class Fanfare { /* exported Fanfare */
       this.addEffect(new FanfareSubEffect(this, this._config, event));
     }
   }
+
 }
 
 /* globals FanfareCheerEffect FanfareSubEffect */

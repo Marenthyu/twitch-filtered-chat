@@ -111,7 +111,20 @@ class ChatCommandManager {
       c.extra_help = [];
       c.dflt_args = args.length > 0 ? args : null;
       c.completers = [];
+      c.attributes = {}; /* Modified via configureCommand */
       this._commands[command] = c;
+    }
+  }
+
+  /* Configure advanced attributes to modify how a command is invoked */
+  configureCommand(command, config) {
+    if (this.hasCommand(command, true)) {
+      const cmd = this.getCommand(command, true);
+      if (config.disableClone) {
+        cmd.attributes.disableClone = true;
+      }
+    } else {
+      Util.Error(`No such command ${command}`);
     }
   }
 
@@ -321,8 +334,14 @@ class ChatCommandManager {
           obj.cmd_func = c.func;
           obj.cmd_desc = c.desc;
           obj.cmd_extra_help = c.extra_help;
-          obj.cmd_dflt_args = Util.JSONClone(c.dflt_args);
-          obj.cmd_completers = Util.JSONClone(c.completers);
+          obj.cmd_attributes = c.attributes;
+          if (c.attributes.disableClone) {
+            obj.cmd_dflt_args = c.dflt_args;
+            obj.cmd_completers = c.completers;
+          } else {
+            obj.cmd_dflt_args = Util.JSONClone(c.dflt_args);
+            obj.cmd_completers = Util.JSONClone(c.completers);
+          }
           if (c.dflt_args) {
             c.func.bind(obj)(cmd, tokens, client, ...c.dflt_args);
           } else {
@@ -350,6 +369,9 @@ class ChatCommandManager {
   getCommand(msg, native_only=false) {
     let cname = this._trim(msg);
     let c = null;
+    if (this._aliases.hasOwnProperty(cname)) {
+      cname = this._aliases[cname];
+    }
     if (this._commands.hasOwnProperty(cname)) {
       c = this._commands[cname];
       if (!c && !native_only && this._commands[this._aliases[cname]]) {
@@ -687,28 +709,7 @@ function onCommandClear(cmd, tokens, client) {
 function onCommandJoin(cmd, tokens, client) {
   if (tokens.length > 0) {
     let cdef = Twitch.ParseChannel(tokens[0]);
-    let cinfo = client.GetChannelInfo(cdef.channel);
-    let toJoin = null;
-    if (Twitch.IsRoom(cdef)) {
-      /* It's a well-formed room specification; join it */
-      toJoin = tokens[0];
-    } else if (!cdef.room && !cdef.roomuid) {
-      /* Normal channel; join it */
-      toJoin = tokens[0];
-    } else {
-      /* Join cdef.channel, room named cdef.room */
-      let cname = cdef.channel;
-      let rname = cdef.room;
-      if (cinfo.rooms && cinfo.rooms[rname]) {
-        let cid = cinfo.rooms[rname].owner_id;
-        let rid = cinfo.rooms[rname].uid;
-        toJoin = Twitch.FormatRoom(cid, rid);
-      } else {
-        Content.addErrorText(`No such room ${cname} ${rname}`);
-        Util.LogOnlyOnce(cname, rname, cdef, cinfo);
-      }
-    }
-    if (!toJoin.match(/^#/)) { toJoin = `#${toJoin}`; }
+    let toJoin = cdef.channel; /* Sanitizes the channel token */
     if (toJoin !== null) {
       if (!client.IsInChannel(toJoin)) {
         client.JoinChannel(toJoin);
@@ -725,28 +726,7 @@ function onCommandJoin(cmd, tokens, client) {
 function onCommandPart(cmd, tokens, client) {
   if (tokens.length > 0) {
     let cdef = Twitch.ParseChannel(tokens[0]);
-    let cinfo = client.GetChannelInfo(cdef.channel);
-    let toPart = null;
-    if (Twitch.IsRoom(cdef)) {
-      /* It's a well-formed room specification; part it */
-      toPart = tokens[0];
-    } else if (!cdef.room && !cdef.roomuid) {
-      /* Normal channel; part it */
-      toPart = tokens[0];
-    } else {
-      /* Leave cdef.channel, room named cdef.room */
-      let cname = cdef.channel;
-      let rname = cdef.room;
-      if (cinfo.rooms && cinfo.rooms[rname]) {
-        let cid = cinfo.rooms[rname].owner_id;
-        let rid = cinfo.rooms[rname].uid;
-        toPart = Twitch.FormatRoom(cid, rid);
-      } else {
-        Content.addErrorText(`No such room ${cname} ${rname}`);
-        Util.LogOnlyOnce(cname, rname, cdef, cinfo);
-      }
-    }
-    if (!toPart.match(/^#/)) { toPart = `#${toPart}`; }
+    let toPart = cdef.channel; /* Sanitizes the channel token */
     if (toPart !== null) {
       if (client.IsInChannel(toPart)) {
         client.LeaveChannel(toPart);
@@ -1028,10 +1008,11 @@ function onCommandClient(cmd, tokens, client) {
     let ui = us[c] || {};
     let ci = client.GetChannelInfo(c) || {};
     let rooms = Object.keys(ci.rooms || {});
+    let num_users = ci.users ? ci.users.length : 0;
     Content.addHelpText(`Channel ${c}:`);
     Content.addHelpLine("Status:", `${ci.online ? "On" : "Off"}line`, true);
-    Content.addHelpLine("ID:", ci.id, true);
-    Content.addHelpLine("Active users:", ci.users ? ci.users.length : 0, true);
+    Content.addHelpLine("ID:", `${ci.id}`, true);
+    Content.addHelpLine("Active users:", `${num_users}`, true);
     Content.addHelpLine(`Rooms: ${rooms.length}`, rooms.join(", "), true);
     if (Object.entries(ui).length > 0) {
       Content.addHelpLine("User Color:", ui.color || "not set", true);
@@ -1052,35 +1033,7 @@ function onCommandChannels(cmd, tokens, client) {
   Content.addHelpText("Active channels:");
   for (let channel of client.GetJoinedChannels()) {
     let cinfo = client.GetChannelInfo(channel);
-    if (channel.startsWith("#chatrooms:")) {
-      let cobj = Twitch.ParseChannel(channel);
-      cinfo = client.GetChannelById(Util.ParseNumber(cobj.room));
-      for (let [room_name, room_def] of Object.entries(cinfo.rooms)) {
-        if (cobj.roomuid === room_def.uid) {
-          Content.addHelpText(`${cinfo.cname} ${room_name} ${room_def.uid}`);
-        }
-      }
-    } else {
-      Content.addHelpText(`${channel} ${cinfo.id}`);
-    }
-  }
-}
-
-/* //rooms: display available rooms */
-function onCommandRooms(cmd, tokens, client) {
-  for (let channel of client.GetJoinedChannels()) {
-    let cinfo = client.GetChannelInfo(channel);
-    if (cinfo.rooms) {
-      Content.addHelpText(`Available rooms for ${channel}:`);
-      for (let [room_name, room_info] of Object.entries(cinfo.rooms)) {
-        let cid = room_info.owner_id;
-        let rid = room_info.uid;
-        let rdef = Twitch.FormatRoom(cid, rid);
-        let click = `$('#txtChat').val('//join ${rdef.escape()}')`;
-        let text = `${room_name} ${rid}`;
-        Content.addHelp(`${channel} <a onclick="${click}">${text}</a>`);
-      }
-    }
+    Content.addHelpText(`${channel} ${cinfo.id}`);
   }
 }
 
@@ -1295,11 +1248,6 @@ function InitChatCommands() { /* exported InitChatCommands */
       func: onCommandChannels,
       desc: "List connected channels",
       alias: ["channels", "ch", "joined"]
-    },
-    "rooms": {
-      func: onCommandRooms,
-      desc: "List available rooms",
-      extra: ["This command may not work if you're running un-authenticated"]
     },
     "highlight": {
       func: onCommandHighlight,
