@@ -18,3 +18,4 @@ notes.txt
 .sw[po]
 .*.sw[po]
 README.html
+*.diff
