@@ -847,12 +847,6 @@ class HTMLGenerator { /* exported HTMLGenerator */
     $e.attr("data-channel", event.channelString.replace(/^#/, ""));
     $e.attr("data-channel-id", event.flags["room-id"]);
     $e.attr("data-channel-full", Twitch.FormatChannel(event.channel));
-    if (event.channel.room) {
-      $e.attr("data-room", event.channel.room);
-    }
-    if (event.channel.roomuid) {
-      $e.attr("data-roomuid", event.channel.roomuid);
-    }
     if (event.issub) {
       $e.attr("data-subscriber", "1");
     }
