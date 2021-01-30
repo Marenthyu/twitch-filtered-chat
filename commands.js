@@ -14,6 +14,19 @@
  *     args...    extra arguments passed to ChatCommands.add, as-is
  *   description  (string) a description of the command to be printed in //help
  *   args         (optional) extra arguments to pass to the function
+ *   completers   (Array, optional) completion functions
+ *
+ * Completion functions:
+ * completer_func(client, cmd_object, curr_state) -> [words...]
+ *   client       a reference to the TwitchClient object
+ *   curr_state   the current completion state
+ *     text         the entire String being completed
+ *     textBefore   the text before the tab position
+ *     wordPos      the location of the word being completed
+ *     prefix       text to insert before the completed word (modifiable)
+ *     currWord     the word being completed
+ * Return a list of valid completion words, which can be empty. Note that
+ * the curr_state.prefix field can be modified if desired.
  *
  * Example:
  * Run the following JavaScript:
@@ -22,10 +35,25 @@
  *   "//mycommand value1 value2"
  * This results in the following call:
  *   myFunc("mycommand", ["value1", "value2"], client, 1, 2)
+ *
+ * Completion example:
+ * Run the following JavaScript:
+ *   ChatCommands.add("mycommand", myFunc, "My new command", 1, 2)
+ *   ChatCommands.addCommandCompleter("mycommand",
+ *     function(client, curr_state) {
+ *       return ["param1", "param2", "param3"];
+ *     });
+ * Type the following into chat (where "<tab>" is the literal tab key):
+ *   "//mycommand <tab>"
+ * This results in the following output:
+ *   "//mycommand param1"
+ * Pressing <tab> again cycles through the words.
  */
 
-/* TODO
+/* FIXME:
  * Retain text after tab completion: "foo @<tab> foo" -> "foo @user foo"
+ *
+ * TODO:
  * Implement ChatCommands.addComplete(command, func)
  * Implement //plugins addremote <class> <url> [<config>]
  */
@@ -82,6 +110,7 @@ class ChatCommandManager {
       c.aliases = [];
       c.extra_help = [];
       c.dflt_args = args.length > 0 ? args : null;
+      c.completers = [];
       this._commands[command] = c;
     }
   }
@@ -118,47 +147,98 @@ class ChatCommandManager {
 
   /* Tab completion API {{{0 */
 
-  /* Gather completions for user names */
-  tcGatherUsers(part, client) {
-    let matches = [];
-    let users = [client.GetName()];
-    for (let c of client.GetJoinedChannels()) {
-      let ci = client.GetChannelInfo(c);
-      if (ci.users) {
-        users = users.concat(ci.users);
-      }
+  /* Add a tab-completion function to the given command */
+  addCommandCompleter(cmd, completer_func) {
+    const cmd_obj = this.getCommand(cmd);
+    if (cmd_obj !== null) {
+      cmd_obj.completers.push(completer_func);
+    } else {
+      Util.Error("Adding completer to invalid command", cmd);
     }
-    for (let user of users) {
-      if (part.length === 0 || user.startsWith(part)) {
-        matches.push(user);
-      }
-    }
-    return matches;
   }
 
   /* Request completion of the given completion object */
   complete(client, cargs) {
-    let text = cargs.oText;
-    let pos = cargs.oPos;
-    let idx = cargs.index;
+    let text = cargs.oText; /* input/output */
+    let pos = cargs.oPos;   /* input/output */
+    let idx = cargs.index;  /* input/output */
     let matches = [];
     /* Text before tab: "test te<tab>" -> "test te" */
     let textBefore = text.substr(0, pos);
     /* Word being tab-completed: "test te<tab>" -> "te" */
-    let wordPos = textBefore.search(/\W[\w]*$/);
-    let currWord = textBefore;
+    let wordPos = textBefore.search(/(?<=\s)\S*$/);
     /* Text to insert before the match (including any leading symbols) */
-    let prefix = cargs.oText;
+    let prefix = null;
+    /* The word to complete */
+    let currWord = null;
     if (wordPos > -1) {
       prefix = textBefore.substr(0, wordPos);
       currWord = textBefore.substr(wordPos).trimStart();
+    } else {
+      prefix = cargs.oText;
+      currWord = textBefore;
     }
+
+    let completed = false;
+
+    /* Complete @<user> sequences */
     if (currWord.startsWith("@")) {
-      /* Complete @<user> sequences */
-      matches = this.tcGatherUsers(currWord.substr(1), client);
-      prefix = prefix + "@";
-    } else if (this.isCommandStr(text)) {
-      /* Complete commands */
+      const part = currWord.substr(1);
+      for (const c of client.GetJoinedChannels()) {
+        const ci = client.GetChannelInfo(c);
+        if (ci.users) {
+          const users = ci.users.map((u) => u.toLowerCase());
+          matches.extend(users.filter((u) => u.startsWith(part)));
+        }
+      }
+      const uname = client.GetName().toLowerCase();
+      if (uname.startsWith(part)) {
+        matches.push(uname);
+      }
+      if (!prefix.endsWith("@")) {
+        prefix = prefix + "@";
+      }
+      completed = matches.length > 0;
+    }
+
+    /* Complete channel names */
+    if (!completed && currWord.startsWith("#")) {
+      for (let c of client.GetJoinedChannels()) {
+        if (c.toLowerCase().startsWith(currWord)) {
+          matches.push(c);
+        }
+      }
+      if (matches.length > 0) {
+        completed = true;
+        if (prefix.endsWith("#")) {
+          prefix = prefix.substr(0, prefix.length-1);
+        }
+      }
+    }
+
+    const wordBefore = textBefore.trimEnd();
+    /* Complete a specific command */
+    if (!completed && this.hasCommand(wordBefore)) {
+      let cobj = this.getCommand(wordBefore);
+      for (const completer of cobj.completers) {
+        const cstate = {
+          text: text,
+          textBefore: textBefore,
+          wordPos: wordPos,
+          prefix: prefix,
+          currWord: currWord
+        };
+        const cfunc = completer.bind(cobj);
+        matches.extend(cfunc(client, cstate));
+        if (cstate.prefix !== prefix) {
+          prefix = cstate.prefix;
+        }
+      }
+      completed = matches.length > 0;
+    }
+
+    /* Complete commands */
+    if (!completed && this.isCommandStr(text)) {
       let word = this._trim(text.substr(0, pos));
       for (let k of Object.keys(this._commands).sort()) {
         if (word.length === 0 || k.startsWith(word)) {
@@ -166,18 +246,19 @@ class ChatCommandManager {
         }
       }
       prefix = word ? text.substr(0, text.indexOf(word)) : text;
-    } else if (currWord.startsWith("#")) {
-      /* Complete channel-specific messages */
-      let word = text.substr(0, pos).toLowerCase();
-      for (let c of client.GetJoinedChannels()) {
-        if (word.length === 0 || c.toLowerCase().startsWith(word)) {
-          matches.push(c);
-        }
-      }
     }
 
     /* If matches were found, return one */
     if (matches.length > 0) {
+      /* Remove duplicates from matches */
+      const final_matches = [];
+      for (const elem of matches) {
+        if (!final_matches.includes(elem)) {
+          final_matches.push(elem);
+        }
+      }
+      matches = final_matches;
+
       if (idx < matches.length) {
         text = prefix + matches[idx];
         pos = text.length;
@@ -240,7 +321,8 @@ class ChatCommandManager {
           obj.cmd_func = c.func;
           obj.cmd_desc = c.desc;
           obj.cmd_extra_help = c.extra_help;
-          obj.cmd_dflt_args = c.dflt_args;
+          obj.cmd_dflt_args = Util.JSONClone(c.dflt_args);
+          obj.cmd_completers = Util.JSONClone(c.completers);
           if (c.dflt_args) {
             c.func.bind(obj)(cmd, tokens, client, ...c.dflt_args);
           } else {
@@ -265,11 +347,14 @@ class ChatCommandManager {
   }
 
   /* Return a command object by command name (optionally excluding aliases) */
-  getCommand(cmd, native_only=false) {
-    let cname = this._trim(cmd);
-    let c = this._commands[cname];
-    if (!c && !native_only && this._commands[this._aliases[cname]]) {
-      c = this._commands[this._aliases[cname]];
+  getCommand(msg, native_only=false) {
+    let cname = this._trim(msg);
+    let c = null;
+    if (this._commands.hasOwnProperty(cname)) {
+      c = this._commands[cname];
+      if (!c && !native_only && this._commands[this._aliases[cname]]) {
+        c = this._commands[this._aliases[cname]];
+      }
     }
     return c;
   }
