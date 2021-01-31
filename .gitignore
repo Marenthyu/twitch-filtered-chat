@@ -4,6 +4,7 @@ plugins/dwangoAC.js
 dist/plugins/dwangoAC.js
 assets/3rdparty/
 make-readme.sh
+assets/github-light.css
 
 # Ignore installed packages
 node_modules/
@@ -13,7 +14,7 @@ package-lock.json
 notes/
 notes.txt
 
-# Ignore swap/temporary/compiled files
+# Ignore swap/temporary/generated files
 *.py[co]
 .sw[po]
 .*.sw[po]
