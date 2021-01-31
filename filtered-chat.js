@@ -61,7 +61,6 @@
  *   Filtering
  *   Plugin creation and loading
  *   Plugin configuration (?plugincfg)
- * Auto-complete command arguments
  */
 
 /* IDEAS:
@@ -198,6 +197,16 @@ class Content { /* exported Content */
   /* Add a help line with indent; escapes when escape=true (default false) */
   static addHelpTextLine(s, escape=false) {
     Content.addHelp(ChatCommands.helpTextLine(s, escape));
+  }
+
+  /* Add a help line pair with escaping */
+  static addHelpLineE(c, s) {
+    Content.addHelpLine(c, s, true);
+  }
+
+  /* Add a help line with indent and escaping */
+  static addHelpTextLineE(s) {
+    Content.addHelpTextLine(s, true);
   }
 }
 
@@ -594,7 +603,7 @@ function getConfigObject(inclSensitive=false) {
   /* Default ClientID */
   if (inclSensitive) {
     if (!config.ClientID) {
-      /* Protect against source code sniffing */
+      /* Protect against naive source code sniffing */
       config.ClientID = [
          19, 86, 67,115, 22, 38,198,  3, 55,118, 67, 35,150,230, 71,
         134, 83,  3,119,166, 86, 39, 38,167,135,134,147,214, 38, 55
@@ -1242,7 +1251,7 @@ function doLoadClient() { /* exported doLoadClient */
           mcfgs.push([k, v]);
         }
         if (key !== null) {
-          Content.addHelpLine(`${key}`, `${val}`, true);
+          Content.addHelpLineE(`${key}`, `${val}`);
         }
       }
       Content.addHelp(`<em>Window Configuration Values:</em>`);
@@ -1250,7 +1259,7 @@ function doLoadClient() { /* exported doLoadClient */
         Content.addHelpText(`Module ${k}: ${v.Name}`);
         for (const [ck, cv] of Object.entries(v)) {
           if (ck !== "Name") {
-            Content.addHelpLine(`${ck}`, `${cv}`, true);
+            Content.addHelpLineE(`${ck}`, `${cv}`);
           }
         }
       }
@@ -1265,13 +1274,12 @@ function doLoadClient() { /* exported doLoadClient */
       Content.addHelpLine("pass", "Dislay OAuth token (if one is present)");
       Content.addHelpLine("url",
                           "Generate a URL from the current configuration");
-      Content.addHelpText(_T("//config url parameters (can be used in any",
-                             "order):"));
+      Content.addHelpText("//config url parameters:");
       Content.addHelpLine("git", "Force URL to target github.io");
       Content.addHelpLine("text", "Force URL to be un-encoded");
       Content.addHelpLine("auth", "Include passwords in URL");
-      Content.addHelpLine("tag=<value>", "Set the tag to <value>", true);
-      Content.addHelpLine("key=<value>", "Use config key to <value>", true);
+      Content.addHelpLineE("tag=<value>", "Set the tag to <value>");
+      Content.addHelpLineE("key=<value>", "Use config key to <value>");
       Content.addHelpText(_T("//config set <key> <value>: Directly change",
                              "<key> to <value> (dangerous!)"));
       Content.addHelpText(_T("//config setobj <key> <value>: Directly change",
@@ -1284,9 +1292,9 @@ function doLoadClient() { /* exported doLoadClient */
       window.liveStorage = {};
       Content.addNoticeText(`Purged storage "${Util.GetWebStorageKey()}"`);
     } else if (t0 === "clientid") {
-      Content.addHelpLine("ClientID", cfg.ClientID, true);
+      Content.addHelpLineE("ClientID", cfg.ClientID);
     } else if (t0 === "pass") {
-      Content.addHelpLine("Pass", cfg.Pass, true);
+      Content.addHelpLineE("Pass", cfg.Pass);
     } else if (t0 === "url") {
       /* Generate a URL with the current configuration, omitting items
        * left at default values */
@@ -1334,13 +1342,13 @@ function doLoadClient() { /* exported doLoadClient */
         const oldval = Util.ObjectGet(cfg, key);
         const oldstr = JSON.stringify(oldval);
         Content.addHelpText(`Changing ${key} from "${oldstr}" to "${newstr}"`);
-        Content.addHelpLine(key, oldstr, true);
-        Content.addHelpLine(key, newstr, true);
+        Content.addHelpLineE(key, oldstr);
+        Content.addHelpLineE(key, newstr);
         Util.ObjectSet(cfg, key, newval);
         mergeConfigObject(cfg);
       } else {
         Content.addHelpText(`Adding key ${key} with value "${newstr}"`);
-        Content.addHelpLine(key, newstr, true);
+        Content.addHelpLineE(key, newstr);
         Util.ObjectSet(cfg, key, newval);
         mergeConfigObject(cfg);
       }
@@ -1361,7 +1369,7 @@ function doLoadClient() { /* exported doLoadClient */
       }
     } else if (Util.ObjectHas(cfg, t0)) {
       Content.addHelpText("Configuration:");
-      Content.addHelpLine(t0, JSON.stringify(Util.ObjectGet(cfg, t0)), true);
+      Content.addHelpLineE(t0, JSON.stringify(Util.ObjectGet(cfg, t0)));
     } else {
       const tok = `"${t0}"`;
       Content.addErrorText(`Unknown config command or key ${tok}`, true);
