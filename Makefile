@@ -51,6 +51,20 @@ $(DIST)/$(FANFARE_PATH)/%.js: $(FANFARE_PATH)/%.js
 $(DIST)/polyfill.js: node_modules/babel-polyfill/dist/polyfill.js
 	test -f "$<" && echo cp "$<" "$@"
 
+# Shorthand for generating README.html
+
+.PHONY: README
+README: README.html
+	browse "file://$(shell pwd)/$^"
+
+README.html: README.md
+	test -d assets || mkdir assets
+	test -f "assets/github-light.css" || \
+		curl "https://raw.githubusercontent.com/primer/github-syntax-light/master/lib/github-light.css" \
+		-o "assets/github-light.css"
+	pandoc "$<" -f markdown_github+smart -t html5 \
+		-c "assets/github-light.css" -o "$@" && ls -l "$@"
+
 print-% : ; $(info $* is a $(flavor $*) variable set to [$($*)]) @true
 
 # vim: sw=4 ts=4 sts=4 noet
