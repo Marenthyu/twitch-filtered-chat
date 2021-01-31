@@ -133,7 +133,7 @@ class Fanfare { /* exported Fanfare */
   /* Create an element with some default attributes */
   elem(type, classes, ...attrs) {
     const e = document.createElement(type);
-    const setAttr = (k, v) => {
+    const setAttr = (k, v) => { /* Useful "set a value" helper */
       if (k === "innerHTML") e.innerHTML = v;
       else if (k === "innerText") e.innerText = v;
       else e.setAttribute(k, v);
@@ -141,6 +141,7 @@ class Fanfare { /* exported Fanfare */
     setAttr("class", `ff ${classes}`.trim());
     setAttr("data-from", "fanfare");
     for (let aobj of attrs) {
+      /* FIXME: Check for any kind of "pair", not just Array[2] */
       if (Util.IsArray(aobj) && aobj.length === 2) {
         let [k, v] = aobj;
         setAttr(k, v);
@@ -229,15 +230,15 @@ class Fanfare { /* exported Fanfare */
       Content.addHelpText("Add a number to cheerdemo to simulate that number of bits");
       Content.addHelpText("Available arguments for subdemo:");
       for (let kind of TwitchSubEvent.KINDS) {
-        Content.addHelpLine(kind, `Demonstrate the ${kind} type of subscription`, true);
+        Content.addHelpLineE(kind, `Demonstrate the ${kind} type of subscription`);
       }
       for (let plan of TwitchSubEvent.PLANS) {
         let name = TwitchSubEvent.PlanName(plan);
-        Content.addHelpLine(plan, `Demonstrate a ${name} subscription`, true);
+        Content.addHelpLineE(plan, `Demonstrate a ${name} subscription`);
       }
       Content.addHelpText(`Available "//${cmd} config" arguments:`);
-      Content.addHelpLine(`config set <k> <v>`, "Set key <k> to value <v>", true);
-      Content.addHelpLine(`config unset <k>`, "Unset key <k>", true);
+      Content.addHelpLineE(`config set <k> <v>`, "Set key <k> to value <v>");
+      Content.addHelpLineE(`config unset <k>`, "Unset key <k>");
     } else if (t0 === "on") {
       self._on = true;
       Content.addInfoText("Fanfare is now enabled");
@@ -273,7 +274,7 @@ class Fanfare { /* exported Fanfare */
       }
       self._onSubEvent(self._client, {kind: kind, plan: plan}, true);
     } else if (t0 === "config") {
-      Content.addHelpLine("config", JSON.stringify(self._config), true);
+      Content.addHelpLineE("config", JSON.stringify(self._config));
       if (tokens.length > 2) {
         let t1 = tokens[1];
         let t2 = tokens[2];
@@ -285,8 +286,8 @@ class Fanfare { /* exported Fanfare */
         } else {
           Content.addErrorText(`Fanfare: unknown config argument ${t1}`);
           Content.addHelpText(`Available arguments:`);
-          Content.addHelpLine(`config set <k> <v>`, "Set key <k> to value <v>", true);
-          Content.addHelpLine(`config unset <k>`, "Unset key <k>", true);
+          Content.addHelpLineE(`config set <k> <v>`, "Set key <k> to value <v>");
+          Content.addHelpLineE(`config unset <k>`, "Unset key <k>");
         }
       }
     } else {
