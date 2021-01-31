@@ -67,9 +67,10 @@ URL: `https://kaedenn.github.io/twitch-filtered-chat/index.html?<OPTIONS>`
 | `fanfare`     | Fanfare configuration: either `1` or `true` to enable, or a JSON-encoded string to set specific options |
 | `highlight`   | Comma-separated patterns (either regexes of the form `/pat/[flags]` or strings) to highlight |
 | `urls`        | Set to a falsy value to disable URL formatting. Default is to format URLs |
-| `tag`         | Set a specific name for the chat, for debugging and antics usage (highly recommended!) |
+| `wsuri`       | Override the `WebSocket` endpoint to a custom URI |
+| `tag`         | Set a specific name for the chat for debugging and antics usage (highly recommended!) |
 
-The default configuration key is `tfc-config`. If `config_key` is present, then `tfc-config-${config_key}` is used instead.
+This client uses the `tfc-config` `localStorage` key by default. If you specify `config_key`, then `tfc-config-${config_key}` is used instead. This `config_key` option allows you to have multiple parallel configurations that don't interfere with each other.
 
 Note that `user` and `pass` must be supplied together: if a username is given, then a password must be given via either `pass` or stored in `localStorage`.
 
@@ -319,7 +320,11 @@ Note that `^M` refers to a literal `^M` character: `^V^M` on Linux. This can be 
 ## Credits
 
 > Shayd3 - Creating the settings builder
+
 > YoshiRulz - Improving rainbow effect
+
 > Inverted - Improving username contrast, helping with disco effect
+
 > SighnWave - Creating the disco effect
+
 > Feeve - Assisting with resub debugging
