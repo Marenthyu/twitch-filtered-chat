@@ -2,9 +2,7 @@
 
 "use strict";
 
-/** Chat Commands
- *
- * Adding a chat command:
+/*** Adding a chat command:
  * ChatCommands.add(command, function, description, args...)
  *   command      (string) chat command to add, executed via //command
  *   function     a function taking the following arguments
@@ -16,7 +14,7 @@
  *   args         (optional) extra arguments to pass to the function
  *   completers   (Array, optional) completion functions
  *
- * Completion functions:
+ *** Completion functions:
  * completer_func(client, cmd_object, curr_state) -> [words...]
  *   client       a reference to the TwitchClient object
  *   curr_state   the current completion state
@@ -28,7 +26,14 @@
  * Return a list of valid completion words, which can be empty. Note that
  * the curr_state.prefix field can be modified if desired.
  *
- * Example:
+ *** Special configuration:
+ * If executing a command results in a "cyclic object value" error, then add
+ * the following after adding the command:
+ *   ChatCommands.configureCommand("//mycommand", {disableClone: true})
+ * This will disable the JSONClone() in the command execution.
+ * WARNING: This allows the command to modify its own definition!!
+ *
+ *** General example:
  * Run the following JavaScript:
  *   ChatCommands.add("mycommand", myFunc, "My new command", 1, 2)
  * Type the following into chat:
@@ -36,7 +41,7 @@
  * This results in the following call:
  *   myFunc("mycommand", ["value1", "value2"], client, 1, 2)
  *
- * Completion example:
+ *** Completion example:
  * Run the following JavaScript:
  *   ChatCommands.add("mycommand", myFunc, "My new command", 1, 2)
  *   ChatCommands.addCommandCompleter("mycommand",
@@ -50,13 +55,9 @@
  * Pressing <tab> again cycles through the words.
  */
 
-/* FIXME:
- * Retain text after tab completion: "foo @<tab> foo" -> "foo @user foo"
- *
- * TODO:
- * Implement ChatCommands.addComplete(command, func)
- * Implement //plugins addremote <class> <url> [<config>]
- */
+/* FIXME: Retain text after tab: "foo @<tab> foo" -> "foo @user foo" */
+
+/* TODO: Implement //plugins addremote <class> <url> [<config>] */
 
 var ChatCommands = null; /* exported ChatCommands */
 
@@ -466,8 +467,8 @@ class ChatCommandManager {
       for (let c of Object.keys(this._commands)) {
         this.printHelp(this._commands[c]);
       }
-      Content.addHelp(this.formatArgs(_T("Enter //help <command> for help on",
-                                         "<command>")));
+      Content.addHelp(this.formatArgs(
+        "Enter //help <command> for help on <command>"));
       for (let line of this._helpText) {
         Content.addHelp(line);
       }
@@ -588,8 +589,7 @@ function onCommandLog(cmd, tokens, client) {
             Content.addHelpText(`${i}: ${desc}`);
           }
         } else {
-          Content.addHelpText(_T(`Removing ${unmatched.length}/${logCount}`,
-                                 `items`));
+          Content.addHelpText(`Removing ${unmatched.length}/${logCount} items`);
           Content.addHelpText(`New logs length: ${matched.length}`);
           Util.SetWebStorage(LOG_KEY, matched.map((i) => i[1]));
         }
@@ -994,15 +994,18 @@ function onCommandClient(cmd, tokens, client) {
   let us = client.SelfUserState() || {};
   Content.addHelpText("Client information:");
   Content.addHelpLine("Socket:", cstatus.open ? "Open" : "Closed");
-  Content.addHelpLine("Endpoint:", cstatus.endpoint, true);
-  Content.addHelpLine("Status:",
-                      cstatus.connected ? "Connected" : "Not connected");
+  Content.addHelpLineE("Endpoint:", cstatus.endpoint);
+  if (cstatus.connected) {
+    Content.addHelpLine("Status:", "Connected");
+  } else {
+    Content.addHelpLine("Status:", "Not connected");
+  }
   Content.addHelpLine("Identified:", cstatus.identified ? "Yes" : "No");
   Content.addHelpLine("Authenticated:", cstatus.authed ? "Yes" : "No");
-  Content.addHelpLine("Name:", client.GetName(), true);
+  Content.addHelpLineE("Name:", client.GetName());
   Content.addHelpLine("FFZ:", client.FFZEnabled() ? "Enabled" : "Disabled");
   Content.addHelpLine("BTTV:", client.BTTVEnabled() ? "Enabled" : "Disabled");
-  Content.addHelpLine("User ID:", `${us.userid}`, true);
+  Content.addHelpLineE("User ID:", `${us.userid}`);
   Content.addHelpText(`Channels connected to: ${channels.length}`);
   for (let c of channels) {
     let ui = us[c] || {};
@@ -1010,14 +1013,14 @@ function onCommandClient(cmd, tokens, client) {
     let rooms = Object.keys(ci.rooms || {});
     let num_users = ci.users ? ci.users.length : 0;
     Content.addHelpText(`Channel ${c}:`);
-    Content.addHelpLine("Status:", `${ci.online ? "On" : "Off"}line`, true);
-    Content.addHelpLine("ID:", `${ci.id}`, true);
-    Content.addHelpLine("Active users:", `${num_users}`, true);
-    Content.addHelpLine(`Rooms: ${rooms.length}`, rooms.join(", "), true);
+    Content.addHelpLine("Status:", ci.online ? "Online" : "Offline");
+    Content.addHelpLineE("ID:", `${ci.id}`);
+    Content.addHelpLine("Active users:", `${num_users}`);
+    Content.addHelpLineE(`Rooms: ${rooms.length}`, rooms.join(", "));
     if (Object.entries(ui).length > 0) {
-      Content.addHelpLine("User Color:", ui.color || "not set", true);
-      Content.addHelpLine("User Badges:", JSON.stringify(ui.badges), true);
-      Content.addHelpLine("Display Name:", `${ui["display-name"]}`, true);
+      Content.addHelpLineE("User Color:", ui.color || "not set");
+      Content.addHelpLineE("User Badges:", JSON.stringify(ui.badges));
+      Content.addHelpLineE("Display Name:", `${ui["display-name"]}`);
       Content.addHelpText(`User Info: ${JSON.stringify(ui)}`);
     }
   }
@@ -1044,7 +1047,7 @@ function onCommandHighlight(cmd, tokens, client) {
     Content.addHelpText("Current highlight patterns:");
     for (let idx = 0; idx < H.highlightMatches.length; ++idx) {
       let pat = H.highlightMatches[idx];
-      Content.addHelpLine(`Index ${idx+1}`, `${pat}`, true);
+      Content.addHelpLineE(`Index ${idx+1}`, `${pat}`);
     }
   } else if (tokens[0] === "add") {
     let patstr = tokens.slice(1).join(" ");
@@ -1071,11 +1074,9 @@ function onCommandHighlight(cmd, tokens, client) {
           let after = matches.slice(idx);
           H.highlightMatches = before.concat(after);
         }
-        Content.addHelpText(_T(`Now storing ${H.highlightMatches.length}`,
-                               `patterns`));
+        Content.addHelpText(`Now storing ${H.highlightMatches.length} patterns`);
       } else {
-        Content.addErrorText(_T(`Invalid index ${idx}; must be between 1 and`,
-                                `${max}`));
+        Content.addErrorText(`Index ${idx} must be between 1 and ${max}`);
       }
     } else {
       Content.addErrorText(`"//highlight remove" requires argument`);
@@ -1115,8 +1116,7 @@ function onCommandAuth(cmd, tokens, client) {
           }
           window.location.search = qs;
         } else {
-          Content.addError(_T("The value you entered does not match; not",
-                              "resetting"));
+          Content.addError("The value you entered does not match; not resetting");
         }
       });
       Content.addHTML(btn);
@@ -1125,8 +1125,7 @@ function onCommandAuth(cmd, tokens, client) {
     let $url = $(`<a target="_blank"></a>`);
     $url.attr("href", Strings.OAUTH_GEN_URL);
     $url.text(Strings.OAUTH_GEN_URL);
-    Content.addHelpText(_T("Click the following link to generate an OAuth",
-                           "token:"));
+    Content.addHelpText("Click this link to generate an OAuth token:");
     Content.addHelp($url);
     Content.addHelpText(_T("Then enter your Twitch username and that OAuth",
                            "token in the settings panel. You can open the",
@@ -1135,6 +1134,8 @@ function onCommandAuth(cmd, tokens, client) {
   }
 }
 
+/* Call when ready to initialize chat commands. Populates the ChatCommands
+ * global variable */
 function InitChatCommands() { /* exported InitChatCommands */
   /* Default command definition
    * Structure:
@@ -1210,8 +1211,9 @@ function InitChatCommands() { /* exported InitChatCommands */
       func: onCommandEmotes,
       desc: "Display the requested emotes",
       usage: [
-        ["[<kinds>]", _T("Display emotes; <kinds> can be one or more of:",
-                         "global, channel, ffz, bttv, or all")]
+        ["[<kinds>]",
+         _T("Display emotes; <kinds> can be one or more of: global, channel,",
+            " ffz, bttv, or all")]
       ],
       extra: [
         _T("Emotes are organized by set, one set per channel. Set 0 is for",
@@ -1226,8 +1228,7 @@ function InitChatCommands() { /* exported InitChatCommands */
         [null, "Show loaded plugins and their status"],
         ["help", "Show loaded plugins and command help"],
         ["add <class> <file> [<config>]",
-         _T("Add a plugin by class name and filename, optionally with a",
-            "config object")],
+         "Add a plugin by class and file, optionally with a config object"],
         ["load <class> <file> [<config>]", "Alias to `//plugin add`"]
         /* TODO: //plugins addremote */
       ]
