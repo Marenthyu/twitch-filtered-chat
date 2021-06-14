@@ -68,7 +68,7 @@ class PluginStorageClass {
 
   /* Return the plugin objects */
   get plugins() {
-    if (this.disabled || PluginStorageClass.disabled) { return null; }
+    if (this.disabled || PluginStorageClass.disabled) { throw new Error("Disabled"); }
     return this._plugins;
   }
 
@@ -87,7 +87,7 @@ class PluginStorageClass {
 
   /* Load the given plugin object with the TwitchClient instance given */
   _load(plugin, client, config) {
-    if (this.disabled || PluginStorageClass.disabled) { return; }
+    if (this.disabled || PluginStorageClass.disabled) { throw new Error("Disabled"); }
     Util.LogOnly("Loading plugin " + JSON.stringify(plugin));
     let ctor = plugin.ctor;
     return new Promise((resolve, reject) => {
@@ -149,7 +149,7 @@ class PluginStorageClass {
 
   /* Add a plugin object */
   add(plugin_def) {
-    if (this.disabled || PluginStorageClass.disabled) { return; }
+    if (this.disabled || PluginStorageClass.disabled) { throw new Error("Disabled"); }
     /* Validate plugin before adding */
     if (!plugin_def.ctor.match(/^[A-Za-z0-9_]+$/)) {
       throw new Error("Invalid plugin name: " + plugin_def.ctor);
@@ -166,15 +166,15 @@ class PluginStorageClass {
 
   /* Load all added plugin objects */
   loadAll(client, config) {
-    if (this.disabled || PluginStorageClass.disabled) { return; }
+    if (this.disabled || PluginStorageClass.disabled) { throw new Error("Disabled"); }
     let plugins = Object.values(this._plugins);
     return Promise.all(plugins.map((p) => this._load(p, client, config)));
   }
 
   /* Load a plugin by name */
   load(ctor, client, config) {
-    if (this.disabled || PluginStorageClass.disabled) { return; }
-    this._load(this._plugins[ctor], client, config)
+    if (this.disabled || PluginStorageClass.disabled) { throw new Error("Disabled"); }
+    return this._load(this._plugins[ctor], client, config)
       .catch((e) => {
         Util.Error("Failed loading plugin", ctor, e);
         Content.addError(e);

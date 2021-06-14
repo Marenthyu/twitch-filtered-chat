@@ -1267,7 +1267,7 @@ function doLoadClient() { /* exported doLoadClient */
       Content.addHelpLine("//config", "Show and manipulate configuration");
       Content.addHelpText("//config parameters:");
       Content.addHelpLine("export",
-                          _T("Export *all* of localStorage to a new tab",
+                          _J("Export *all* of localStorage to a new tab",
                              "(contains passwords!)"));
       Content.addHelpLine("purge", "Clear localStorage (cannot be undone!)");
       Content.addHelpLine("clientid", "Display ClientID");
@@ -1280,9 +1280,9 @@ function doLoadClient() { /* exported doLoadClient */
       Content.addHelpLine("auth", "Include passwords in URL");
       Content.addHelpLineE("tag=<value>", "Set the tag to <value>");
       Content.addHelpLineE("key=<value>", "Use config key to <value>");
-      Content.addHelpText(_T("//config set <key> <value>: Directly change",
+      Content.addHelpText(_J("//config set <key> <value>: Directly change",
                              "<key> to <value> (dangerous!)"));
-      Content.addHelpText(_T("//config setobj <key> <value>: Directly change",
+      Content.addHelpText(_J("//config setobj <key> <value>: Directly change",
                              "<key> to JSON-encoded <value> (dangerous!)"));
       Content.addHelpText("//config unset <key>: Remove <key> (dangerous!)");
     } else if (t0 === "export") {
@@ -1374,7 +1374,7 @@ function doLoadClient() { /* exported doLoadClient */
       const tok = `"${t0}"`;
       Content.addErrorText(`Unknown config command or key ${tok}`, true);
     }
-  }, _T("Obtain and modify configuration information; use //config help for",
+  }, _J("Obtain and modify configuration information; use //config help for",
         "details"));
 
   /* Obtain configuration, construct client */
@@ -1390,7 +1390,7 @@ function doLoadClient() { /* exported doLoadClient */
       document.title += " - Read-Only";
       /* Change the chat placeholder and border to reflect read-only */
       if (cfg.Layout.Chat) {
-        const message = _T(Strings.ANON_PLACEHOLDER + ":",
+        const message = _J(Strings.ANON_PLACEHOLDER + ":",
                            Strings.AUTH_PLACEHOLDER);
         $("#txtChat").attr("placeholder", message);
         Util.CSS.SetProperty("--chat-border", "#cd143c");
@@ -2028,7 +2028,7 @@ function doLoadClient() { /* exported doLoadClient */
       }
     }
     if (getConfigValue("Channels").length === 0) {
-      Content.addInfoText(_T("No channels configured; type //join <channel>",
+      Content.addInfoText(_J("No channels configured; type //join <channel>",
                              "to join one!"));
     }
   });
@@ -2044,7 +2044,7 @@ function doLoadClient() { /* exported doLoadClient */
     if (getConfigValue("NoAutoReconnect")) {
       Content.addErrorText(`Connection closed ${msg} ${Strings.RECONNECT}`);
     } else {
-      Content.addErrorText(_T(`Connection closed ${msg}; reconnecting in 5`,
+      Content.addErrorText(_J(`Connection closed ${msg}; reconnecting in 5`,
                               `seconds...`));
       if (!client.connecting) {
         window.setTimeout(() => { client.Connect(); }, 5000);

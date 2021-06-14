@@ -343,6 +343,14 @@ class ChatCommandManager {
             obj.cmd_dflt_args = Util.JSONClone(c.dflt_args);
             obj.cmd_completers = Util.JSONClone(c.completers);
           }
+          if (Util.DebugLevel >= Util.LEVEL_DEBUG) {
+            let args = Util.JSONClone(tokens);
+            if (c.dflt_args) {
+              args.extend(c.dflt_args);
+            }
+            let arg_str = args.map((e) => `"${Util.EscapeSlashes(`${e}`)}"`).join(", ");
+            Util.DebugOnly(`${cmd}(${arg_str})`);
+          }
           if (c.dflt_args) {
             c.func.bind(obj)(cmd, tokens, client, ...c.dflt_args);
           } else {
@@ -856,17 +864,17 @@ function onCommandEmotes(cmd, tokens, client) {
     }
   }
   if (tokens.indexOf("global") > -1 || tokens.indexOf("all") > -1) {
-    to_display.push(_T(`Global:`,
+    to_display.push(_J(`Global:`,
                        `${s_emotes[TwitchClient.ESET_GLOBAL].join("")}`));
-    to_display.push(_T(`Twitch Prime:`,
+    to_display.push(_J(`Twitch Prime:`,
                        `${s_emotes[TwitchClient.ESET_PRIME].join("")}`));
-    to_display.push(_T(`Turbo Set 1:`,
+    to_display.push(_J(`Turbo Set 1:`,
                        `${s_emotes[TwitchClient.ESET_TURBO_1].join("")}`));
-    to_display.push(_T(`Turbo Set 2:`,
+    to_display.push(_J(`Turbo Set 2:`,
                        `${s_emotes[TwitchClient.ESET_TURBO_2].join("")}`));
-    to_display.push(_T(`Turbo Set 3:`,
+    to_display.push(_J(`Turbo Set 3:`,
                        `${s_emotes[TwitchClient.ESET_TURBO_3].join("")}`));
-    to_display.push(_T(`Turbo Set 4:`,
+    to_display.push(_J(`Turbo Set 4:`,
                        `${s_emotes[TwitchClient.ESET_TURBO_4].join("")}`));
   }
   if (tokens.indexOf("channel") > -1 || tokens.indexOf("all") > -1) {
@@ -960,7 +968,7 @@ function onCommandPlugins(cmd, tokens, client) {
           try {
             cfg = JSON.parse(cfgStr);
           } catch (err) {
-            Content.addErrorText(_T(`Malformed JSON string "${cfgStr}";`,
+            Content.addErrorText(_J(`Malformed JSON string "${cfgStr}";`,
                                     "ignoring"));
           }
         }
@@ -1097,13 +1105,13 @@ function onCommandAuth(cmd, tokens, client) {
   } else if (client.IsAuthed()) {
     Content.addHelpText(`You are authenticated as ${client.GetName()}`);
     if (t0 === "reset") {
-      let btn = $(_T(`<span class="btn help" style="color: lightblue;`,
+      let btn = $(_J(`<span class="btn help" style="color: lightblue;`,
                      `font-weight: bold">Click here to reset your OAuth`,
                      `token</span>`));
-      Content.addHelpText(_T("Are you sure you want to reset your OAuth",
+      Content.addHelpText(_J("Are you sure you want to reset your OAuth",
                              "token? This cannot be undone!"));
       btn.click(function(e) {
-        let resp = prompt(_T("Enter your username if you're ABSOLUTELY",
+        let resp = prompt(_J("Enter your username if you're ABSOLUTELY",
                              "CERTAIN you want to reset your OAuth",
                              "token\nThis cannot be undone."));
         if (resp === client.GetName()) {
@@ -1127,7 +1135,7 @@ function onCommandAuth(cmd, tokens, client) {
     $url.text(Strings.OAUTH_GEN_URL);
     Content.addHelpText("Click this link to generate an OAuth token:");
     Content.addHelp($url);
-    Content.addHelpText(_T("Then enter your Twitch username and that OAuth",
+    Content.addHelpText(_J("Then enter your Twitch username and that OAuth",
                            "token in the settings panel. You can open the",
                            "settings panel by clicking the gear icon in the",
                            "upper-right corner of the page."));
@@ -1212,11 +1220,11 @@ function InitChatCommands() { /* exported InitChatCommands */
       desc: "Display the requested emotes",
       usage: [
         ["[<kinds>]",
-         _T("Display emotes; <kinds> can be one or more of: global, channel,",
+         _J("Display emotes; <kinds> can be one or more of: global, channel,",
             " ffz, bttv, or all")]
       ],
       extra: [
-        _T("Emotes are organized by set, one set per channel. Set 0 is for",
+        _J("Emotes are organized by set, one set per channel. Set 0 is for",
            "global emotes.")
       ]
     },
@@ -1261,17 +1269,17 @@ function InitChatCommands() { /* exported InitChatCommands */
         ["remove <index>", "Remove the pattern numbered <index>"]
       ],
       extra: [
-        _T("Patterns can be either regexes (such as /foo/) or text (such as",
+        _J("Patterns can be either regexes (such as /foo/) or text (such as",
            "\"foo\")"),
-        _T("Regexes may contain flag characters: /foo/i will match \"foo\",",
+        _J("Regexes may contain flag characters: /foo/i will match \"foo\",",
            "\"Foo\", \"FOO\", etc."),
-        _T("By default, patterns are case-sensitive; highlighting \"foo\"",
+        _J("By default, patterns are case-sensitive; highlighting \"foo\"",
            "will not highlight \"Foo\"")
       ]
     },
     "auth": {
       func: onCommandAuth,
-      desc: _T("Display help on authenticating with Twitch Filtered Chat. If",
+      desc: _J("Display help on authenticating with Twitch Filtered Chat. If",
                "presently authenticated, then also present button to reset",
                "authentication"),
       alias: ["login"],

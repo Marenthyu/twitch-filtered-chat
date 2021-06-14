@@ -61,9 +61,9 @@
  *  ${text_shadow}: Username shadow CSS, calculated and populated by HTMLGen
  */
 
-/* Alias for Util.T: split text across multiple lines */
-function _T(...args) { /* exported _T */
-  return Util.T(...args);
+/* Alias for Util.J: split text across multiple lines */
+function _J(...args) { /* exported _J */
+  return Util.J(...args);
 }
 
 /* Configuration keys */
@@ -108,7 +108,7 @@ const Strings = { /* exported Strings */
   /* Streamer is online/offline messages */
   StreamOnline: (ch) => `${Strings.Streamer(ch)} is streaming`,
   StreamInfo: (name, game, viewers) =>
-    _T(`${Strings.Streamer(name)} is streaming`,
+    _J(`${Strings.Streamer(name)} is streaming`,
        `${Strings.Streamer(name, game)} for ${viewers}`,
        `viewer${viewers === 1 ? "" : "s"}`),
   StreamOffline: (ch) => `${Strings.Streamer(ch)} is not currently streaming`,
@@ -116,7 +116,7 @@ const Strings = { /* exported Strings */
   /* Default messages for various USERNOTICE types */
   Sub: (plan) => `just subscribed with a ${plan} subscription!`,
   ResubStreak: (months, plan, streak) =>
-    _T(`resubscribed for ${months} months with a ${plan} subscription!`,
+    _J(`resubscribed for ${months} months with a ${plan} subscription!`,
        `They're on a streak of ${streak} months!`),
   Resub: (months, plan) =>
     `resubscribed for ${months} months with a ${plan} subscription!`,
@@ -143,7 +143,7 @@ var CSSCheerStyles = (() => { /* exported CSSCheerStyles */
           colors.push(rule.style.split(": ")[1]);
         }
         const cssrules = [];
-        cssrules.push(_T(`background-image:`,
+        cssrules.push(_J(`background-image:`,
                          `linear-gradient(to right, ${colors.join(", ")})`));
         cssrules.push("background-clip: text");
         cssrules.push("-webkit-background-clip: text");

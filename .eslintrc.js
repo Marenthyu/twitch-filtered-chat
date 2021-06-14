@@ -15,7 +15,7 @@ module.exports = {
         "Plugins": "readonly",
         "Content": "readonly",
         "ChatCommands": "readwrite",
-        "_T": "readonly"
+        "_J": "readonly"
     },
     "parserOptions": {
         "ecmaVersion": 2018
