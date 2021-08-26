@@ -231,8 +231,7 @@ function parseQueryString(config, qs=null) {
   }
 
   for (const [k, v] of Object.entries(qs_data)) {
-    let key = k; /* config key */
-    let val = v; /* config val */
+    let [key, val] = [k, v];
     if (k === "clientid") {
       key = "ClientID";
       config.__clientid_override = true;
@@ -245,7 +244,7 @@ function parseQueryString(config, qs=null) {
     } else if (k === "channel" || k === "channels") {
       key = "Channels";
       val = v.split(",").map((c) => Twitch.FormatChannel(c));
-    } else if (k === "debug") {
+    } else if (k === "debug") { /* debug level; see README for values */
       key = "Debug";
       if (typeof(v) === "boolean") {
         val = v;
@@ -260,16 +259,16 @@ function parseQueryString(config, qs=null) {
       } else {
         val = false;
       }
-    } else if (k === "noassets") {
+    } else if (k === "noassets") { /* disable asset processing (for testing) */
       key = "NoAssets";
       val = Boolean(v);
-    } else if (k === "noffz") {
+    } else if (k === "noffz") { /* disable FFZ support */
       key = "NoFFZ";
       val = Boolean(v);
-    } else if (k === "nobttv") {
+    } else if (k === "nobttv") { /* disable BTTV support */
       key = "NoBTTV";
       val = Boolean(v);
-    } else if (k === "hmax") {
+    } else if (k === "hmax") { /* max history for sent messages */
       key = "HistorySize";
       if (v === "inf") {
         val = Infinity;
@@ -279,54 +278,54 @@ function parseQueryString(config, qs=null) {
         Util.WarnOnly(`Invalid hmax value ${v}; defaulting`);
         val = TwitchClient.DEFAULT_HISTORY_SIZE;
       }
-    } else if (k.match(/^module[\d]*?$/)) {
+    } else if (k.match(/^module[\d]*?$/)) { /* module configuration */
       if (k === "module") {
         key = "module1";
       } else {
         key = k;
       }
       val = parseModuleConfig(v);
-    } else if (k === "trans" || k === "transparent") {
+    } else if (k === "trans" || k === "transparent") { /* transparent bg */
       key = "Transparent";
       val = 1;
-    } else if (k === "layout") {
+    } else if (k === "layout") { /* overall layout choice */
       key = "Layout";
       val = ParseLayout(v);
-    } else if (k === "norec") {
+    } else if (k === "norec") { /* do not reconnect on error */
       key = "NoAutoReconnect";
       val = true;
-    } else if (k === "size") {
+    } else if (k === "size") { /* overall font size (in pt) */
       key = "Size";
       val = `${v}pt`;
-    } else if (k === "plugins") {
+    } else if (k === "plugins") { /* enable/disable plugins */
       key = "Plugins";
       val = Boolean(v);
-    } else if (k === "disable") {
+    } else if (k === "disable") { /* disable specific effect(s) */
       key = "DisableEffects";
       val = v.split(",");
-    } else if (k === "enable") {
+    } else if (k === "enable") { /* enable specific effect(s) */
       key = "EnableEffects";
       val = v.split(",");
-    } else if (k === "max") {
+    } else if (k === "max") { /* max number of messages to display */
       key = "MaxMessages";
       if (v === "inf" || v === -1) {
         val = Infinity;
       } else if (typeof(v) === "number") {
         val = v;
       } else {
-        Util.WarnOnly(`Invalid max value ${v}; defaulting`);
         val = TwitchClient.DEFAULT_MAX_MESSAGES;
+        Util.WarnOnly(`Invalid max value ${v}; defaulting to ${val}`);
       }
-    } else if (k === "font") {
+    } else if (k === "font") { /* overall font override */
       key = "Font";
       val = `${v}`;
-    } else if (k === "scroll") {
+    } else if (k === "scroll") { /* enable/disable scrollbars */
       key = "Scroll";
       val = Boolean(v);
-    } else if (k === "clips") {
+    } else if (k === "clips") { /* whether or not to display clip info */
       key = "ShowClips";
       val = Boolean(v);
-    } else if (k === "plugincfg") {
+    } else if (k === "plugincfg") { /* plugin-specific configuration */
       key = "PluginConfig";
       try {
         val = JSON.parse(v);
@@ -334,7 +333,7 @@ function parseQueryString(config, qs=null) {
         Util.Error(e);
         key = val = null;
       }
-    } else if (k === "scheme") {
+    } else if (k === "scheme") { /* light mode or dark mode */
       key = "ColorScheme";
       if (v === "light") {
         val = "light";
@@ -344,10 +343,10 @@ function parseQueryString(config, qs=null) {
         Util.WarnOnly(`Invalid scheme value ${v}, defaulting to dark`);
         val = "dark";
       }
-    } else if (k === "force" || k === "antics") {
+    } else if (k === "force" || k === "antics") { /* enable HTML/XSS injection */
       key = "EnableForce";
       val = Boolean(v);
-    } else if (k === "fanfare") {
+    } else if (k === "fanfare") { /* enable/disable fanfare processing */
       key = "Fanfare";
       val = {enable: false};
       try {
@@ -367,13 +366,13 @@ function parseQueryString(config, qs=null) {
         Util.Error("Failed parsing Fanfare config; disabling", e, v);
         key = val = null;
       }
-    } else if (k === "highlight") {
+    } else if (k === "highlight") { /* words to highlight on */
       key = "Highlight";
       val = `${v}`.split(",").map((s) => Util.StringToRegExp(s, "g"));
-    } else if (k === "urls") {
+    } else if (k === "urls") { /* enable formatting of URLs */
       key = "EnableURLs";
       val = Boolean(v);
-    } else if (k === "wsuri") {
+    } else if (k === "wsuri") { /* WebSocket URI override */
       key = "WSURI";
     }
     /* Skip items with a falsy key */
@@ -685,19 +684,29 @@ function genConfigURL(config, options=null) {
   if (config.NoAutoReconnect) {
     qsAdd("norec", "1");
   }
-  const font_curr = Util.CSS.GetProperty("--body-font-size");
-  const font_dflt = Util.CSS.GetProperty("--body-font-size-default");
-  if (font_curr !== font_dflt) {
-    qsAdd("size", font_curr.replace(/[^0-9]/g, ""));
+  if (config.Font) {
+    qsAdd("font", config.Font);
+  } else {
+    const font_curr = Util.CSS.GetProperty("--body-font");
+    const font_dflt = Util.CSS.GetProperty("--body-font-default");
+    if (font_curr !== font_dflt) {
+      qsAdd("font", font_curr);
+    }
+  }
+  if (config.Size) {
+    qsAdd("size", config.Size);
+  } else {
+    const fsize_curr = Util.CSS.GetProperty("--body-font-size");
+    const fsize_dflt = Util.CSS.GetProperty("--body-font-size-default");
+    if (fsize_curr !== fsize_dflt) {
+      qsAdd("size", fsize_curr.replace(/[^0-9]/g, ""));
+    }
   }
   if (config.Plugins) {
     qsAdd("plugins", "1");
   }
   if (config.MaxMessages !== TwitchClient.DEFAULT_MAX_MESSAGES) {
     qsAdd("max", `${config.MaxMessages}`);
-  }
-  if (config.Font) {
-    qsAdd("font", config.Font);
   }
   if (config.Scroll) {
     qsAdd("scroll", "1");
