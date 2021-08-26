@@ -34,7 +34,7 @@ URL: `https://kaedenn.github.io/twitch-filtered-chat/index.html?<OPTIONS>`
 ### Query String Options
 
 | Option Key    | Option Value |
-|---------------|--------------|
+| ---           | -------------- |
 | `twapi`       | Force external (`e`) or internal (`i`) Twitch API library (see below) |
 | `layout`      | Layout (see below) |
 | `config_key`  | Custom configuration key (see below) |
@@ -43,12 +43,12 @@ URL: `https://kaedenn.github.io/twitch-filtered-chat/index.html?<OPTIONS>`
 | `clientid`    | ClientID override to use for Twitch asset loading |
 | `user`        | Username to use (requires `pass`) |
 | `pass`        | OAuth token to use (requires `user`; removed once parsed) |
-| `debug`       | Either a number or one of `false` (0), `true` (1), `debug` (1), or `trace` (2) (default: 0) |
+| `debug`       | Either either a number or one of `false` (0), `true` (1), `debug` (1), or `trace` (2) (default: 0) |
 | `channels`    | Channels to join (with or without #), separated by commas |
 | `noffz`       | Disable FFZ support (badges and emotes) entirely |
 | `nobttv`      | Disable BTTV support (emotes) entirely |
 | `noassets`    | Prevents loading of all image (badge, emote, cheer) assets (implies `noffz` and `nobttv`) |
-| `hmax`        | Maximum size of sent chat history (default 300) |
+| `hmax`        | Maximum size of sent chat history (default 300) (requires `chat` layout and proper `user` and `pass` values) |
 | `trans`       | Makes the backgrounds completely transparent |
 | `module1`     | The encoded module configuration for module 1 (explained below) |
 | `module2`     | The encoded module configuration for module 2 (explained below) |
@@ -92,18 +92,16 @@ Passing `twapi=i` forces the internal submodule to be scanned first. Passing `tw
 ### Layout
 
 | Layout | Description |
-| ------ | ----------- |
-| `layout=double:chat` | Two columns; right column has a chat box. This is the default |
+| --- | ----------- |
+| `layout=double:chat` | Two columns with a chat box (default) |
 | `layout=single:chat` | One column with a chat box |
 | `layout=double:nochat` | Two columns without a chat box |
 | `layout=single:nochat` | One column without a chat box |
 | `layout=double:slim` | Two columns without headers, settings, or a chat box |
 | `layout=single:slim` | One column without header, settings, or a chat box |
-| `layout=double` | Exactly `layout=double:chat` |
-| `layout=single` | Exactly `layout=single:chat` |
+| `layout=double` | Shorthand for `layout=double:chat` |
+| `layout=single` | Shorthand for `layout=single:chat` |
 | `layout=tesla` | Special layout for use on embedded browsers, such as in a Tesla. This is similar to `layout=single:slim` but changes numerous other behaviors |
-
-For a `single` column, the module is `module1`. For `double` columns, the left module is `module1` and the right module is `module2`.
 
 ### Module configuration
 
@@ -113,19 +111,17 @@ For a `single` column, the module is `module1`. For `double` columns, the left m
 
 If `layout` is `single`, `module1` is shown. Otherwise, `module1` is the left module and `module2` the right.
 
-`name`: Module's name
+| Argument | Multi-Valued? | Description |
+| --- | --- | ----------- |
+| `name` | No | Module's display name. Can be anything. |
+| `flags` | No | a sequence of 1s (show) or 0s (hide) for `Pleb`, `Sub`, `VIP`, `Mod`, `Events`, `Bits`, and `/me`. |
+| `kw-include` | Yes | Display the message if it contains the value(s) given. Overrides `flags` and `channel-exclude`. |
+| `user-include` | Yes | Always show messages from the specified user(s). Overrides `flags` and `channel-exclude`. |
+| `user-exclude` | Yes | Hide messages from any of the user(s) given. |
+| `start-exclude` | Yes | Hide messages containing any of the value(s) given. |
+| `channel-exclude` | Yes | Hide messages from any of the channel(s) given (intended for `layout=double` usage). |
 
-`flags`: a sequence of 1s (shown) or 0s (filtered) for `Pleb`, `Sub`, `VIP`, `Mod`, `Events`, `Bits`, and `/me`.
-
-`kw-include`: Display the message if it contains the value given, overriding excludes
-
-`user-include`: Always show messages from this user, overriding
-
-`user-exclude`: Don't show messages from this user
-
-`start-exclude`: Don't show messages starting with the value given
-
-`channel-exclude`: Exclude messages from this channel (for `layout=double` usage)
+To pass multiple values, place commas between them. For example `user-include=Kaedenn_,dwangoAC` matches both `Kaedenn_` and `dwangoAC`.
 
 Default: `module1=Chat,1111111,,,,,&module2=Chat,1111111,,,,,`
 
@@ -137,8 +133,8 @@ Example configurations are coming relatively soon.
 
 The following cheer effects are available and cost one bit each.
 
-| Effect Name | Description |
-| ----------- | ----------- |
+| Effect | Description |
+| --- | ----------- |
 | `marquee` | Message scrolls from right to left across the chat window |
 | `bold` | Message is bold |
 | `italic` | Message is italicised |
@@ -171,8 +167,8 @@ To use them, add them to the message after the cheer:
 
 The following effects are disabled by default and must be enabled via `&enable=` to use. These effects don't look quite right and are a work in progress.
 
-| Effect Name | Description |
-| ----------- | ----------- |
+| Effect | Description |
+| --- | ----------- |
 | `slide` | Similar to `marquee`, the message scrolls in from the right |
 | `scroll` | Similar to `marquee`, the effect scrolls in from the left |
 | `bounce` | Similar to `marquee`, the effect bounces from left to right |
@@ -182,7 +178,7 @@ The following effects are disabled by default and must be enabled via `&enable=`
 The following hotkeys are available:
 
 | Key Name | Action |
-| -------- | ------ |
+| --- | ------ |
 | `ScrollLock` | Toggles automatic scrolling when new messages are received |
 | `Escape` | Closes all visible settings windows |
 
@@ -232,7 +228,7 @@ If enabled (either `&force=1` present in the query string or `Mod Antics` checkb
 By starting their message with one of the following words, moderators can do the following:
 
 | Word | Action |
-| -------- | -------- |
+| --- | -------- |
 | `force` | Interpret the rest of the message as literal HTML |
 | `forceeval` | Interpret the rest of the message as a JavaScript expression, displaying the result in the chat |
 | `forcejs` | Interpret the rest of the message as a JavaScript function |
@@ -252,7 +248,9 @@ By starting their message with one of the following words, moderators can do the
 
 Only enable antics if you completely trust your moderators. Furthermore, antics gives access to your OAuth token if one is present.
 
-I *highly* recommend disabling antics if you're using an OAuth token. Enable antics at your own risk.
+I *highly* recommend disabling antics if you're using an OAuth token.
+
+Enable antics at your own risk.
 
 ## Testing
 
