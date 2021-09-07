@@ -288,6 +288,8 @@ function parseQueryString(config, qs=null) {
     } else if (k === "trans" || k === "transparent") { /* transparent bg */
       key = "Transparent";
       val = 1;
+    } else if (k === "bghint") { /* background color hint */
+      key = "BGColorHint";
     } else if (k === "layout") { /* overall layout choice */
       key = "Layout";
       val = ParseLayout(v);

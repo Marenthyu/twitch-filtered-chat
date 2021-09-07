@@ -40,6 +40,15 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return this._config[k];
   }
 
+  /* Returns "light", "dark", or null */
+  themeHint() {
+    const theme = this.getValue("BGColorHint");
+    if (theme === "light" || theme === "dark") {
+      return theme;
+    }
+    return null;
+  }
+
   /* Return whether or not mod antics are enabled */
   get enableAntics() {
     return this.getValue("EnableForce") && $("#cbForce").is(":checked");
@@ -100,16 +109,36 @@ class HTMLGenerator { /* exported HTMLGenerator */
     return this._userColors[name];
   }
 
-  /* Returns array of [css attr, css value] */
+  /* Returns array of [css attr, css value]. Returns null if the selected
+   * theme matches the color that maximizes contrast.
+   */
   genBorderCSS(color) {
-    let border = Util.GetMaxContrast(color, this._shadowColors);
-    return [
-      "text-shadow",
-      `-0.8px -0.8px 0 ${border},` +
-      ` 0.8px -0.8px 0 ${border},` +
-      `-0.8px  0.8px 0 ${border},` +
-      ` 0.8px  0.8px 0 ${border}`
-    ];
+    const theme = this.themeHint();
+    let bcolor = null;
+    let add_border = true;
+    if (theme === "light") {
+      bcolor = Util.GetMaxContrast(color, "#ffffff", ...this._shadowColors);
+      if (bcolor === "#ffffff") {
+        add_border = false;
+      }
+    } else if (theme === "dark") {
+      bcolor = Util.GetMaxContrast(color, "#000000", ...this._shadowColors);
+      if (bcolor === "#000000") {
+        add_border = false;
+      }
+    } else {
+      bcolor = Util.GetMaxContrast(color, ...this.shadowColors);
+    }
+    if (add_border && bcolor !== null) {
+      return [
+        "text-shadow",
+        `-0.8px -0.8px 0 ${bcolor},` +
+        ` 0.8px -0.8px 0 ${bcolor},` +
+        `-0.8px  0.8px 0 ${bcolor},` +
+        ` 0.8px  0.8px 0 ${bcolor}`
+      ];
+    }
+    return null;
   }
 
   /* Returns jquery node */
@@ -117,7 +146,10 @@ class HTMLGenerator { /* exported HTMLGenerator */
     let $e = $(`<span class="username" data-username="1"></span>`);
     let c = color || this.getColorFor(name) || "#ffffff";
     $e.css("color", c);
-    $e.css(...this.genBorderCSS(color));
+    const bcss = this.genBorderCSS(color);
+    if (bcss !== null) {
+      $e.css(...bcss);
+    }
     $e.text(name);
     return $e;
   }
