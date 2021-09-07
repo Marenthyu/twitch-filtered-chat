@@ -7,6 +7,9 @@
  * Feel free to change the default variables below.
  */
 
+/* Import fonts we may want to use */
+@import url("https://fonts.googleapis.com/css?family=Ubuntu");
+
 :root {
   /* Default colors (used by ?trans=1 because "-color-default") */
   --body-color-default: #0e0e0e;
@@ -170,6 +173,10 @@ body.light .url {
   position: relative;
   border: 2px solid #3c3c3c;
   background: var(--module-color, var(--module-color-default));
+}
+
+.module.slim {
+  border: 0px;
 }
 
 .module.no-chat .content {
@@ -703,6 +710,8 @@ body.light #chat textarea {
   padding: 10px;
   border-left: 1px solid #888888;
   border-bottom: 1px solid #888888;
+  overflow: scroll;
+  max-height: 100%;
   z-index: var(--z-index-settings);
 }
 
