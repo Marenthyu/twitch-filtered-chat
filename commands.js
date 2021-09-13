@@ -185,14 +185,22 @@ class ChatCommandManager {
     let prefix = null;
     /* The word to complete */
     let currWord = null;
+    /* Text to add after the completed word */
+    let suffix = null;
     if (wordPos > -1) {
       prefix = textBefore.substr(0, wordPos);
       currWord = textBefore.substr(wordPos).trimStart();
     } else {
-      prefix = cargs.oText;
+      prefix = "";
       currWord = textBefore;
+      suffix = " ";
     }
 
+    Util.DebugOnly("Completing text \"%s\", pos %d, idx %d, wpos %d",
+      text, pos, idx, wordPos);
+    Util.DebugOnly("Text before: \"%s\"", textBefore);
+    Util.DebugOnly("Prefix: \"%s\"", prefix);
+    Util.DebugOnly("Current word: \"%s\"", currWord);
     let completed = false;
 
     /* Complete @<user> sequences */
@@ -276,6 +284,9 @@ class ChatCommandManager {
       if (idx < matches.length) {
         text = prefix + matches[idx];
         pos = text.length;
+        if (suffix !== null) {
+          text += suffix;
+        }
         idx += 1;
       }
       if (idx >= matches.length) {
