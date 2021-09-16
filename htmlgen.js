@@ -26,8 +26,12 @@ class HTMLGenerator { /* exported HTMLGenerator */
     this._highlights = [];
 
     /* Ensure config has certain values */
-    if (!this._config.Layout) this._config.Layout = {};
-    if (!this._config.ShowClips) this._config.ShowClips = false;
+    if (!this._config.hasOwnProperty("Layout")) {
+      this._config.Layout = {};
+    }
+    if (!this._config.hasOwnProperty("ShowClips")) {
+      this._config.ShowClips = false;
+    }
   }
 
   /* Set the configuration key to the value given */
@@ -116,19 +120,29 @@ class HTMLGenerator { /* exported HTMLGenerator */
     const theme = this.themeHint();
     let bcolor = null;
     let add_border = true;
-    if (theme === "light") {
-      bcolor = Util.GetMaxContrast(color, "#ffffff", ...this._shadowColors);
-      if (bcolor === "#ffffff") {
+    /* Determine if we should add a border based on UsernameShadow */
+    if (this._config.hasOwnProperty("UsernameShadow")) {
+      if (!this._config.UsernameShadow) {
         add_border = false;
       }
-    } else if (theme === "dark") {
-      bcolor = Util.GetMaxContrast(color, "#000000", ...this._shadowColors);
-      if (bcolor === "#000000") {
-        add_border = false;
-      }
-    } else {
-      bcolor = Util.GetMaxContrast(color, ...this.shadowColors);
     }
+    /* If that passes, determine if we should add a border based on colors */
+    if (add_border) {
+      if (theme === "light") {
+        bcolor = Util.GetMaxContrast(color, "#ffffff", ...this._shadowColors);
+        if (bcolor === "#ffffff") {
+          add_border = false;
+        }
+      } else if (theme === "dark") {
+        bcolor = Util.GetMaxContrast(color, "#000000", ...this._shadowColors);
+        if (bcolor === "#000000") {
+          add_border = false;
+        }
+      } else {
+        bcolor = Util.GetMaxContrast(color, ...this.shadowColors);
+      }
+    }
+    /* If all that passed and the color isn't null, apply it */
     if (add_border && bcolor !== null) {
       return [
         "text-shadow",
@@ -914,6 +928,15 @@ class HTMLGenerator { /* exported HTMLGenerator */
     let color = event.flags.color || this.getColorFor(event.user);
     if (this._client.IsUIDSelf(event.flags["user-id"])) {
       $e.addClass("self");
+    }
+    let slide = true;
+    if (this._config.hasOwnProperty("AnimateMessage")) {
+      if (!this._config.AnimateMessage) {
+        slide = false;
+      }
+    }
+    if (slide) {
+      $e.addClass("anim-slide");
     }
     /* Add data attributes */
     this._addChatAttrs($e, event);

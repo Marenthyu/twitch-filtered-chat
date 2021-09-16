@@ -67,7 +67,9 @@ URL: `https://kaedenn.github.io/twitch-filtered-chat/index.html?<OPTIONS>`
 | `fanfare`     | Fanfare configuration: either `1` or `true` to enable, or a JSON-encoded string to set specific options |
 | `highlight`   | Comma-separated patterns (either regexes of the form `/pat/[flags]` or strings) to highlight |
 | `urls`        | Set to a falsy value to disable URL formatting. Default is to format URLs |
-| `bghint`      | Hint to the HTML Generator the relative shade of the background. Valid values are `light` and `dark` |
+| `bghint`      | Hint to the HTML Generator the relative shade of the background. Valid values are `light` and `dark`. This affects whether or not username shadows are displayed |
+| `shadow`      | Set to a falsy value to disable username shadows altogether. Overrides the behavior of `bghint` regarding username shadows. |
+| `msganim`     | Set to a falsy value to disable message "slide-in" animation |
 | `wsuri`       | Override the `WebSocket` endpoint to a custom URI |
 | `tag`         | Set a specific name for the chat for debugging and antics usage (highly recommended!) |
 

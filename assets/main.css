@@ -387,6 +387,10 @@ body.light .loading {
 
 /* Line CSS {{{0 */
 
+.module .content {
+  overflow-x: hidden;
+}
+
 .module .content .line.line-wrapper {
   z-index: var(--z-line);
 }
@@ -857,7 +861,33 @@ body.slim #btnSettings {
 
 /* End hover context window 0}}} */
 
-/* Custom marquees {{{0 */
+/* Animations and effects {{{0 */
+
+.line .chat-line.anim-slide {
+  position: relative;
+  left: 100%;
+  opacity: 0%;
+  -webkit-animation: slide 0.5s forwards;
+  -webkit-animation-delay: 0s;
+  animation: slide 0.5s forwards;
+  animation-delay: 0s;
+}
+
+@-webkit-keyframes slide {
+  100% {
+    left: 0;
+    opacity: 100%;
+  }
+}
+
+@keyframes slide {
+  100% {
+    left: 0;
+    opacity: 100%;
+  }
+}
+
+/* Custom marquees {{{1 */
 
 .effect-marquee {
   overflow: hidden;
@@ -949,9 +979,9 @@ body.slim #btnSettings {
   100% { transform: translateX(100%); }
 }
 
-/* End custom marquees 0}}} */
+/* End custom marquees 1}}} */
 
-/* CSS cheer effects {{{0 */
+/* CSS cheer effects {{{1 */
 
 .effect-bold {
   font-weight: bold;
@@ -1037,7 +1067,9 @@ body.slim #btnSettings {
   100% { background-position: 0% 100%; }
 }
 
-/* End CSS cheer effects 0}}} */
+/* End CSS cheer effects 1}}} */
+
+/* End animations and effects 0}}} */
 
 /** TFC page structure:
  * body

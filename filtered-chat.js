@@ -345,6 +345,12 @@ function parseQueryString(config, qs=null) {
         Util.WarnOnly(`Invalid scheme value ${v}, defaulting to dark`);
         val = "dark";
       }
+    } else if (k === "shadow") {
+      key = "UsernameShadow";
+      val = Boolean(v);
+    } else if (k === "msganim") {
+      key = "AnimateMessage";
+      val = Boolean(v);
     } else if (k === "force" || k === "antics") { /* enable HTML/XSS injection */
       key = "EnableForce";
       val = Boolean(v);
@@ -733,6 +739,12 @@ function genConfigURL(config, options=null) {
     qsAdd("scheme", "dark");
   } else if (config.ColorScheme === "light") {
     qsAdd("scheme", "light");
+  }
+  if (config.hasOwnProperty("UsernameShadow")) {
+    qsAdd("shadow", config.UsernameShadow ? "1" : "0");
+  }
+  if (config.hasOwnProperty("AnimateMessage")) {
+    qsAdd("msganim", config.AnimateMessage ? "1" : "0");
   }
   if (config.EnableForce) {
     qsAdd("force", "1");
@@ -1486,8 +1498,19 @@ function doLoadClient() { /* exported doLoadClient */
     setLightScheme();
   }
 
+  /* Don't display username shadows if that's desired */
+  if (config.hasOwnProperty("UsernameShadow")) {
+    if (!config.UsernameShadow) {
+      $(document.body).addClass("no-shadow");
+    }
+  }
+
   /* Apply the animated cheers config to the settings div */
-  $("#cbAnimCheers").uncheck(config.NoAnim);
+  if (config.NoAnim) {
+    $("#cbAnimCheers").uncheck();
+  } else {
+    $("#cbAnimCheers").check();
+  }
 
   /* Clear the background style */
   $("#txtBGStyle").val("");
@@ -1504,7 +1527,11 @@ function doLoadClient() { /* exported doLoadClient */
   }
 
   /* Sync fanfare with the enable checkbox */
-  $("#cbFanfare").check(config.Fanfare && config.Fanfare.enable);
+  if (config.Fanfare && config.Fanfare.enable) {
+    $("#cbFanfare").check();
+  } else {
+    $("#cbFanfare").uncheck();
+  }
 
   /* Construct the HTMLGenerator and Fanfare objects */
   client.set("HTMLGen", new HTMLGenerator(client, config));
