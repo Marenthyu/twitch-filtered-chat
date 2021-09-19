@@ -139,7 +139,7 @@ class HTMLGenerator { /* exported HTMLGenerator */
           add_border = false;
         }
       } else {
-        bcolor = Util.GetMaxContrast(color, ...this.shadowColors);
+        bcolor = Util.GetMaxContrast(color, ...this._shadowColors);
       }
     }
     /* If all that passed and the color isn't null, apply it */
