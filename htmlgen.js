@@ -955,9 +955,12 @@ class HTMLGenerator { /* exported HTMLGenerator */
     if (!event.flags.action) {
       $e.html($e.html() + ":");
     } else {
-      let [attr, val] = this.genBorderCSS(color);
       msg_def.e.css("color", color);
-      msg_def.e.css(attr, val);
+      const attr_val = this.genBorderCSS(color);
+      if (attr_val !== null) {
+        const [attr, val] = attr_val;
+        msg_def.e.css(attr, val);
+      }
     }
     $e.html($e.html() + "&nbsp;");
     /* Apply the calculated style information */
