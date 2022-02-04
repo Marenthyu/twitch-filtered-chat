@@ -174,11 +174,11 @@ class Fanfare { /* exported Fanfare */
   /* Start a new animation */
   addEffect(effect) {
     effect.load().then(() => {
-      Util.LogOnly(`Loaded effect ${effect}`);
+      Util.LogOnly(`Loaded effect ${effect.name()}`);
       this._running.push(effect);
       this.startAnimation();
     }).catch((ev) => {
-      Util.Error(`Failed to load effect ${effect}`);
+      Util.Error(`Failed to load effect ${effect.name()}`);
       Content.addErrorText(`${ev}`);
       Util.DebugOnly(ev);
     });
@@ -195,7 +195,7 @@ class Fanfare { /* exported Fanfare */
             effect.draw(this._context);
             stillRunning.push(effect);
           } else {
-            Util.LogOnly(`Completed effect ${effect}`);
+            Util.LogOnly(`Completed effect ${effect.name()}`);
           }
         }
         this._running = stillRunning;
