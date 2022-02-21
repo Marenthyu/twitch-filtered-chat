@@ -462,6 +462,24 @@ function getConfigObject(inclSensitive=false) {
   /* Parse the query string, storing items to remove */
   const query_remove = parseQueryString(config, qs);
 
+  /* Parse Hash in URL to override query string OAuth token for Implicit Auth */
+  if (window.location.hash && window.location.hash.toString().indexOf("access_token=") > -1) {
+    let hash = window.location.hash.toString();
+    if (hash !== null && hash.startsWith("#")) {
+      hash = hash.substring(1);
+      for (let part of hash.split("&")) {
+        let subparts = part.split("=");
+        let key = subparts[0];
+        let value = subparts[1];
+        switch (key) {
+          case "access_token": {
+            config.Pass = value;
+          }
+        }
+      }
+    }
+  }
+
   /* Ensure config.Channels is present for #settings configuration below */
   if (!Util.IsArray(config.Channels)) {
     config.Channels = [];
